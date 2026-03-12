@@ -1804,7 +1804,7 @@ function LoadingGlobe({ lang, destination }) {
 // MAIN APP
 // ============================================================================
 
-export default function TravelSwish() {
+function TravelSwish() {
   const [page, setPage] = useState('landing');
   const [lang, setLang] = useState('no');
   const [destination, setDestination] = useState('');
@@ -2077,4 +2077,11 @@ export default function TravelSwish() {
       `}</style>
     </div>
   );
+}
+
+// Mount app
+const rootEl = document.getElementById('root');
+if (rootEl) {
+  const root = ReactDOM.createRoot(rootEl);
+  root.render(<TravelSwish />);
 }
