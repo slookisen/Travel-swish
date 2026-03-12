@@ -26,6 +26,8 @@ import { useState, useEffect, useRef, useCallback, createContext, useContext } f
 // ============================================================================
 
 const PREFERENCE_CARDS = {
+  // Mode: experiences
+
   no: [
     {id:'p1', emoji:'🪂', q:'Vil du hoppe i fallskjerm over reisemålet ditt?', desc:'Adrenalin fra høyder og fritt fall.', cat:'adrenalin', dims:{adv:1,soc:.2,lux:.1,act:.9,cul:-.2,nat:.5,food:-.3,night:-.2,spont:.6}},
     {id:'p2', emoji:'🧗', q:'Foretrekker du å klatre opp en fjellvegg fremfor å ta heisen?', desc:'Fysisk utfordring gir deg energi.', cat:'adrenalin', dims:{adv:.9,soc:.1,lux:-.4,act:1,cul:-.1,nat:.8,food:-.2,night:-.3,spont:.3}},
@@ -131,6 +133,57 @@ const PREFERENCE_CARDS = {
     {id:'p50', emoji:'🌙', q:'Are you most active after the sun goes down?', desc:'The night has its own magic.', cat:'pace', dims:{adv:.4,soc:.6,lux:.3,act:.2,cul:.1,nat:-.3,food:.3,night:1,spont:.5}},
   ]
 };
+
+
+
+// Mode: restaurants (separate swipe deck)
+const RESTAURANT_CARDS = {
+  no: [
+    {id:'r1', emoji:'🍣', q:'Er sushi og japansk mat en favoritt?', desc:'Du liker rene smaker, kvalitet og presisjon.', cat:'cuisine', dims:{adv:.2,soc:.2,lux:.4,act:-.2,cul:.6,nat:-.2,food:1,night:.2,spont:-.1}},
+    {id:'r2', emoji:'🍕', q:'Kan en enkel pizza være den perfekte middag?', desc:'Du liker komfortmat og uformell stemning.', cat:'casual', dims:{adv:-.1,soc:.3,lux:-.4,act:-.2,cul:.1,nat:-.1,food:.6,night:.2,spont:.1}},
+    {id:'r3', emoji:'🌶️', q:'Velger du ofte sterk mat når du kan?', desc:'Du tåler litt trøkk i smakene.', cat:'spicy', dims:{adv:.4,soc:.1,lux:-.1,act:.1,cul:.2,nat:-.1,food:.9,night:.1,spont:.2}},
+    {id:'r4', emoji:'🥂', q:'Er det verdt å betale mer for en “wow”-middag?', desc:'Du prioriterer kvalitet, service og atmosfære.', cat:'fine', dims:{adv:.1,soc:.2,lux:1,act:-.3,cul:.3,nat:-.2,food:.8,night:.2,spont:-.4}},
+    {id:'r5', emoji:'🍔', q:'Er burger og fries en go-to når du er sulten?', desc:'Raskt, enkelt og digg.', cat:'casual', dims:{adv:-.1,soc:.2,lux:-.5,act:-.1,cul:-.1,nat:-.2,food:.5,night:.1,spont:.2}},
+    {id:'r6', emoji:'🥗', q:'Foretrekker du ofte noe lett og friskt?', desc:'Du liker rene råvarer og føler deg best etterpå.', cat:'fresh', dims:{adv:-.2,soc:-.1,lux:.1,act:.3,cul:.2,nat:.2,food:.6,night:-.3,spont:-.2}},
+    {id:'r7', emoji:'🍷', q:'Er vinbar/et godt vinkart en stor pluss?', desc:'Du liker å matche drikke og mat.', cat:'drinks', dims:{adv:.1,soc:.5,lux:.6,act:-.2,cul:.4,nat:-.1,food:.5,night:.6,spont:.1}},
+    {id:'r8', emoji:'🧆', q:'Liker du å prøve lokale småretter (tapas/meze)?', desc:'Deling, variasjon og nye smaker.', cat:'sharing', dims:{adv:.3,soc:.8,lux:.2,act:-.1,cul:.6,nat:-.1,food:.8,night:.3,spont:.4}},
+    {id:'r9', emoji:'🥩', q:'Er en skikkelig biffmiddag noe du blir glad av?', desc:'Du liker kraftige smaker og god metthet.', cat:'hearty', dims:{adv:-.1,soc:.2,lux:.3,act:-.1,cul:.1,nat:-.1,food:.7,night:.2,spont:-.2}},
+    {id:'r10', emoji:'🕯️', q:'Foretrekker du romantisk stemning fremfor liv og røre?', desc:'Rolig, intimt og koselig.', cat:'ambience', dims:{adv:-.3,soc:-.1,lux:.5,act:-.4,cul:.2,nat:-.1,food:.4,night:-.1,spont:-.3}},
+    {id:'r11', emoji:'🎉', q:'Liker du restauranter med høy energi og folk?', desc:'Du tåler lyd og liker puls.', cat:'lively', dims:{adv:.2,soc:.8,lux:.1,act:.1,cul:.2,nat:-.2,food:.4,night:.8,spont:.3}},
+    {id:'r12', emoji:'⏱️', q:'Vil du ofte ha noe raskt og effektivt?', desc:'Kort vei fra bestilling til mat.', cat:'quick', dims:{adv:-.2,soc:-.1,lux:-.2,act:.1,cul:-.1,nat:-.1,food:.3,night:-.3,spont:.2}},
+    {id:'r13', emoji:'🍜', q:'Ramen/pho/nudler: ja takk?', desc:'Du liker varme, rike buljonger og comfort.', cat:'cuisine', dims:{adv:.2,soc:.1,lux:-.1,act:-.1,cul:.3,nat:-.1,food:.8,night:.1,spont:.2}},
+    {id:'r14', emoji:'🧁', q:'Er dessert et must når du spiser ute?', desc:'Du liker en søt avslutning.', cat:'dessert', dims:{adv:-.1,soc:.1,lux:.1,act:-.2,cul:.1,nat:-.1,food:.7,night:.1,spont:.1}},
+    {id:'r15', emoji:'📍', q:'Er “lokale skjulte perler” viktigere enn kjeder?', desc:'Du vil ha unikt og autentisk.', cat:'local', dims:{adv:.4,soc:.1,lux:.1,act:.2,cul:.7,nat:-.1,food:.6,night:.1,spont:.5}},
+    {id:'r16', emoji:'🧑‍🍳', q:'Synes du åpen kjøkken/chef’s counter er kult?', desc:'Du liker håndverket bak maten.', cat:'craft', dims:{adv:.2,soc:.2,lux:.4,act:-.1,cul:.4,nat:-.1,food:.6,night:.1,spont:.1}},
+    {id:'r17', emoji:'🥘', q:'Er du glad i gryteretter og “comfort food”?', desc:'Varmt, mettende og trygt.', cat:'hearty', dims:{adv:-.2,soc:.1,lux:-.1,act:-.2,cul:.1,nat:-.1,food:.7,night:-.1,spont:-.2}},
+    {id:'r18', emoji:'🌿', q:'Er vegetar/vegansk tilbud viktig for deg?', desc:'Du vil ha gode alternativer uten kjøtt.', cat:'diet', dims:{adv:.1,soc:.1,lux:.1,act:.2,cul:.2,nat:.1,food:.5,night:-.1,spont:.1}},
+    {id:'r19', emoji:'👨‍👩‍👧‍👦', q:'Trives du best på familievennlige steder?', desc:'Lav terskel og enkel logistikk.', cat:'family', dims:{adv:-.3,soc:.3,lux:-.3,act:-.2,cul:-.1,nat:-.1,food:.3,night:-.5,spont:-.2}},
+    {id:'r20', emoji:'🎧', q:'Blir du fort sliten av høy musikk mens du spiser?', desc:'Du foretrekker å kunne prate.', cat:'quiet', dims:{adv:-.2,soc:-.1,lux:.2,act:-.2,cul:.1,nat:-.1,food:.3,night:-.4,spont:-.2}},
+  ],
+  en: [
+    {id:'r1', emoji:'🍣', q:'Is sushi/Japanese food a favorite?', desc:'You like clean flavors and quality.', cat:'cuisine', dims:{adv:.2,soc:.2,lux:.4,act:-.2,cul:.6,nat:-.2,food:1,night:.2,spont:-.1}},
+    {id:'r2', emoji:'🍕', q:'Can a simple pizza be the perfect dinner?', desc:'Casual comfort and no fuss.', cat:'casual', dims:{adv:-.1,soc:.3,lux:-.4,act:-.2,cul:.1,nat:-.1,food:.6,night:.2,spont:.1}},
+    {id:'r3', emoji:'🌶️', q:'Do you often choose spicy food when you can?', desc:'You enjoy heat and bold flavors.', cat:'spicy', dims:{adv:.4,soc:.1,lux:-.1,act:.1,cul:.2,nat:-.1,food:.9,night:.1,spont:.2}},
+    {id:'r4', emoji:'🥂', q:'Is it worth paying more for a “wow” dinner?', desc:'You value quality, service and ambience.', cat:'fine', dims:{adv:.1,soc:.2,lux:1,act:-.3,cul:.3,nat:-.2,food:.8,night:.2,spont:-.4}},
+    {id:'r5', emoji:'🍔', q:'Burger and fries as a go-to?', desc:'Fast, simple, satisfying.', cat:'casual', dims:{adv:-.1,soc:.2,lux:-.5,act:-.1,cul:-.1,nat:-.2,food:.5,night:.1,spont:.2}},
+    {id:'r6', emoji:'🥗', q:'Do you often prefer something light and fresh?', desc:'You like clean ingredients.', cat:'fresh', dims:{adv:-.2,soc:-.1,lux:.1,act:.3,cul:.2,nat:.2,food:.6,night:-.3,spont:-.2}},
+    {id:'r7', emoji:'🍷', q:'Is a good wine list a big plus?', desc:'You enjoy pairing drinks and food.', cat:'drinks', dims:{adv:.1,soc:.5,lux:.6,act:-.2,cul:.4,nat:-.1,food:.5,night:.6,spont:.1}},
+    {id:'r8', emoji:'🧆', q:'Do you like sharing small plates (tapas/meze)?', desc:'Variety and social eating.', cat:'sharing', dims:{adv:.3,soc:.8,lux:.2,act:-.1,cul:.6,nat:-.1,food:.8,night:.3,spont:.4}},
+    {id:'r9', emoji:'🥩', q:'A proper steak dinner makes you happy?', desc:'Hearty flavors and fullness.', cat:'hearty', dims:{adv:-.1,soc:.2,lux:.3,act:-.1,cul:.1,nat:-.1,food:.7,night:.2,spont:-.2}},
+    {id:'r10', emoji:'🕯️', q:'Do you prefer romantic ambience over loud buzz?', desc:'Calm and intimate.', cat:'ambience', dims:{adv:-.3,soc:-.1,lux:.5,act:-.4,cul:.2,nat:-.1,food:.4,night:-.1,spont:-.3}},
+    {id:'r11', emoji:'🎉', q:'Do you enjoy high-energy, lively restaurants?', desc:'You like buzz and people.', cat:'lively', dims:{adv:.2,soc:.8,lux:.1,act:.1,cul:.2,nat:-.2,food:.4,night:.8,spont:.3}},
+    {id:'r12', emoji:'⏱️', q:'Do you often want something quick and efficient?', desc:'From order to food fast.', cat:'quick', dims:{adv:-.2,soc:-.1,lux:-.2,act:.1,cul:-.1,nat:-.1,food:.3,night:-.3,spont:.2}},
+    {id:'r13', emoji:'🍜', q:'Ramen/pho/noodles: yes please?', desc:'Warm broths and comfort.', cat:'cuisine', dims:{adv:.2,soc:.1,lux:-.1,act:-.1,cul:.3,nat:-.1,food:.8,night:.1,spont:.2}},
+    {id:'r14', emoji:'🧁', q:'Is dessert a must when dining out?', desc:'You love a sweet finish.', cat:'dessert', dims:{adv:-.1,soc:.1,lux:.1,act:-.2,cul:.1,nat:-.1,food:.7,night:.1,spont:.1}},
+    {id:'r15', emoji:'📍', q:'Do “local hidden gems” matter more than chains?', desc:'You want unique and authentic.', cat:'local', dims:{adv:.4,soc:.1,lux:.1,act:.2,cul:.7,nat:-.1,food:.6,night:.1,spont:.5}},
+    {id:'r16', emoji:'🧑‍🍳', q:'Do you like open kitchens/chef’s counters?', desc:'You enjoy the craft.', cat:'craft', dims:{adv:.2,soc:.2,lux:.4,act:-.1,cul:.4,nat:-.1,food:.6,night:.1,spont:.1}},
+    {id:'r17', emoji:'🥘', q:'Do you love stews and comfort food?', desc:'Warm, filling, safe.', cat:'hearty', dims:{adv:-.2,soc:.1,lux:-.1,act:-.2,cul:.1,nat:-.1,food:.7,night:-.1,spont:-.2}},
+    {id:'r18', emoji:'🌿', q:'Do you care about vegetarian/vegan options?', desc:'You want strong meat-free choices.', cat:'diet', dims:{adv:.1,soc:.1,lux:.1,act:.2,cul:.2,nat:.1,food:.5,night:-.1,spont:.1}},
+    {id:'r19', emoji:'👨‍👩‍👧‍👦', q:'Do you prefer family-friendly places?', desc:'Low friction and easy logistics.', cat:'family', dims:{adv:-.3,soc:.3,lux:-.3,act:-.2,cul:-.1,nat:-.1,food:.3,night:-.5,spont:-.2}},
+    {id:'r20', emoji:'🎧', q:'Does loud music while eating drain you?', desc:'You prefer conversation.', cat:'quiet', dims:{adv:-.2,soc:-.1,lux:.2,act:-.2,cul:.1,nat:-.1,food:.3,night:-.4,spont:-.2}},
+  ]
+};
+
 
 const PREF_CAT_GRAD = {
   adrenalin:['#7f1d1d','#ef4444'], adrenaline:['#7f1d1d','#ef4444'],
@@ -372,37 +425,48 @@ const STRINGS = {
 // ============================================================================
 
 const STORAGE_KEYS = {
-  swipes: 'ts_swipes',
-  totalSwipes: 'ts_totalSwipes',
-  seenExperiences: 'ts_seenExperiences',
   apiKey: 'apiKey',
 };
 
-function loadMemory() {
-  try {
-    const swipes = JSON.parse(localStorage.getItem(STORAGE_KEYS.swipes) || '{}');
-    const totalSwipes = parseInt(localStorage.getItem(STORAGE_KEYS.totalSwipes) || '0', 10);
-    const seenExperiences = JSON.parse(localStorage.getItem(STORAGE_KEYS.seenExperiences) || '[]');
-    return { swipes, totalSwipes, seenExperiences };
-  } catch { return { swipes: {}, totalSwipes: 0, seenExperiences: [] }; }
+function keysFor(type) {
+  // Separate memories per mode so restaurant swipes don't overwrite experience swipes.
+  const suffix = type === 'restaurants' ? '_restaurants' : '_experiences';
+  return {
+    swipes: `ts_swipes${suffix}`,
+    totalSwipes: `ts_totalSwipes${suffix}`,
+    seen: `ts_seen${suffix}`,
+  };
 }
 
-function saveSwipes(swipes, totalSwipes) {
+function loadMemory(type) {
+  const K = keysFor(type);
   try {
-    localStorage.setItem(STORAGE_KEYS.swipes, JSON.stringify(swipes));
-    localStorage.setItem(STORAGE_KEYS.totalSwipes, String(totalSwipes));
+    const swipes = JSON.parse(localStorage.getItem(K.swipes) || '{}');
+    const totalSwipes = parseInt(localStorage.getItem(K.totalSwipes) || '0', 10);
+    const seen = JSON.parse(localStorage.getItem(K.seen) || '[]');
+    return { swipes, totalSwipes, seen };
+  } catch { return { swipes: {}, totalSwipes: 0, seen: [] }; }
+}
+
+function saveSwipes(type, swipes, totalSwipes) {
+  const K = keysFor(type);
+  try {
+    localStorage.setItem(K.swipes, JSON.stringify(swipes));
+    localStorage.setItem(K.totalSwipes, String(totalSwipes));
   } catch {}
 }
 
-function saveSeenExperiences(seen) {
-  try { localStorage.setItem(STORAGE_KEYS.seenExperiences, JSON.stringify(seen)); } catch {}
+function saveSeen(type, seen) {
+  const K = keysFor(type);
+  try { localStorage.setItem(K.seen, JSON.stringify(seen)); } catch {}
 }
 
-function clearMemory() {
+function clearMemory(type) {
+  const K = keysFor(type);
   try {
-    localStorage.removeItem(STORAGE_KEYS.swipes);
-    localStorage.removeItem(STORAGE_KEYS.totalSwipes);
-    localStorage.removeItem(STORAGE_KEYS.seenExperiences);
+    localStorage.removeItem(K.swipes);
+    localStorage.removeItem(K.totalSwipes);
+    localStorage.removeItem(K.seen);
   } catch {}
 }
 
@@ -577,14 +641,23 @@ function describeProfile(dims, lang) {
   return parts.join(', ') || (lang === 'no' ? 'balansert reisende' : 'balanced traveler');
 }
 
-function buildExperiencePrompt(dest, profileText, lang, excludeNames) {
+function buildPrompt(mode, dest, profileText, lang, excludeNames) {
   const excludeStr = excludeNames && excludeNames.length > 0
     ? (lang === 'no'
-        ? `\nUNNGÅ disse opplevelsene som allerede er vist: ${excludeNames.join(', ')}.`
-        : `\nEXCLUDE these already-shown experiences: ${excludeNames.join(', ')}.`)
+        ? `\nUNNGÅ disse som allerede er vist: ${excludeNames.join(', ')}.`
+        : `\nEXCLUDE these already-shown items: ${excludeNames.join(', ')}.`)
     : '';
-  return lang === 'no'
-    ? `Søk etter opplevelser i ${dest} for denne profilen: ${profileText}.${excludeStr}\nReturner en JSON-array med 8-10 opplevelser sortert etter match (høyest først). Hvert objekt: {"name":"...","why":"2-3 setninger om hvorfor denne passer brukerens profil","quote":"en kort anmeldelse/sitat fra en ekte anmelder hvis mulig, ellers tom streng","cat":"kategori","url":"booking-url","price":"ca pris","duration":"varighet","match":0-100,"lat":0.0,"lng":0.0}. Fokus på hidden gems og ekte bookbare opplevelser. KUN JSON-array, ingen annen tekst.`
+
+  const isRestaurants = mode === 'restaurants';
+
+  if (lang === 'no') {
+    return isRestaurants
+      ? `Søk etter restauranter i ${dest} for denne profilen: ${profileText}.${excludeStr}\nReturner en JSON-array med 8-10 restauranter sortert etter match (høyest først). Hvert objekt: {"name":"...","why":"2-3 setninger om hvorfor denne restauranten passer brukerens preferanser","quote":"en kort anmeldelse/sitat fra en ekte anmelder hvis mulig, ellers tom streng","cat":"kjøkken/tema","url":"booking/Google Maps/restaurant-url","price":"ca prisnivå","duration":"(valgfritt)","match":0-100,"lat":0.0,"lng":0.0}. Prioriter steder som er ekte, åpne, og i rimelig avstand. KUN JSON-array, ingen annen tekst.`
+      : `Søk etter opplevelser i ${dest} for denne profilen: ${profileText}.${excludeStr}\nReturner en JSON-array med 8-10 opplevelser sortert etter match (høyest først). Hvert objekt: {"name":"...","why":"2-3 setninger om hvorfor denne passer brukerens profil","quote":"en kort anmeldelse/sitat fra en ekte anmelder hvis mulig, ellers tom streng","cat":"kategori","url":"booking-url","price":"ca pris","duration":"varighet","match":0-100,"lat":0.0,"lng":0.0}. Fokus på hidden gems og ekte bookbare opplevelser. KUN JSON-array, ingen annen tekst.`;
+  }
+
+  return isRestaurants
+    ? `Search for restaurants in ${dest} for this profile: ${profileText}.${excludeStr}\nReturn a JSON array of 8-10 restaurants sorted by match (highest first). Each object: {"name":"...","why":"2-3 sentences on why this fits the user's preferences","quote":"a short real reviewer quote if available, otherwise empty string","cat":"cuisine/theme","url":"restaurant/Google Maps/reservation URL","price":"price level","duration":"(optional)","match":0-100,"lat":0.0,"lng":0.0}. Prioritize real places near the destination. ONLY JSON array, no other text.`
     : `Search for experiences in ${dest} for this profile: ${profileText}.${excludeStr}\nReturn a JSON array of 8-10 experiences sorted by match (highest first). Each object: {"name":"...","why":"2-3 sentences on why this fits the user profile","quote":"a short real reviewer quote if available, otherwise empty string","cat":"category","url":"booking-url","price":"approx","duration":"duration","match":0-100,"lat":0.0,"lng":0.0}. Focus on hidden gems and real bookable experiences. ONLY JSON array, no other text.`;
 }
 
@@ -842,7 +915,7 @@ function LandingPage({ onStart, lang, onLangChange }) {
 // HOME PAGE
 // ============================================================================
 
-function HomePage({ lang, onStart, onBack }) {
+function HomePage({ lang, onStart, onBack, mode, onMode }) {
   const S = STRINGS[lang];
   const [dest, setDest] = useState('');
   const [apiKey, setApiKey] = useState('');
@@ -882,7 +955,7 @@ function HomePage({ lang, onStart, onBack }) {
       try { window.localStorage?.setItem('apiKey', key.trim()); } catch { }
     }
 
-    onStart({ destination: dest.trim(), apiKey: key.trim() });
+    onStart({ destination: dest.trim(), apiKey: key.trim(), mode });
   }
 
   return (
@@ -902,6 +975,38 @@ function HomePage({ lang, onStart, onBack }) {
           <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>{S.home.compass}</div>
           <h1 style={{ fontFamily: 'Playfair Display, serif', fontSize: '2.5rem', color: T.txt, marginBottom: '0.5rem' }}>{S.home.heading}</h1>
           <p style={{ color: T.dim, fontSize: '0.95rem' }}>{S.landing.step1desc}</p>
+
+          {/* Mode switch */}
+          <div style={{ marginTop: '1.25rem', display: 'flex', gap: '0.75rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+            <button
+              onClick={() => onMode('experiences')}
+              style={{
+                padding: '0.55rem 1.1rem',
+                borderRadius: '2rem',
+                cursor: 'pointer',
+                border: `1px solid ${T.border}`,
+                background: mode === 'experiences' ? `linear-gradient(135deg, ${T.gold}, ${T.teal})` : T.card,
+                color: mode === 'experiences' ? T.bg : T.txt,
+                fontWeight: 'bold',
+              }}
+            >
+              {lang === 'no' ? 'Opplevelser' : 'Experiences'}
+            </button>
+            <button
+              onClick={() => onMode('restaurants')}
+              style={{
+                padding: '0.55rem 1.1rem',
+                borderRadius: '2rem',
+                cursor: 'pointer',
+                border: `1px solid ${T.border}`,
+                background: mode === 'restaurants' ? `linear-gradient(135deg, ${T.gold}, ${T.teal})` : T.card,
+                color: mode === 'restaurants' ? T.bg : T.txt,
+                fontWeight: 'bold',
+              }}
+            >
+              {lang === 'no' ? 'Restauranter' : 'Restaurants'}
+            </button>
+          </div>
         </div>
 
         {/* Destination Input */}
@@ -1198,9 +1303,9 @@ function LevelBadge({ lang, totalSwipes }) {
   );
 }
 
-function SwipePage({ lang, destination, apiKey, onResults, onBack }) {
+function SwipePage({ lang, destination, apiKey, onResults, onBack, mode }) {
   const S = STRINGS[lang];
-  const mem = useRef(loadMemory()).current;
+  const mem = useRef(loadMemory(mode)).current;
   const [swipes, setSwipes] = useState(mem.swipes);
   const [totalSwipesAll, setTotalSwipesAll] = useState(mem.totalSwipes);
   const [cardIdx, setCardIdx] = useState(0);
@@ -1209,7 +1314,7 @@ function SwipePage({ lang, destination, apiKey, onResults, onBack }) {
   const [showReset, setShowReset] = useState(false);
   const [phase, setPhase] = useState(1);
 
-  const cards = PREFERENCE_CARDS[lang];
+  const cards = (mode === 'restaurants' ? RESTAURANT_CARDS : PREFERENCE_CARDS)[lang];
   // Only show cards that haven't been swiped in memory
   const unswipedCards = useRef(
     shuffleArray(cards.filter(c => !mem.swipes[c.id]))
@@ -1231,7 +1336,7 @@ function SwipePage({ lang, destination, apiKey, onResults, onBack }) {
     const newTotal = totalSwipesAll + 1;
     setSwipes(newSwipes);
     setTotalSwipesAll(newTotal);
-    saveSwipes(newSwipes, newTotal);
+    saveSwipes(mode, newSwipes, newTotal);
 
     if (phase === 1 && cardIdx >= cardsToShow.length - 1 && phase2Cards.length > 0) {
       setShowChoice(true);
@@ -1249,11 +1354,11 @@ function SwipePage({ lang, destination, apiKey, onResults, onBack }) {
 
   function handleFindExperiences() {
     const profile = calcProfile(swipes, cards);
-    onResults(profile);
+    onResults(profile, mode);
   }
 
   function handleReset() {
-    clearMemory();
+    clearMemory(mode);
     setSwipes({});
     setTotalSwipesAll(0);
     setShowReset(false);
@@ -1723,6 +1828,7 @@ export default function TravelSwish() {
   const [lang, setLang] = useState('no');
   const [destination, setDestination] = useState('');
   const [apiKey, setApiKey] = useState('');
+  const [mode, setMode] = useState('experiences'); // experiences | restaurants
   const [experiences, setExperiences] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -1748,13 +1854,14 @@ export default function TravelSwish() {
 
   // Load seen experiences from memory on mount
   useEffect(() => {
-    const mem = loadMemory();
-    seenNames.current = mem.seenExperiences;
+    const mem = loadMemory(mode);
+    seenNames.current = mem.seen;
   }, []);
 
   function handleSwipeStart(data) {
     setDestination(data.destination);
     setApiKey(data.apiKey);
+    if (data.mode) setMode(data.mode);
     setPage('swipe');
   }
 
@@ -1777,7 +1884,8 @@ export default function TravelSwish() {
     return exps;
   }
 
-  async function handleFindExperiences(prof) {
+  async function handleFindExperiences(prof, overrideMode) {
+    const activeMode = overrideMode || mode;
     if (cooldownUntil && cooldownUntil > Date.now()) {
       setError(`For mange forespørsler. Vent ${cooldownLeft || Math.ceil((cooldownUntil - Date.now())/1000)}s og prøv igjen.`);
       return;
@@ -1786,19 +1894,18 @@ export default function TravelSwish() {
     setLoading(true);
     setError('');
     try {
-      const mem = loadMemory();
-      const swipes = prof ? null : mem.swipes;
-      const cards = PREFERENCE_CARDS[lang];
+      const mem = loadMemory(activeMode);
+      const cards = (activeMode === 'restaurants' ? RESTAURANT_CARDS : PREFERENCE_CARDS)[lang];
       const profile = prof || calcProfile(mem.swipes, cards);
       const profileText = describeProfile(profile, lang);
-      const prompt = buildExperiencePrompt(destination, profileText, lang, seenNames.current);
+      const prompt = buildPrompt(activeMode, destination, profileText, lang, seenNames.current);
       const result = await askClaude(prompt, apiKey);
       const exps = parseExperiencesFromResult(result);
 
-      // Track seen experiences
+      // Track seen
       const newNames = exps.map(e => e.name).filter(Boolean);
       seenNames.current = [...seenNames.current, ...newNames];
-      saveSeenExperiences(seenNames.current);
+      saveSeen(activeMode, seenNames.current);
 
       setLoading(false);
       setExperiences(exps);
@@ -1824,12 +1931,12 @@ export default function TravelSwish() {
 
     setLoadingMore(true);
     try {
-      const mem = loadMemory();
-      const cards = PREFERENCE_CARDS[lang];
+      const mem = loadMemory(mode);
+      const cards = (mode === 'restaurants' ? RESTAURANT_CARDS : PREFERENCE_CARDS)[lang];
       const profile = calcProfile(mem.swipes, cards);
       const profileText = describeProfile(profile, lang);
       const allSeen = [...seenNames.current, ...experiences.map(e => e.name)];
-      const prompt = buildExperiencePrompt(destination, profileText, lang, allSeen);
+      const prompt = buildPrompt(mode, destination, profileText, lang, allSeen);
       const result = await askClaude(prompt, apiKey);
       const newExps = parseExperiencesFromResult(result);
 
@@ -1842,7 +1949,7 @@ export default function TravelSwish() {
       // Track seen
       const newNames = unique.map(e => e.name).filter(Boolean);
       seenNames.current = [...seenNames.current, ...newNames];
-      saveSeenExperiences(seenNames.current);
+      saveSeen(mode, seenNames.current);
 
       setExperiences(combined);
       setLoadingMore(false);
@@ -1859,13 +1966,13 @@ export default function TravelSwish() {
     }
   }
 
-  const totalSwipes = parseInt(typeof window !== 'undefined' ? (localStorage.getItem(STORAGE_KEYS.totalSwipes) || '0') : '0', 10);
+  const totalSwipes = parseInt(typeof window !== 'undefined' ? (localStorage.getItem(keysFor(mode).totalSwipes) || '0') : '0', 10);
 
   return (
     <div style={{ width: '100%', minHeight: '100vh', background: T.bg, fontFamily: 'DM Sans, sans-serif', color: T.txt, overflow: 'hidden' }}>
       {page === 'landing' && <LandingPage onStart={() => setPage('home')} lang={lang} onLangChange={setLang} />}
-      {page === 'home' && <HomePage lang={lang} onStart={handleSwipeStart} onBack={() => setPage('landing')} />}
-      {page === 'swipe' && <SwipePage lang={lang} destination={destination} apiKey={apiKey} onResults={handleFindExperiences} onBack={() => setPage('home')} />}
+      {page === 'home' && <HomePage lang={lang} mode={mode} onMode={setMode} onStart={handleSwipeStart} onBack={() => setPage('landing')} />}
+      {page === 'swipe' && <SwipePage lang={lang} mode={mode} destination={destination} apiKey={apiKey} onResults={handleFindExperiences} onBack={() => setPage('home')} />}
       {page === 'results' && <ResultsPage lang={lang} destination={destination} experiences={experiences} onBack={() => setPage('home')} onLoadMore={handleLoadMore} loadingMore={loadingMore} totalSwipes={totalSwipes} cooldownLeft={cooldownLeft} />}
 
       {/* Loading Overlay — Airplane over Globe */}
