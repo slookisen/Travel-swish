@@ -1,4 +1,6 @@
-import { useState, useEffect, useRef, useCallback, createContext, useContext } from "react";
+// Note: this app runs in a single HTML file using React UMD builds (React/ReactDOM globals).
+// Avoid ES module imports so it works on GitHub Pages + mobile Safari.
+const { useState, useEffect, useRef, useCallback, createContext, useContext } = React;
 
 // ============================================================================
 // PREFERENCE CARDS - INLINED FROM preference-cards.js
@@ -1835,7 +1837,7 @@ export default function TravelSwish() {
   useEffect(() => {
     const mem = loadMemory(mode);
     seenNames.current = mem.seen;
-  }, []);
+  }, [mode]);
 
   function handleSwipeStart(data) {
     setDestination(data.destination);
