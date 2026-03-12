@@ -447,7 +447,8 @@ async function askClaude(prompt, apiKey) {
   if (!key) throw new Error('API-nøkkel er påkrevd / API key is required');
 
   const timeoutMs = 90000;
-  const fetchPromise = fetch('https://api.anthropic.com/v1/messages', {
+
+  const doFetch = () => fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -468,18 +469,41 @@ async function askClaude(prompt, apiKey) {
     setTimeout(() => reject(new Error('Tidsavbrudd (90s). Prøv igjen. / Request timed out. Try again.')), timeoutMs)
   );
 
-  const res = await Promise.race([fetchPromise, timeoutPromise]);
+  const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
-  if (!res.ok) {
-    const errBody = await res.json().catch(() => ({}));
-    if (res.status === 401) throw new Error('Ugyldig API-nøkkel / Invalid API key');
-    if (res.status === 429) throw new Error('For mange forespørsler, prøv igjen / Rate limited, try again');
-    throw new Error(errBody.error?.message || 'API-feil ' + res.status);
+  // Retry/backoff for 429 (rate limit)
+  // - If Retry-After is present, prefer it.
+  // - Otherwise exponential backoff.
+  let attempt = 0;
+  while (true) {
+    const res = await Promise.race([doFetch(), timeoutPromise]);
+
+    if (!res.ok) {
+      const retryAfter = parseInt(res.headers.get('retry-after') || '', 10);
+
+      if (res.status === 401) throw new Error('Ugyldig API-nøkkel / Invalid API key');
+
+      if (res.status === 429) {
+        const waitS = Number.isFinite(retryAfter) && retryAfter > 0 ? retryAfter : 60;
+        if (attempt < 2) {
+          // Backoff: min(Retry-After, exponential)
+          const expMs = (2 ** attempt) * 2000;
+          const waitMs = Math.min(waitS * 1000, expMs);
+          attempt += 1;
+          await sleep(waitMs);
+          continue;
+        }
+        throw new Error(`RATE_LIMIT:${waitS}`);
+      }
+
+      const errBody = await res.json().catch(() => ({}));
+      throw new Error(errBody.error?.message || 'API-feil ' + res.status);
+    }
+
+    const data = await res.json();
+    const textBlocks = (data.content || []).filter(b => b.type === 'text').map(b => b.text);
+    return textBlocks.join('\n');
   }
-
-  const data = await res.json();
-  const textBlocks = (data.content || []).filter(b => b.type === 'text').map(b => b.text);
-  return textBlocks.join('\n');
 }
 
 function calcProfile(swipes, cards) {
@@ -1389,7 +1413,7 @@ function SwipePage({ lang, destination, apiKey, onResults, onBack }) {
 // RESULTS PAGE
 // ============================================================================
 
-function ResultsPage({ lang, destination, experiences, onBack, onLoadMore, loadingMore, totalSwipes }) {
+function ResultsPage({ lang, destination, experiences, onBack, onLoadMore, loadingMore, totalSwipes, cooldownLeft }) {
   const S = STRINGS[lang];
   const [filter, setFilter] = useState('');
   // Sort by match% descending
@@ -1512,12 +1536,12 @@ function ResultsPage({ lang, destination, experiences, onBack, onLoadMore, loadi
         {/* Load More */}
         {onLoadMore && (
           <div style={{ textAlign: 'center', marginTop: '2rem' }}>
-            <button onClick={onLoadMore} disabled={loadingMore} style={{
-              padding: '0.85rem 2rem', background: loadingMore ? T.card : `linear-gradient(135deg, ${T.gold}40, ${T.teal}40)`,
-              color: T.txt, border: `1px solid ${T.border}`, borderRadius: '0.75rem', cursor: loadingMore ? 'wait' : 'pointer',
+            <button onClick={onLoadMore} disabled={loadingMore || (cooldownLeft > 0)} style={{
+              padding: '0.85rem 2rem', background: (loadingMore || cooldownLeft > 0) ? T.card : `linear-gradient(135deg, ${T.gold}40, ${T.teal}40)`,
+              color: T.txt, border: `1px solid ${T.border}`, borderRadius: '0.75rem', cursor: (loadingMore || cooldownLeft > 0) ? 'wait' : 'pointer',
               fontSize: '1rem', fontWeight: 'bold', transition: 'all 0.3s',
             }}>
-              {loadingMore ? S.results.loadingMore : S.results.loadMore}
+              {loadingMore ? S.results.loadingMore : (cooldownLeft > 0 ? `Vent ${cooldownLeft}s…` : S.results.loadMore)}
             </button>
           </div>
         )}
@@ -1682,8 +1706,24 @@ export default function TravelSwish() {
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState('');
+  const [cooldownUntil, setCooldownUntil] = useState(0);
+  const [cooldownLeft, setCooldownLeft] = useState(0);
   const seenNames = useRef([]);
   const S = STRINGS[lang];
+
+  // Cooldown countdown for rate limiting
+  useEffect(() => {
+    if (!cooldownUntil) return;
+    const t = setInterval(() => {
+      const left = Math.max(0, Math.ceil((cooldownUntil - Date.now()) / 1000));
+      setCooldownLeft(left);
+      if (left <= 0) {
+        setCooldownUntil(0);
+        setCooldownLeft(0);
+      }
+    }, 250);
+    return () => clearInterval(t);
+  }, [cooldownUntil]);
 
   // Load seen experiences from memory on mount
   useEffect(() => {
@@ -1717,6 +1757,11 @@ export default function TravelSwish() {
   }
 
   async function handleFindExperiences(prof) {
+    if (cooldownUntil && cooldownUntil > Date.now()) {
+      setError(`For mange forespørsler. Vent ${cooldownLeft || Math.ceil((cooldownUntil - Date.now())/1000)}s og prøv igjen.`);
+      return;
+    }
+
     setLoading(true);
     setError('');
     try {
@@ -1738,12 +1783,24 @@ export default function TravelSwish() {
       setExperiences(exps);
       setPage('results');
     } catch (err) {
-      setError(err.message || 'Unknown error');
+      const msg = err?.message || 'Unknown error';
+      if (typeof msg === 'string' && msg.startsWith('RATE_LIMIT:')) {
+        const waitS = parseInt(msg.split(':')[1] || '60', 10) || 60;
+        setCooldownUntil(Date.now() + waitS * 1000);
+        setError(`For mange forespørsler (rate limit). Prøv igjen om ${waitS}s.`);
+      } else {
+        setError(msg);
+      }
       setLoading(false);
     }
   }
 
   async function handleLoadMore() {
+    if (cooldownUntil && cooldownUntil > Date.now()) {
+      setError(`For mange forespørsler. Vent ${cooldownLeft || Math.ceil((cooldownUntil - Date.now())/1000)}s og prøv igjen.`);
+      return;
+    }
+
     setLoadingMore(true);
     try {
       const mem = loadMemory();
@@ -1769,7 +1826,14 @@ export default function TravelSwish() {
       setExperiences(combined);
       setLoadingMore(false);
     } catch (err) {
-      setError(err.message || 'Unknown error');
+      const msg = err?.message || 'Unknown error';
+      if (typeof msg === 'string' && msg.startsWith('RATE_LIMIT:')) {
+        const waitS = parseInt(msg.split(':')[1] || '60', 10) || 60;
+        setCooldownUntil(Date.now() + waitS * 1000);
+        setError(`For mange forespørsler (rate limit). Prøv igjen om ${waitS}s.`);
+      } else {
+        setError(msg);
+      }
       setLoadingMore(false);
     }
   }
@@ -1781,7 +1845,7 @@ export default function TravelSwish() {
       {page === 'landing' && <LandingPage onStart={() => setPage('home')} lang={lang} onLangChange={setLang} />}
       {page === 'home' && <HomePage lang={lang} onStart={handleSwipeStart} onBack={() => setPage('landing')} />}
       {page === 'swipe' && <SwipePage lang={lang} destination={destination} apiKey={apiKey} onResults={handleFindExperiences} onBack={() => setPage('home')} />}
-      {page === 'results' && <ResultsPage lang={lang} destination={destination} experiences={experiences} onBack={() => setPage('home')} onLoadMore={handleLoadMore} loadingMore={loadingMore} totalSwipes={totalSwipes} />}
+      {page === 'results' && <ResultsPage lang={lang} destination={destination} experiences={experiences} onBack={() => setPage('home')} onLoadMore={handleLoadMore} loadingMore={loadingMore} totalSwipes={totalSwipes} cooldownLeft={cooldownLeft} />}
 
       {/* Loading Overlay — Airplane over Globe */}
       {loading && <LoadingGlobe lang={lang} destination={destination} />}
