@@ -464,12 +464,16 @@ function parseJSON(str) {
 }
 
 async function askClaude(prompt, apiKey) {
+  // Robust key handling: state can be lost on mobile; fall back to localStorage.
+  const key = apiKey || (typeof window !== 'undefined' ? (window.localStorage?.getItem('apiKey') || '') : '');
+  if (!key) throw new Error('API-nøkkel er påkrevd / API key is required');
+
   const timeoutMs = 90000;
   const fetchPromise = fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'x-api-key': apiKey,
+      'x-api-key': key,
       'anthropic-version': '2023-06-01',
       'anthropic-dangerous-direct-browser-access': 'true',
     },
