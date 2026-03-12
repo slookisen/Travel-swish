@@ -819,6 +819,7 @@ function HomePage({ lang, onStart, onBack }) {
   const S = STRINGS[lang];
   const [dest, setDest] = useState('');
   const [apiKey, setApiKey] = useState('');
+  const [forceKeyEntry, setForceKeyEntry] = useState(false);
   const [showApiGuide, setShowApiGuide] = useState(false);
   const [showKey, setShowKey] = useState(false);
   const [error, setError] = useState('');
@@ -842,14 +843,17 @@ function HomePage({ lang, onStart, onBack }) {
       setError(S.home.required);
       return;
     }
-    const key = apiKey || savedKey;
+
+    const key = (forceKeyEntry ? apiKey : (apiKey || savedKey));
     if (!key) {
       setError(S.home.apiRequired);
       return;
     }
-    if (apiKey) {
-      try { window.localStorage?.setItem('apiKey', apiKey); } catch { }
+
+    if (apiKey || forceKeyEntry) {
+      try { window.localStorage?.setItem('apiKey', key.trim()); } catch { }
     }
+
     onStart({ destination: dest.trim(), apiKey: key.trim() });
   }
 
@@ -895,7 +899,7 @@ function HomePage({ lang, onStart, onBack }) {
 
         {/* API Key Section */}
         <div style={{ marginBottom: '2rem', background: T.card, border: `1px solid ${T.border}`, borderRadius: '1rem', padding: '1.5rem' }}>
-          {!savedKey && (
+          {(!savedKey || forceKeyEntry) && (
             <>
               <label style={{ display: 'block', color: T.txt, marginBottom: '0.75rem', fontSize: '0.95rem', fontWeight: '500' }}>{S.home.apiLabel}</label>
               <input
@@ -915,10 +919,17 @@ function HomePage({ lang, onStart, onBack }) {
             </>
           )}
 
-          {savedKey && !apiKey && (
+          {savedKey && !forceKeyEntry && (
             <div style={{ marginBottom: '1rem' }}>
               <p style={{ color: T.green, fontWeight: 'bold', marginBottom: '0.5rem' }}>{S.home.keySaved}</p>
-              <button onClick={() => setApiKey('')} style={{ fontSize: '0.85rem', background: T.bg, border: `1px solid ${T.border}`, color: T.txt, padding: '0.5rem 1rem', borderRadius: '0.5rem', cursor: 'pointer' }}>
+              <button
+                onClick={() => {
+                  setForceKeyEntry(true);
+                  setApiKey('');
+                  setError('');
+                }}
+                style={{ fontSize: '0.85rem', background: T.bg, border: `1px solid ${T.border}`, color: T.txt, padding: '0.5rem 1rem', borderRadius: '0.5rem', cursor: 'pointer' }}
+              >
                 {S.home.changeKey}
               </button>
             </div>
