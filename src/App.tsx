@@ -261,6 +261,15 @@ function buildPrompt(mode: Mode, dest: string, profileText: string, lang: Lang, 
 
 type Page = 'landing' | 'home' | 'swipe' | 'results';
 
+function shuffleArray<T>(arr: T[]) {
+  const result = [...arr];
+  for (let i = result.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [result[i], result[j]] = [result[j], result[i]];
+  }
+  return result;
+}
+
 type Item = {
   name: string;
   why?: string;
@@ -282,7 +291,113 @@ function parseItems(result: string, lang: Lang): Item[] {
       if (Array.isArray(parsed)) return parsed;
     } catch {}
   }
-  return [{ name: lang === 'no' ? 'AI-svar mottatt' : 'AI response received', why: result.slice(0, 400), match: 50 }];
+  return [{ name: lang === 'no' ? 'AI-svar mottatt' : lang === 'sv' ? 'AI-svar mottaget' : 'AI response received', why: result.slice(0, 400), match: 50 }];
+}
+
+function SwipeDeckCard({
+  card,
+  lang,
+  onSwipe,
+}: {
+  card: Card;
+  lang: Lang;
+  onSwipe: (val: number) => void;
+}) {
+  const [dx, setDx] = useState(0);
+  const [dragging, setDragging] = useState(false);
+  const startX = useRef<number | null>(null);
+
+  const threshold = 90; // px
+
+  function endDrag(finalDx: number) {
+    setDragging(false);
+    startX.current = null;
+
+    if (finalDx > threshold) {
+      onSwipe(1);
+      setDx(0);
+      return;
+    }
+    if (finalDx < -threshold) {
+      onSwipe(-1);
+      setDx(0);
+      return;
+    }
+
+    // snap back
+    setDx(0);
+  }
+
+  return (
+    <div
+      style={{
+        position: 'absolute',
+        inset: 0,
+        display: 'grid',
+        placeItems: 'center',
+        touchAction: 'pan-y',
+      }}
+    >
+      <div
+        onTouchStart={(e) => {
+          setDragging(true);
+          startX.current = e.touches[0].clientX;
+        }}
+        onTouchMove={(e) => {
+          if (startX.current == null) return;
+          const cur = e.touches[0].clientX;
+          setDx(cur - startX.current);
+        }}
+        onTouchEnd={() => endDrag(dx)}
+        onMouseDown={(e) => {
+          setDragging(true);
+          startX.current = e.clientX;
+        }}
+        onMouseMove={(e) => {
+          if (!dragging || startX.current == null) return;
+          setDx(e.clientX - startX.current);
+        }}
+        onMouseUp={() => endDrag(dx)}
+        onMouseLeave={() => dragging && endDrag(dx)}
+        style={{
+          width: '100%',
+          maxWidth: 520,
+          background: T.card,
+          border: `1px solid ${T.border}`,
+          borderRadius: 18,
+          padding: 16,
+          transform: `translateX(${dx}px) rotate(${dx / 18}deg)`,
+          transition: dragging ? 'none' : 'transform 180ms ease',
+          boxShadow: '0 18px 50px rgba(0,0,0,0.35)',
+          userSelect: 'none',
+        }}
+      >
+        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+          <div style={{ fontSize: 28 }}>{card.emoji}</div>
+          <div style={{ fontWeight: 900, fontSize: 16 }}>{card.q}</div>
+        </div>
+        <div style={{ color: T.dim, marginTop: 8, lineHeight: 1.5 }}>{card.desc}</div>
+
+        <div style={{ display: 'flex', gap: 10, marginTop: 14 }}>
+          <button
+            onClick={() => onSwipe(-1)}
+            style={{ padding: '10px 12px', borderRadius: 12, border: `1px solid ${T.border}`, background: 'transparent', color: T.red, cursor: 'pointer', fontWeight: 900 }}
+          >
+            {UI.no[lang]}
+          </button>
+          <button
+            onClick={() => onSwipe(1)}
+            style={{ padding: '10px 12px', borderRadius: 12, border: `1px solid ${T.border}`, background: 'transparent', color: T.green, cursor: 'pointer', fontWeight: 900 }}
+          >
+            {UI.yes[lang]}
+          </button>
+          <div style={{ marginLeft: 'auto', color: T.dim, fontSize: 12, alignSelf: 'center' }}>
+            {lang === 'no' ? 'Dra ←/→' : lang === 'sv' ? 'Dra ←/→' : 'Drag ←/→'}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export default function App() {
@@ -305,9 +420,21 @@ export default function App() {
     return 'en';
   });
 
-  const [mode, setMode] = useState<Mode>('experiences');
-  const [destination, setDestination] = useState('');
-  const [apiKey, setApiKey] = useState('');
+  const [mode, setMode] = useState<Mode>(() => {
+    try {
+      const saved = (localStorage.getItem('ts_mode') || '') as Mode;
+      if (saved === 'experiences' || saved === 'restaurants') return saved;
+    } catch {}
+    return 'experiences';
+  });
+
+  const [destination, setDestination] = useState(() => {
+    try { return localStorage.getItem('ts_destination') || ''; } catch { return ''; }
+  });
+
+  const [apiKey, setApiKey] = useState(() => {
+    try { return localStorage.getItem('apiKey') || ''; } catch { return ''; }
+  });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [cooldownUntil, setCooldownUntil] = useState(0);
@@ -336,6 +463,18 @@ export default function App() {
 
   const labels = MODE_LABELS[mode][lang];
 
+  useEffect(() => {
+    try { localStorage.setItem('ts_mode', mode); } catch {}
+  }, [mode]);
+
+  useEffect(() => {
+    try { localStorage.setItem('ts_destination', destination); } catch {}
+  }, [destination]);
+
+  useEffect(() => {
+    try { localStorage.setItem('apiKey', apiKey); } catch {}
+  }, [apiKey]);
+
   const cards = useMemo(() => cardsFor(mode, lang), [mode, lang]);
 
   const mem = useMemo(() => loadMemory(mode), [mode]);
@@ -348,6 +487,22 @@ export default function App() {
     setSwipes(m.swipes);
     setTotalSwipes(m.totalSwipes);
   }, [mode]);
+
+  // Build the deck: only unswiped cards
+  const unswiped = useMemo(() => {
+    const ids = new Set(Object.keys(swipes));
+    return cards.filter(c => !ids.has(c.id));
+  }, [cards, swipes]);
+
+  const [deck, setDeck] = useState<Card[]>(() => []);
+  const [deckIndex, setDeckIndex] = useState(0);
+
+  useEffect(() => {
+    // Refresh deck when mode or language changes or when swipes update.
+    const fresh = shuffleArray(unswiped);
+    setDeck(fresh);
+    setDeckIndex(0);
+  }, [mode, lang, unswiped.length]);
 
   const canSearch = totalSwipes >= 10 || Object.keys(swipes).length >= 10;
 
@@ -391,9 +546,20 @@ export default function App() {
     setSwipes(next);
     setTotalSwipes(nextTotal);
     saveSwipes(mode, next, nextTotal);
+
+    // Advance deck
+    setDeckIndex((i) => Math.min(i + 1, deck.length));
   }
 
-  // --- UI (minimal but stable; we can re-add fancy landing later)
+  // Guard: never allow swipe/results without destination
+  useEffect(() => {
+    if ((page === 'swipe' || page === 'results') && !destination.trim()) {
+      setError(UI.destinationMissing[lang]);
+      setPage('home');
+    }
+  }, [page, destination, lang]);
+
+  // --- UI (stable; with swipe deck)
   return (
     <div style={{ minHeight: '100vh', background: T.bg, color: T.txt, fontFamily: 'system-ui, -apple-system, Segoe UI, Roboto, Arial' }}>
       <div style={{ padding: '14px 18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: `1px solid ${T.border}` }}>
@@ -456,7 +622,7 @@ export default function App() {
             <input
               value={destination}
               onChange={e => setDestination(e.target.value)}
-              placeholder={lang === 'no' ? 'Barcelona, Oslo, Tokyo…' : 'Barcelona, Oslo, Tokyo…'}
+              placeholder={lang === 'no' ? 'Barcelona, Oslo, Tokyo…' : lang === 'sv' ? 'Barcelona, Stockholm, Tokyo…' : 'Barcelona, Oslo, Tokyo…'}
               style={{ width: '100%', padding: 12, borderRadius: 12, border: `1px solid ${T.border}`, background: T.card, color: T.txt }}
             />
           </div>
@@ -497,31 +663,27 @@ export default function App() {
       {page === 'swipe' && (
         <div style={{ padding: 24, maxWidth: 760, margin: '0 auto' }}>
           <button onClick={() => setPage('home')} style={{ marginBottom: 10, background: 'transparent', border: `1px solid ${T.border}`, color: T.txt, padding: '8px 10px', borderRadius: 10, cursor: 'pointer' }}>
-            {lang === 'no' ? 'Tilbake' : 'Back'}
+            {UI.back[lang]}
           </button>
 
           <h2 style={{ marginTop: 0 }}>{labels}: {destination}</h2>
-          <div style={{ color: T.dim, marginBottom: 10 }}>{lang === 'no' ? 'Sveip/velg kort for å lære profilen din.' : 'Swipe/choose cards to learn your profile.'}</div>
-          <div style={{ color: T.dim, fontSize: 12, marginBottom: 16 }}>Total: {totalSwipes}</div>
+          <div style={{ color: T.dim, marginBottom: 10 }}>{UI.swipeHint[lang]}</div>
+          <div style={{ color: T.dim, fontSize: 12, marginBottom: 16 }}>{UI.total[lang]}: {totalSwipes}</div>
 
-          <div style={{ display: 'grid', gap: 12 }}>
-            {cards.map((c) => (
-              <div key={c.id} style={{ background: T.card, border: `1px solid ${T.border}`, borderRadius: 14, padding: 14, display: 'grid', gap: 8 }}>
-                <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-                  <div style={{ fontSize: 26 }}>{c.emoji}</div>
-                  <div style={{ fontWeight: 800 }}>{c.q}</div>
-                </div>
-                <div style={{ color: T.dim, fontSize: 13, lineHeight: 1.5 }}>{c.desc}</div>
-                <div style={{ display: 'flex', gap: 10 }}>
-                  <button onClick={() => swipeCard(c, -1)} style={{ padding: '10px 12px', borderRadius: 12, border: `1px solid ${T.border}`, background: 'transparent', color: T.red, cursor: 'pointer', fontWeight: 800 }}>
-                    {lang === 'no' ? 'NEI' : 'NO'}
-                  </button>
-                  <button onClick={() => swipeCard(c, 1)} style={{ padding: '10px 12px', borderRadius: 12, border: `1px solid ${T.border}`, background: 'transparent', color: T.green, cursor: 'pointer', fontWeight: 800 }}>
-                    {lang === 'no' ? 'JA' : 'YES'}
-                  </button>
-                </div>
+          {/* Swipe deck */}
+          <div style={{ position: 'relative', height: 220 }}>
+            {deckIndex >= deck.length ? (
+              <div style={{ color: T.dim, paddingTop: 40 }}>
+                {lang === 'no' ? 'Ingen flere kort. Du kan gå tilbake og bytte modus, eller hente forslag.' : lang === 'sv' ? 'Inga fler kort. Gå tillbaka och byt läge, eller hämta förslag.' : 'No more cards. Go back and switch mode, or fetch suggestions.'}
               </div>
-            ))}
+            ) : (
+              <SwipeDeckCard
+                key={deck[deckIndex].id}
+                card={deck[deckIndex]}
+                lang={lang}
+                onSwipe={(val) => swipeCard(deck[deckIndex], val)}
+              />
+            )}
           </div>
 
           <div style={{ marginTop: 16, display: 'flex', gap: 10, flexWrap: 'wrap' }}>
@@ -538,9 +700,9 @@ export default function App() {
                 fontWeight: 800,
               }}
             >
-              {loading ? (lang === 'no' ? 'Henter…' : 'Loading…') : (lang === 'no' ? 'Finn forslag' : 'Find suggestions')}
+              {loading ? UI.loading[lang] : UI.fetch[lang]}
             </button>
-            {!canSearch && <div style={{ color: T.dim, alignSelf: 'center' }}>{lang === 'no' ? 'Sveip minst 10 kort først.' : 'Swipe at least 10 cards first.'}</div>}
+            {!canSearch && <div style={{ color: T.dim, alignSelf: 'center' }}>{UI.swipeAtLeast[lang]}</div>}
           </div>
 
           {error && <div style={{ marginTop: 14, color: T.red }}>{error}</div>}
