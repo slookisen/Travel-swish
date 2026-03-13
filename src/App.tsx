@@ -6,9 +6,9 @@ const APP_VERSION = 'v0.1.0';
 // --- Modes
 export type Mode = 'experiences' | 'restaurants';
 
-const MODE_LABELS: Record<Mode, { no: string; en: string }> = {
-  experiences: { no: 'Opplevelser', en: 'Experiences' },
-  restaurants: { no: 'Restauranter', en: 'Restaurants' },
+const MODE_LABELS: Record<Mode, { no: string; en: string; sv: string }> = {
+  experiences: { no: 'Opplevelser', en: 'Experiences', sv: 'Upplevelser' },
+  restaurants: { no: 'Restauranter', en: 'Restaurants', sv: 'Restauranger' },
 };
 
 // --- Theme
@@ -74,7 +74,7 @@ export type Card = {
 // Keep same dimensions across modes to simplify the learning engine.
 const DIMS = ['adv', 'soc', 'lux', 'act', 'cul', 'nat', 'food', 'night', 'spont'] as const;
 
-type Lang = 'no' | 'en';
+type Lang = 'no' | 'en' | 'sv';
 
 const PREFERENCE_CARDS: Record<Lang, Card[]> = {
   no: [
@@ -86,6 +86,11 @@ const PREFERENCE_CARDS: Record<Lang, Card[]> = {
     { id: 'p1', emoji: '🍜', q: 'Would you eat street food from a stall you’ve never heard of?', desc: 'The best flavors are often unexpected.', cat: 'food', dims: { adv: .6, soc: .4, lux: -.5, act: .2, cul: .6, nat: -.1, food: 1, night: .1, spont: .7 } },
     { id: 'p2', emoji: '🏛️', q: 'Could you spend a full day in a museum without getting bored?', desc: 'Art and history fascinate you.', cat: 'culture', dims: { adv: -.2, soc: .1, lux: .3, act: -.3, cul: 1, nat: -.2, food: -.1, night: -.2, spont: -.4 } },
     { id: 'p3', emoji: '🥾', q: 'Would you hike for hours for the view?', desc: 'Earn the panorama with your own feet.', cat: 'nature', dims: { adv: .7, soc: .2, lux: -.5, act: 1, cul: -.1, nat: 1, food: -.2, night: -.5, spont: .1 } },
+  ],
+  sv: [
+    { id: 'p1', emoji: '🍜', q: 'Skulle du äta street food från ett ställe du aldrig hört talas om?', desc: 'De bästa smakerna är ofta oväntade.', cat: 'mat', dims: { adv: .6, soc: .4, lux: -.5, act: .2, cul: .6, nat: -.1, food: 1, night: .1, spont: .7 } },
+    { id: 'p2', emoji: '🏛️', q: 'Kan du spendera en hel dag på museum utan att bli uttråkad?', desc: 'Konst och historia fascinerar dig.', cat: 'kultur', dims: { adv: -.2, soc: .1, lux: .3, act: -.3, cul: 1, nat: -.2, food: -.1, night: -.2, spont: -.4 } },
+    { id: 'p3', emoji: '🥾', q: 'Skulle du vandra länge för utsiktens skull?', desc: 'Förtjäna panoramat med egna steg.', cat: 'natur', dims: { adv: .7, soc: .2, lux: -.5, act: 1, cul: -.1, nat: 1, food: -.2, night: -.5, spont: .1 } },
   ],
 };
 
@@ -99,6 +104,11 @@ const RESTAURANT_CARDS: Record<Lang, Card[]> = {
     { id: 'r1', emoji: '🍣', q: 'Is sushi/Japanese food a favorite?', desc: 'You like clean flavors and quality.', cat: 'cuisine', dims: { adv: .2, soc: .2, lux: .4, act: -.2, cul: .6, nat: -.2, food: 1, night: .2, spont: -.1 } },
     { id: 'r2', emoji: '🥂', q: 'Is it worth paying more for a “wow” dinner?', desc: 'You value quality, service and ambience.', cat: 'fine', dims: { adv: .1, soc: .2, lux: 1, act: -.3, cul: .3, nat: -.2, food: .8, night: .2, spont: -.4 } },
     { id: 'r3', emoji: '🎉', q: 'Do you enjoy high-energy, lively restaurants?', desc: 'You like buzz and people.', cat: 'lively', dims: { adv: .2, soc: .8, lux: .1, act: .1, cul: .2, nat: -.2, food: .4, night: .8, spont: .3 } },
+  ],
+  sv: [
+    { id: 'r1', emoji: '🍣', q: 'Är sushi och japansk mat en favorit?', desc: 'Du gillar rena smaker, kvalitet och precision.', cat: 'cuisine', dims: { adv: .2, soc: .2, lux: .4, act: -.2, cul: .6, nat: -.2, food: 1, night: .2, spont: -.1 } },
+    { id: 'r2', emoji: '🥂', q: 'Är det värt att betala mer för en “wow”-middag?', desc: 'Du prioriterar kvalitet, service och atmosfär.', cat: 'fine', dims: { adv: .1, soc: .2, lux: 1, act: -.3, cul: .3, nat: -.2, food: .8, night: .2, spont: -.4 } },
+    { id: 'r3', emoji: '🎉', q: 'Gillar du restauranger med hög energi och folk?', desc: 'Du klarar ljud och gillar puls.', cat: 'lively', dims: { adv: .2, soc: .8, lux: .1, act: .1, cul: .2, nat: -.2, food: .4, night: .8, spont: .3 } },
   ],
 };
 
@@ -240,7 +250,16 @@ function parseItems(result: string, lang: Lang): Item[] {
 
 export default function App() {
   const [page, setPage] = useState<Page>('landing');
-  const [lang, setLang] = useState<Lang>('no');
+
+  // Default language for new users: English. Persist choice in localStorage.
+  const [lang, setLang] = useState<Lang>(() => {
+    try {
+      const saved = (localStorage.getItem('ts_lang') || '') as Lang;
+      if (saved === 'no' || saved === 'en' || saved === 'sv') return saved;
+    } catch {}
+    return 'en';
+  });
+
   const [mode, setMode] = useState<Mode>('experiences');
   const [destination, setDestination] = useState('');
   const [apiKey, setApiKey] = useState('');
@@ -335,9 +354,19 @@ export default function App() {
       <div style={{ padding: '14px 18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: `1px solid ${T.border}` }}>
         <div style={{ fontWeight: 800, color: T.gold }}>Travel‑Swish</div>
         <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-          <button onClick={() => setLang(lang === 'no' ? 'en' : 'no')} style={{ background: 'transparent', border: `1px solid ${T.border}`, color: T.txt, padding: '6px 10px', borderRadius: 10, cursor: 'pointer' }}>
-            {lang === 'no' ? 'EN' : 'NO'}
-          </button>
+          <select
+            value={lang}
+            onChange={(e) => {
+              const v = e.target.value as Lang;
+              setLang(v);
+              try { localStorage.setItem('ts_lang', v); } catch {}
+            }}
+            style={{ background: 'transparent', border: `1px solid ${T.border}`, color: T.txt, padding: '6px 10px', borderRadius: 10, cursor: 'pointer' }}
+          >
+            <option value="en">EN</option>
+            <option value="no">NO</option>
+            <option value="sv">SV</option>
+          </select>
         </div>
       </div>
 
