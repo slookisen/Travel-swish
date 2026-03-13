@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { T, globalCss } from './ui';
 
 // --- Versioning (shows in footer; also helps debugging cached deploys)
-const APP_VERSION = 'v0.1.1';
+const APP_VERSION = 'v0.1.2';
 
 // --- Strings
 const UI = {
@@ -47,19 +48,6 @@ export type Mode = 'experiences' | 'restaurants';
 const MODE_LABELS: Record<Mode, { no: string; en: string; sv: string }> = {
   experiences: { no: 'Opplevelser', en: 'Experiences', sv: 'Upplevelser' },
   restaurants: { no: 'Restauranter', en: 'Restaurants', sv: 'Restauranger' },
-};
-
-// --- Theme
-const T = {
-  bg: '#0a0d1a',
-  card: 'rgba(20,24,42,0.88)',
-  gold: '#d4a574',
-  teal: '#2dd4bf',
-  txt: '#e8e2d8',
-  dim: '#7a7b8e',
-  red: '#f87171',
-  green: '#34d399',
-  border: 'rgba(255,255,255,0.06)',
 };
 
 // --- Storage
@@ -630,9 +618,10 @@ export default function App() {
   // --- UI (stable; with swipe deck)
   return (
     <div style={{ minHeight: '100vh', background: T.bg, color: T.txt, fontFamily: 'system-ui, -apple-system, Segoe UI, Roboto, Arial' }}>
-      <div style={{ padding: '14px 18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: `1px solid ${T.border}` }}>
-        <div style={{ fontWeight: 800, color: T.gold }}>Travel‑Swish</div>
-        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+      <style>{globalCss}</style>
+      <div style={{ padding: '14px 18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: `1px solid ${T.borderSoft}` }}>
+        <div style={{ fontWeight: 900, color: T.gold, letterSpacing: 0.2 }}>Travel‑Swish</div>
+        <div className="row">
           <select
             value={lang}
             onChange={(e) => {
@@ -640,7 +629,8 @@ export default function App() {
               setLang(v);
               try { localStorage.setItem('ts_lang', v); } catch {}
             }}
-            style={{ background: 'transparent', border: `1px solid ${T.border}`, color: T.txt, padding: '6px 10px', borderRadius: 10, cursor: 'pointer' }}
+            className="pill"
+            style={{ background: 'transparent', color: T.txt }}
           >
             <option value="en">EN</option>
             <option value="no">NO</option>
@@ -650,15 +640,29 @@ export default function App() {
       </div>
 
       {page === 'landing' && (
-        <div style={{ padding: 24, maxWidth: 760, margin: '0 auto' }}>
-          <h1 style={{ marginTop: 10 }}>{UI.landingTitle[lang]}</h1>
-          <p style={{ color: T.dim, lineHeight: 1.6 }}>
-            {UI.landingDesc[lang]}
-          </p>
-          <button onClick={() => setPage('home')} style={{ marginTop: 14, padding: '12px 16px', borderRadius: 12, border: 'none', cursor: 'pointer', background: `linear-gradient(135deg, ${T.gold}, ${T.teal})`, color: T.bg, fontWeight: 800 }}>
-            {UI.getStarted[lang]}
-          </button>
-          <div style={{ marginTop: 18, color: T.dim, fontSize: 12 }}>Build: {APP_VERSION}</div>
+        <div className="container fadeUp">
+          <div className="card" style={{ padding: 22 }}>
+            <div className="row wrap" style={{ justifyContent: 'space-between' }}>
+              <div>
+                <div className="muted" style={{ fontWeight: 800, letterSpacing: 0.4 }}>TRAVEL‑SWISH</div>
+                <h1 style={{ margin: '8px 0 6px 0', fontSize: 34 }}>{UI.landingTitle[lang]}</h1>
+                <p className="muted" style={{ lineHeight: 1.6, marginTop: 0 }}>{UI.landingDesc[lang]}</p>
+              </div>
+              <div className="pill muted" style={{ alignSelf: 'flex-start' }}>Build {APP_VERSION}</div>
+            </div>
+
+            <div style={{ marginTop: 16 }}>
+              <button className="btn btnPrimary" onClick={() => setPage('home')}>{UI.getStarted[lang]}</button>
+            </div>
+
+            <div style={{ marginTop: 16 }} className="muted">
+              {lang === 'no'
+                ? 'Tips: Velg modus, skriv sted, legg inn nøkkel, swipe 10 kort og få forslag.'
+                : lang === 'sv'
+                  ? 'Tips: Välj läge, skriv plats, lägg in nyckel, svajpa 10 kort och få förslag.'
+                  : 'Tip: Pick mode, enter destination, paste key, swipe 10 cards, get suggestions.'}
+            </div>
+          </div>
         </div>
       )}
 
