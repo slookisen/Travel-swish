@@ -24,6 +24,7 @@ const UI = {
     en: 'Demo: key is stored only in your browser. Launch: move to backend.',
     sv: 'Demo: nyckeln lagras bara i din webbläsare. Lansering: flyttas till backend.',
   },
+  apiKeyMissing: { no: 'API-nøkkel mangler', en: 'API key required', sv: 'API-nyckel krävs' },
   back: { no: 'Tilbake', en: 'Back', sv: 'Tillbaka' },
   startMode: {
     no: (modeLabel: string) => `Start ${modeLabel}`,
@@ -113,44 +114,106 @@ const DIMS = ['adv', 'soc', 'lux', 'act', 'cul', 'nat', 'food', 'night', 'spont'
 
 type Lang = 'no' | 'en' | 'sv';
 
-const PREFERENCE_CARDS: Record<Lang, Card[]> = {
+const PREFERENCE_CARDS: Partial<Record<Lang, Card[]>> = {
+  // Larger deck so you don't run out after 2–3 swipes.
+  // NO/EN are fully populated from the original deck; SV falls back to EN for cards (for now).
   no: [
-    { id: 'p1', emoji: '🍜', q: 'Vil du spise street food fra en bod du aldri har hørt om?', desc: 'De beste smakene er ofte de mest uventede.', cat: 'mat', dims: { adv: .6, soc: .4, lux: -.5, act: .2, cul: .6, nat: -.1, food: 1, night: .1, spont: .7 } },
-    { id: 'p2', emoji: '🏛️', q: 'Kan du tilbringe en hel dag på museum uten å kjede deg?', desc: 'Kunst og historie fascinerer deg.', cat: 'kultur', dims: { adv: -.2, soc: .1, lux: .3, act: -.3, cul: 1, nat: -.2, food: -.1, night: -.2, spont: -.4 } },
-    { id: 'p3', emoji: '🥾', q: 'Ville du gått en lang fjelltur for utsikten?', desc: 'Fortjen panoramaet med egne føtter.', cat: 'natur', dims: { adv: .7, soc: .2, lux: -.5, act: 1, cul: -.1, nat: 1, food: -.2, night: -.5, spont: .1 } },
+    { id: 'p1', emoji: '🪂', q: 'Vil du hoppe i fallskjerm over reisemålet ditt?', desc: 'Adrenalin fra høyder og fritt fall.', cat: 'adrenalin', dims: { adv: 1, soc: .2, lux: .1, act: .9, cul: -.2, nat: .5, food: -.3, night: -.2, spont: .6 } },
+    { id: 'p2', emoji: '🧗', q: 'Foretrekker du å klatre opp en fjellvegg fremfor å ta heisen?', desc: 'Fysisk utfordring gir deg energi.', cat: 'adrenalin', dims: { adv: .9, soc: .1, lux: -.4, act: 1, cul: -.1, nat: .8, food: -.2, night: -.3, spont: .3 } },
+    { id: 'p3', emoji: '🏄', q: 'Vil du prøve surfing selv om du aldri har stått på et brett?', desc: 'Nye ferdigheter og bølger.', cat: 'adrenalin', dims: { adv: .8, soc: .4, lux: -.1, act: .9, cul: -.1, nat: .7, food: -.1, night: -.1, spont: .5 } },
+    { id: 'p4', emoji: '🤿', q: 'Vil du dykke ned til et korallrev eller et skipsvrak?', desc: 'En verden under overflaten.', cat: 'adrenalin', dims: { adv: .9, soc: .3, lux: .2, act: .7, cul: .1, nat: .9, food: -.2, night: -.3, spont: .3 } },
+    { id: 'p5', emoji: '🏍️', q: 'Er en tur på motorsykkel gjennom ukjente veier noe for deg?', desc: 'Frihet og fart uten plan.', cat: 'adrenalin', dims: { adv: .8, soc: .1, lux: -.2, act: .6, cul: .2, nat: .6, food: -.1, night: -.2, spont: .8 } },
+    { id: 'p6', emoji: '🧖', q: 'Høres en hel dag på spa med massasje og badstue perfekt ut?', desc: 'Total avslapning for kropp og sinn.', cat: 'avslapning', dims: { adv: -.6, soc: .1, lux: .8, act: -.7, cul: .1, nat: -.1, food: .1, night: -.4, spont: -.3 } },
+    { id: 'p7', emoji: '🧘', q: 'Vil du starte dagen med yoga ved soloppgang?', desc: 'Mindfulness og indre ro.', cat: 'avslapning', dims: { adv: -.3, soc: -.1, lux: .3, act: .3, cul: .3, nat: .4, food: -.1, night: -.6, spont: -.2 } },
+    { id: 'p8', emoji: '🏖️', q: 'Er din drømmedag en hengekøy på stranden med en bok?', desc: 'Ingenting å gjøre, ingen plan.', cat: 'avslapning', dims: { adv: -.7, soc: -.3, lux: .2, act: -.8, cul: -.3, nat: .5, food: .1, night: -.3, spont: .1 } },
+    { id: 'p9', emoji: '🌊', q: 'Vil du tilbringe timer ved å bare se på bølgene?', desc: 'Naturens meditasjon.', cat: 'avslapning', dims: { adv: -.5, soc: -.4, lux: 0, act: -.6, cul: -.2, nat: .8, food: -.1, night: -.5, spont: .1 } },
+    { id: 'p10', emoji: '♨️', q: 'Tiltrekkes du av varme kilder og tradisjonelle bad?', desc: 'Helbredende vann med historie.', cat: 'avslapning', dims: { adv: -.2, soc: .2, lux: .5, act: -.4, cul: .5, nat: .4, food: -.1, night: -.3, spont: -.1 } },
+    { id: 'p11', emoji: '🏛️', q: 'Kan du tilbringe en hel dag på et museum uten å kjede deg?', desc: 'Kunst og historie fascinerer deg.', cat: 'kultur', dims: { adv: -.2, soc: .1, lux: .3, act: -.3, cul: 1, nat: -.2, food: -.1, night: -.2, spont: -.4 } },
+    { id: 'p12', emoji: '🎭', q: 'Vil du se en lokal teaterforestilling selv om den er på et annet språk?', desc: 'Kultur transcenderer språk.', cat: 'kultur', dims: { adv: .2, soc: .4, lux: .4, act: -.2, cul: .9, nat: -.3, food: -.1, night: .3, spont: .1 } },
+    { id: 'p13', emoji: '📜', q: 'Fascineres du av ruiner og arkeologiske utgravninger?', desc: 'Fortidens mysterier trekker deg inn.', cat: 'kultur', dims: { adv: .3, soc: .1, lux: -.2, act: .4, cul: 1, nat: .3, food: -.2, night: -.4, spont: -.1 } },
+    { id: 'p14', emoji: '🎨', q: 'Tiltrekkes du av street art og alternative kunstuttrykk?', desc: 'Byens kreative puls.', cat: 'kultur', dims: { adv: .4, soc: .3, lux: -.3, act: .4, cul: .8, nat: -.2, food: -.1, night: .3, spont: .5 } },
+    { id: 'p15', emoji: '🍜', q: 'Vil du spise street food fra en bod du aldri har hørt om?', desc: 'De beste smakene er ofte de mest uventede.', cat: 'mat', dims: { adv: .6, soc: .4, lux: -.5, act: .2, cul: .6, nat: -.1, food: 1, night: .1, spont: .7 } },
+    { id: 'p16', emoji: '👨‍🍳', q: 'Vil du ta et kokekurs med en lokal kokk?', desc: 'Lær hemmelighetene bak lokal mat.', cat: 'mat', dims: { adv: .3, soc: .6, lux: .3, act: .4, cul: .7, nat: -.1, food: .9, night: -.1, spont: -.1 } },
+    { id: 'p17', emoji: '🍷', q: 'Er vinsmakinger og lokale bryggerier noe du prioriterer?', desc: 'Drikkekultur forteller historien om et sted.', cat: 'mat', dims: { adv: .2, soc: .6, lux: .6, act: -.1, cul: .5, nat: .1, food: .8, night: .4, spont: .2 } },
+    { id: 'p18', emoji: '🌶️', q: 'Bestiller du alltid den mest eksotiske retten på menyen?', desc: 'Smaksløkene dine er eventyrlystne.', cat: 'mat', dims: { adv: .7, soc: .3, lux: 0, act: .1, cul: .5, nat: -.1, food: 1, night: .1, spont: .6 } },
+    { id: 'p19', emoji: '🍽️', q: 'Er en Michelin-restaurant verdt å bruke reisebudsjettet på?', desc: 'Gastronomi som kunstopplevelse.', cat: 'mat', dims: { adv: .1, soc: .4, lux: 1, act: -.2, cul: .4, nat: -.2, food: .9, night: .2, spont: -.4 } },
+    { id: 'p20', emoji: '☕', q: 'Leter du alltid etter den beste lokale kafeen?', desc: 'Kaffekultur og slow mornings.', cat: 'mat', dims: { adv: .1, soc: .2, lux: .2, act: -.2, cul: .4, nat: -.1, food: .6, night: -.3, spont: .2 } },
   ],
   en: [
-    { id: 'p1', emoji: '🍜', q: 'Would you eat street food from a stall you’ve never heard of?', desc: 'The best flavors are often unexpected.', cat: 'food', dims: { adv: .6, soc: .4, lux: -.5, act: .2, cul: .6, nat: -.1, food: 1, night: .1, spont: .7 } },
-    { id: 'p2', emoji: '🏛️', q: 'Could you spend a full day in a museum without getting bored?', desc: 'Art and history fascinate you.', cat: 'culture', dims: { adv: -.2, soc: .1, lux: .3, act: -.3, cul: 1, nat: -.2, food: -.1, night: -.2, spont: -.4 } },
-    { id: 'p3', emoji: '🥾', q: 'Would you hike for hours for the view?', desc: 'Earn the panorama with your own feet.', cat: 'nature', dims: { adv: .7, soc: .2, lux: -.5, act: 1, cul: -.1, nat: 1, food: -.2, night: -.5, spont: .1 } },
-  ],
-  sv: [
-    { id: 'p1', emoji: '🍜', q: 'Skulle du äta street food från ett ställe du aldrig hört talas om?', desc: 'De bästa smakerna är ofta oväntade.', cat: 'mat', dims: { adv: .6, soc: .4, lux: -.5, act: .2, cul: .6, nat: -.1, food: 1, night: .1, spont: .7 } },
-    { id: 'p2', emoji: '🏛️', q: 'Kan du spendera en hel dag på museum utan att bli uttråkad?', desc: 'Konst och historia fascinerar dig.', cat: 'kultur', dims: { adv: -.2, soc: .1, lux: .3, act: -.3, cul: 1, nat: -.2, food: -.1, night: -.2, spont: -.4 } },
-    { id: 'p3', emoji: '🥾', q: 'Skulle du vandra länge för utsiktens skull?', desc: 'Förtjäna panoramat med egna steg.', cat: 'natur', dims: { adv: .7, soc: .2, lux: -.5, act: 1, cul: -.1, nat: 1, food: -.2, night: -.5, spont: .1 } },
+    { id: 'p1', emoji: '🪂', q: 'Would you go skydiving over your travel destination?', desc: 'Adrenaline from heights and freefall.', cat: 'adrenaline', dims: { adv: 1, soc: .2, lux: .1, act: .9, cul: -.2, nat: .5, food: -.3, night: -.2, spont: .6 } },
+    { id: 'p2', emoji: '🧗', q: 'Would you rather climb a cliff face than take the elevator?', desc: 'Physical challenge energizes you.', cat: 'adrenaline', dims: { adv: .9, soc: .1, lux: -.4, act: 1, cul: -.1, nat: .8, food: -.2, night: -.3, spont: .3 } },
+    { id: 'p3', emoji: '🏄', q: 'Would you try surfing even if you have never stood on a board?', desc: 'New skills and waves.', cat: 'adrenaline', dims: { adv: .8, soc: .4, lux: -.1, act: .9, cul: -.1, nat: .7, food: -.1, night: -.1, spont: .5 } },
+    { id: 'p4', emoji: '🤿', q: 'Would you dive down to a coral reef or a shipwreck?', desc: 'A world beneath the surface.', cat: 'adrenaline', dims: { adv: .9, soc: .3, lux: .2, act: .7, cul: .1, nat: .9, food: -.2, night: -.3, spont: .3 } },
+    { id: 'p5', emoji: '🏍️', q: 'Is a motorcycle ride through unknown roads your kind of thing?', desc: 'Freedom and speed without a plan.', cat: 'adrenaline', dims: { adv: .8, soc: .1, lux: -.2, act: .6, cul: .2, nat: .6, food: -.1, night: -.2, spont: .8 } },
+    { id: 'p6', emoji: '🧖', q: 'Does a full day at the spa with massage and sauna sound perfect?', desc: 'Total relaxation for body and mind.', cat: 'relaxation', dims: { adv: -.6, soc: .1, lux: .8, act: -.7, cul: .1, nat: -.1, food: .1, night: -.4, spont: -.3 } },
+    { id: 'p7', emoji: '🧘', q: 'Would you start your day with yoga at sunrise?', desc: 'Mindfulness and inner peace.', cat: 'relaxation', dims: { adv: -.3, soc: -.1, lux: .3, act: .3, cul: .3, nat: .4, food: -.1, night: -.6, spont: -.2 } },
+    { id: 'p8', emoji: '🏖️', q: 'Is your dream day a hammock on the beach with a book?', desc: 'Nothing to do, no plan.', cat: 'relaxation', dims: { adv: -.7, soc: -.3, lux: .2, act: -.8, cul: -.3, nat: .5, food: .1, night: -.3, spont: .1 } },
+    { id: 'p9', emoji: '🌊', q: 'Would you spend hours just watching the waves?', desc: 'Nature as meditation.', cat: 'relaxation', dims: { adv: -.5, soc: -.4, lux: 0, act: -.6, cul: -.2, nat: .8, food: -.1, night: -.5, spont: .1 } },
+    { id: 'p10', emoji: '♨️', q: 'Are you drawn to hot springs and traditional baths?', desc: 'Healing waters with history.', cat: 'relaxation', dims: { adv: -.2, soc: .2, lux: .5, act: -.4, cul: .5, nat: .4, food: -.1, night: -.3, spont: -.1 } },
+    { id: 'p11', emoji: '🏛️', q: 'Could you spend an entire day in a museum without getting bored?', desc: 'Art and history fascinate you.', cat: 'culture', dims: { adv: -.2, soc: .1, lux: .3, act: -.3, cul: 1, nat: -.2, food: -.1, night: -.2, spont: -.4 } },
+    { id: 'p12', emoji: '🎭', q: 'Would you watch a local theatre performance even in another language?', desc: 'Culture transcends language.', cat: 'culture', dims: { adv: .2, soc: .4, lux: .4, act: -.2, cul: .9, nat: -.3, food: -.1, night: .3, spont: .1 } },
+    { id: 'p13', emoji: '📜', q: 'Are you fascinated by ruins and archaeological excavations?', desc: 'The mysteries of the past pull you in.', cat: 'culture', dims: { adv: .3, soc: .1, lux: -.2, act: .4, cul: 1, nat: .3, food: -.2, night: -.4, spont: -.1 } },
+    { id: 'p14', emoji: '🎨', q: 'Are you drawn to street art and alternative artistic expressions?', desc: 'The creative pulse of the city.', cat: 'culture', dims: { adv: .4, soc: .3, lux: -.3, act: .4, cul: .8, nat: -.2, food: -.1, night: .3, spont: .5 } },
+    { id: 'p15', emoji: '🍜', q: 'Would you eat street food from a stall you have never heard of?', desc: 'The best flavours are often the most unexpected.', cat: 'food', dims: { adv: .6, soc: .4, lux: -.5, act: .2, cul: .6, nat: -.1, food: 1, night: .1, spont: .7 } },
+    { id: 'p16', emoji: '👨‍🍳', q: 'Would you take a cooking class with a local chef?', desc: 'Learn the secrets behind local food.', cat: 'food', dims: { adv: .3, soc: .6, lux: .3, act: .4, cul: .7, nat: -.1, food: .9, night: -.1, spont: -.1 } },
+    { id: 'p17', emoji: '🍷', q: 'Are wine tastings and local breweries something you prioritize?', desc: 'Drinking culture tells the story of a place.', cat: 'food', dims: { adv: .2, soc: .6, lux: .6, act: -.1, cul: .5, nat: .1, food: .8, night: .4, spont: .2 } },
+    { id: 'p18', emoji: '🌶️', q: 'Do you always order the most exotic dish on the menu?', desc: 'Your taste buds are adventurous.', cat: 'food', dims: { adv: .7, soc: .3, lux: 0, act: .1, cul: .5, nat: -.1, food: 1, night: .1, spont: .6 } },
+    { id: 'p19', emoji: '🍽️', q: 'Is a Michelin restaurant worth spending your travel budget on?', desc: 'Gastronomy as an art experience.', cat: 'food', dims: { adv: .1, soc: .4, lux: 1, act: -.2, cul: .4, nat: -.2, food: .9, night: .2, spont: -.4 } },
+    { id: 'p20', emoji: '☕', q: 'Do you always search for the best local coffee shop?', desc: 'Coffee culture and slow mornings.', cat: 'food', dims: { adv: .1, soc: .2, lux: .2, act: -.2, cul: .4, nat: -.1, food: .6, night: -.3, spont: .2 } },
   ],
 };
 
-const RESTAURANT_CARDS: Record<Lang, Card[]> = {
+const RESTAURANT_CARDS: Partial<Record<Lang, Card[]>> = {
   no: [
     { id: 'r1', emoji: '🍣', q: 'Er sushi og japansk mat en favoritt?', desc: 'Du liker rene smaker, kvalitet og presisjon.', cat: 'cuisine', dims: { adv: .2, soc: .2, lux: .4, act: -.2, cul: .6, nat: -.2, food: 1, night: .2, spont: -.1 } },
-    { id: 'r2', emoji: '🥂', q: 'Er det verdt å betale mer for en “wow”-middag?', desc: 'Du prioriterer kvalitet, service og atmosfære.', cat: 'fine', dims: { adv: .1, soc: .2, lux: 1, act: -.3, cul: .3, nat: -.2, food: .8, night: .2, spont: -.4 } },
-    { id: 'r3', emoji: '🎉', q: 'Liker du restauranter med høy energi og folk?', desc: 'Du tåler lyd og liker puls.', cat: 'lively', dims: { adv: .2, soc: .8, lux: .1, act: .1, cul: .2, nat: -.2, food: .4, night: .8, spont: .3 } },
+    { id: 'r2', emoji: '🍕', q: 'Kan en enkel pizza være den perfekte middag?', desc: 'Du liker komfortmat og uformell stemning.', cat: 'casual', dims: { adv: -.1, soc: .3, lux: -.4, act: -.2, cul: .1, nat: -.1, food: .6, night: .2, spont: .1 } },
+    { id: 'r3', emoji: '🌶️', q: 'Velger du ofte sterk mat når du kan?', desc: 'Du tåler litt trøkk i smakene.', cat: 'spicy', dims: { adv: .4, soc: .1, lux: -.1, act: .1, cul: .2, nat: -.1, food: .9, night: .1, spont: .2 } },
+    { id: 'r4', emoji: '🥂', q: 'Er det verdt å betale mer for en “wow”-middag?', desc: 'Du prioriterer kvalitet, service og atmosfære.', cat: 'fine', dims: { adv: .1, soc: .2, lux: 1, act: -.3, cul: .3, nat: -.2, food: .8, night: .2, spont: -.4 } },
+    { id: 'r5', emoji: '🍔', q: 'Er burger og fries en go-to når du er sulten?', desc: 'Raskt, enkelt og digg.', cat: 'casual', dims: { adv: -.1, soc: .2, lux: -.5, act: -.1, cul: -.1, nat: -.2, food: .5, night: .1, spont: .2 } },
+    { id: 'r6', emoji: '🥗', q: 'Foretrekker du ofte noe lett og friskt?', desc: 'Du liker rene råvarer og føler deg best etterpå.', cat: 'fresh', dims: { adv: -.2, soc: -.1, lux: .1, act: .3, cul: .2, nat: .2, food: .6, night: -.3, spont: -.2 } },
+    { id: 'r7', emoji: '🍷', q: 'Er vinbar/et godt vinkart en stor pluss?', desc: 'Du liker å matche drikke og mat.', cat: 'drinks', dims: { adv: .1, soc: .5, lux: .6, act: -.2, cul: .4, nat: -.1, food: .5, night: .6, spont: .1 } },
+    { id: 'r8', emoji: '🧆', q: 'Liker du å prøve lokale småretter (tapas/meze)?', desc: 'Deling, variasjon og nye smaker.', cat: 'sharing', dims: { adv: .3, soc: .8, lux: .2, act: -.1, cul: .6, nat: -.1, food: .8, night: .3, spont: .4 } },
+    { id: 'r9', emoji: '🥩', q: 'Er en skikkelig biffmiddag noe du blir glad av?', desc: 'Du liker kraftige smaker og god metthet.', cat: 'hearty', dims: { adv: -.1, soc: .2, lux: .3, act: -.1, cul: .1, nat: -.1, food: .7, night: .2, spont: -.2 } },
+    { id: 'r10', emoji: '🕯️', q: 'Foretrekker du romantisk stemning fremfor liv og røre?', desc: 'Rolig, intimt og koselig.', cat: 'ambience', dims: { adv: -.3, soc: -.1, lux: .5, act: -.4, cul: .2, nat: -.1, food: .4, night: -.1, spont: -.3 } },
+    { id: 'r11', emoji: '🎉', q: 'Liker du restauranter med høy energi og folk?', desc: 'Du tåler lyd og liker puls.', cat: 'lively', dims: { adv: .2, soc: .8, lux: .1, act: .1, cul: .2, nat: -.2, food: .4, night: .8, spont: .3 } },
+    { id: 'r12', emoji: '⏱️', q: 'Vil du ofte ha noe raskt og effektivt?', desc: 'Kort vei fra bestilling til mat.', cat: 'quick', dims: { adv: -.2, soc: -.1, lux: -.2, act: .1, cul: -.1, nat: -.1, food: .3, night: -.3, spont: .2 } },
+    { id: 'r13', emoji: '🍜', q: 'Ramen/pho/nudler: ja takk?', desc: 'Du liker varme, rike buljonger og comfort.', cat: 'cuisine', dims: { adv: .2, soc: .1, lux: -.1, act: -.1, cul: .3, nat: -.1, food: .8, night: .1, spont: .2 } },
+    { id: 'r14', emoji: '🧁', q: 'Er dessert et must når du spiser ute?', desc: 'Du liker en søt avslutning.', cat: 'dessert', dims: { adv: -.1, soc: .1, lux: .1, act: -.2, cul: .1, nat: -.1, food: .7, night: .1, spont: .1 } },
+    { id: 'r15', emoji: '📍', q: 'Er “lokale skjulte perler” viktigere enn kjeder?', desc: 'Du vil ha unikt og autentisk.', cat: 'local', dims: { adv: .4, soc: .1, lux: .1, act: .2, cul: .7, nat: -.1, food: .6, night: .1, spont: .5 } },
+    { id: 'r16', emoji: '🧑‍🍳', q: 'Synes du åpen kjøkken/chef’s counter er kult?', desc: 'Du liker håndverket bak maten.', cat: 'craft', dims: { adv: .2, soc: .2, lux: .4, act: -.1, cul: .4, nat: -.1, food: .6, night: .1, spont: .1 } },
+    { id: 'r17', emoji: '🥘', q: 'Er du glad i gryteretter og “comfort food”?', desc: 'Varmt, mettende og trygt.', cat: 'hearty', dims: { adv: -.2, soc: .1, lux: -.1, act: -.2, cul: .1, nat: -.1, food: .7, night: -.1, spont: -.2 } },
+    { id: 'r18', emoji: '🌿', q: 'Er vegetar/vegansk tilbud viktig for deg?', desc: 'Du vil ha gode alternativer uten kjøtt.', cat: 'diet', dims: { adv: .1, soc: .1, lux: .1, act: .2, cul: .2, nat: .1, food: .5, night: -.1, spont: .1 } },
+    { id: 'r19', emoji: '👨‍👩‍👧‍👦', q: 'Trives du best på familievennlige steder?', desc: 'Lav terskel og enkel logistikk.', cat: 'family', dims: { adv: -.3, soc: .3, lux: -.3, act: -.2, cul: -.1, nat: -.1, food: .3, night: -.5, spont: -.2 } },
+    { id: 'r20', emoji: '🎧', q: 'Blir du fort sliten av høy musikk mens du spiser?', desc: 'Du foretrekker å kunne prate.', cat: 'quiet', dims: { adv: -.2, soc: -.1, lux: .2, act: -.2, cul: .1, nat: -.1, food: .3, night: -.4, spont: -.2 } },
   ],
   en: [
     { id: 'r1', emoji: '🍣', q: 'Is sushi/Japanese food a favorite?', desc: 'You like clean flavors and quality.', cat: 'cuisine', dims: { adv: .2, soc: .2, lux: .4, act: -.2, cul: .6, nat: -.2, food: 1, night: .2, spont: -.1 } },
-    { id: 'r2', emoji: '🥂', q: 'Is it worth paying more for a “wow” dinner?', desc: 'You value quality, service and ambience.', cat: 'fine', dims: { adv: .1, soc: .2, lux: 1, act: -.3, cul: .3, nat: -.2, food: .8, night: .2, spont: -.4 } },
-    { id: 'r3', emoji: '🎉', q: 'Do you enjoy high-energy, lively restaurants?', desc: 'You like buzz and people.', cat: 'lively', dims: { adv: .2, soc: .8, lux: .1, act: .1, cul: .2, nat: -.2, food: .4, night: .8, spont: .3 } },
-  ],
-  sv: [
-    { id: 'r1', emoji: '🍣', q: 'Är sushi och japansk mat en favorit?', desc: 'Du gillar rena smaker, kvalitet och precision.', cat: 'cuisine', dims: { adv: .2, soc: .2, lux: .4, act: -.2, cul: .6, nat: -.2, food: 1, night: .2, spont: -.1 } },
-    { id: 'r2', emoji: '🥂', q: 'Är det värt att betala mer för en “wow”-middag?', desc: 'Du prioriterar kvalitet, service och atmosfär.', cat: 'fine', dims: { adv: .1, soc: .2, lux: 1, act: -.3, cul: .3, nat: -.2, food: .8, night: .2, spont: -.4 } },
-    { id: 'r3', emoji: '🎉', q: 'Gillar du restauranger med hög energi och folk?', desc: 'Du klarar ljud och gillar puls.', cat: 'lively', dims: { adv: .2, soc: .8, lux: .1, act: .1, cul: .2, nat: -.2, food: .4, night: .8, spont: .3 } },
+    { id: 'r2', emoji: '🍕', q: 'Can a simple pizza be the perfect dinner?', desc: 'Casual comfort and no fuss.', cat: 'casual', dims: { adv: -.1, soc: .3, lux: -.4, act: -.2, cul: .1, nat: -.1, food: .6, night: .2, spont: .1 } },
+    { id: 'r3', emoji: '🌶️', q: 'Do you often choose spicy food when you can?', desc: 'You enjoy heat and bold flavors.', cat: 'spicy', dims: { adv: .4, soc: .1, lux: -.1, act: .1, cul: .2, nat: -.1, food: .9, night: .1, spont: .2 } },
+    { id: 'r4', emoji: '🥂', q: 'Is it worth paying more for a “wow” dinner?', desc: 'You value quality, service and ambience.', cat: 'fine', dims: { adv: .1, soc: .2, lux: 1, act: -.3, cul: .3, nat: -.2, food: .8, night: .2, spont: -.4 } },
+    { id: 'r5', emoji: '🍔', q: 'Burger and fries as a go-to?', desc: 'Fast, simple, satisfying.', cat: 'casual', dims: { adv: -.1, soc: .2, lux: -.5, act: -.1, cul: -.1, nat: -.2, food: .5, night: .1, spont: .2 } },
+    { id: 'r6', emoji: '🥗', q: 'Do you often prefer something light and fresh?', desc: 'You like clean ingredients.', cat: 'fresh', dims: { adv: -.2, soc: -.1, lux: .1, act: .3, cul: .2, nat: .2, food: .6, night: -.3, spont: -.2 } },
+    { id: 'r7', emoji: '🍷', q: 'Is a good wine list a big plus?', desc: 'You enjoy pairing drinks and food.', cat: 'drinks', dims: { adv: .1, soc: .5, lux: .6, act: -.2, cul: .4, nat: -.1, food: .5, night: .6, spont: .1 } },
+    { id: 'r8', emoji: '🧆', q: 'Do you like sharing small plates (tapas/meze)?', desc: 'Variety and social eating.', cat: 'sharing', dims: { adv: .3, soc: .8, lux: .2, act: -.1, cul: .6, nat: -.1, food: .8, night: .3, spont: .4 } },
+    { id: 'r9', emoji: '🥩', q: 'A proper steak dinner makes you happy?', desc: 'Hearty flavors and fullness.', cat: 'hearty', dims: { adv: -.1, soc: .2, lux: .3, act: -.1, cul: .1, nat: -.1, food: .7, night: .2, spont: -.2 } },
+    { id: 'r10', emoji: '🕯️', q: 'Do you prefer romantic ambience over loud buzz?', desc: 'Calm and intimate.', cat: 'ambience', dims: { adv: -.3, soc: -.1, lux: .5, act: -.4, cul: .2, nat: -.1, food: .4, night: -.1, spont: -.3 } },
+    { id: 'r11', emoji: '🎉', q: 'Do you enjoy high-energy, lively restaurants?', desc: 'You like buzz and people.', cat: 'lively', dims: { adv: .2, soc: .8, lux: .1, act: .1, cul: .2, nat: -.2, food: .4, night: .8, spont: .3 } },
+    { id: 'r12', emoji: '⏱️', q: 'Do you often want something quick and efficient?', desc: 'From order to food fast.', cat: 'quick', dims: { adv: -.2, soc: -.1, lux: -.2, act: .1, cul: -.1, nat: -.1, food: .3, night: -.3, spont: .2 } },
+    { id: 'r13', emoji: '🍜', q: 'Ramen/pho/noodles: yes please?', desc: 'Warm broths and comfort.', cat: 'cuisine', dims: { adv: .2, soc: .1, lux: -.1, act: -.1, cul: .3, nat: -.1, food: .8, night: .1, spont: .2 } },
+    { id: 'r14', emoji: '🧁', q: 'Is dessert a must when dining out?', desc: 'You love a sweet finish.', cat: 'dessert', dims: { adv: -.1, soc: .1, lux: .1, act: -.2, cul: .1, nat: -.1, food: .7, night: .1, spont: .1 } },
+    { id: 'r15', emoji: '📍', q: 'Do “local hidden gems” matter more than chains?', desc: 'You want unique and authentic.', cat: 'local', dims: { adv: .4, soc: .1, lux: .1, act: .2, cul: .7, nat: -.1, food: .6, night: .1, spont: .5 } },
+    { id: 'r16', emoji: '🧑‍🍳', q: 'Do you like open kitchens/chef’s counters?', desc: 'You enjoy the craft.', cat: 'craft', dims: { adv: .2, soc: .2, lux: .4, act: -.1, cul: .4, nat: -.1, food: .6, night: .1, spont: .1 } },
+    { id: 'r17', emoji: '🥘', q: 'Do you love stews and comfort food?', desc: 'Warm, filling, safe.', cat: 'hearty', dims: { adv: -.2, soc: .1, lux: -.1, act: -.2, cul: .1, nat: -.1, food: .7, night: -.1, spont: -.2 } },
+    { id: 'r18', emoji: '🌿', q: 'Do you care about vegetarian/vegan options?', desc: 'You want strong meat-free choices.', cat: 'diet', dims: { adv: .1, soc: .1, lux: .1, act: .2, cul: .2, nat: .1, food: .5, night: -.1, spont: .1 } },
+    { id: 'r19', emoji: '👨‍👩‍👧‍👦', q: 'Do you prefer family-friendly places?', desc: 'Low friction and easy logistics.', cat: 'family', dims: { adv: -.3, soc: .3, lux: -.3, act: -.2, cul: -.1, nat: -.1, food: .3, night: -.5, spont: -.2 } },
+    { id: 'r20', emoji: '🎧', q: 'Does loud music while eating drain you?', desc: 'You prefer conversation.', cat: 'quiet', dims: { adv: -.2, soc: -.1, lux: .2, act: -.2, cul: .1, nat: -.1, food: .3, night: -.4, spont: -.2 } },
   ],
 };
 
 function cardsFor(mode: Mode, lang: Lang): Card[] {
-  return (mode === 'restaurants' ? RESTAURANT_CARDS : PREFERENCE_CARDS)[lang];
+  const src = (mode === 'restaurants' ? RESTAURANT_CARDS : PREFERENCE_CARDS);
+  // For now, Swedish cards fall back to English until we have full SV translations.
+  return (src[lang] || src.en || src.no || []) as Card[];
 }
 
 // --- Simple profile (kept explainable)
@@ -507,6 +570,11 @@ export default function App() {
   const canSearch = totalSwipes >= 10 || Object.keys(swipes).length >= 10;
 
   async function findItems() {
+    if (!apiKey.trim()) {
+      setError(UI.apiKeyMissing[lang]);
+      setPage('home');
+      return;
+    }
     if (cooldownUntil && cooldownUntil > Date.now()) {
       setError(`For mange forespørsler. Vent ${cooldownLeft}s og prøv igjen.`);
       return;
@@ -644,6 +712,7 @@ export default function App() {
             <button
               onClick={() => {
                 if (!destination.trim()) { setError(UI.destinationMissing[lang]); return; }
+                if (!apiKey.trim()) { setError(UI.apiKeyMissing[lang]); return; }
                 localStorage.setItem('apiKey', apiKey.trim());
                 setPage('swipe');
               }}
