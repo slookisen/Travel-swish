@@ -1,7 +1,44 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 // --- Versioning (shows in footer; also helps debugging cached deploys)
-const APP_VERSION = 'v0.1.0';
+const APP_VERSION = 'v0.1.1';
+
+// --- Strings
+const UI = {
+  landingTitle: {
+    no: 'Swipe → plan → book',
+    en: 'Swipe → plan → book',
+    sv: 'Swipe → plan → boka',
+  },
+  landingDesc: {
+    no: 'Bygg en smakprofil på sekunder. Vi finner forslag som faktisk passer deg.',
+    en: 'Build a taste profile in seconds. Get suggestions that actually fit you.',
+    sv: 'Bygg en smakprofil på sekunder. Få förslag som faktiskt passar dig.',
+  },
+  getStarted: { no: 'Kom i gang', en: 'Get started', sv: 'Kom igång' },
+  chooseMode: { no: 'Velg modus', en: 'Choose mode', sv: 'Välj läge' },
+  destination: { no: 'Destinasjon', en: 'Destination', sv: 'Destination' },
+  destinationMissing: { no: 'Destinasjon mangler', en: 'Destination required', sv: 'Destination krävs' },
+  apiKeyNote: {
+    no: 'Demo: nøkkelen lagres kun i nettleseren din. Lansering: flyttes til backend.',
+    en: 'Demo: key is stored only in your browser. Launch: move to backend.',
+    sv: 'Demo: nyckeln lagras bara i din webbläsare. Lansering: flyttas till backend.',
+  },
+  back: { no: 'Tilbake', en: 'Back', sv: 'Tillbaka' },
+  startMode: {
+    no: (modeLabel: string) => `Start ${modeLabel}`,
+    en: (modeLabel: string) => `Start ${modeLabel}`,
+    sv: (modeLabel: string) => `Starta ${modeLabel}`,
+  },
+  swipeHint: { no: 'Sveip/velg kort for å lære profilen din.', en: 'Swipe/choose cards to learn your profile.', sv: 'Svajpa/välj kort för att lära din profil.' },
+  total: { no: 'Totalt', en: 'Total', sv: 'Totalt' },
+  yes: { no: 'JA', en: 'YES', sv: 'JA' },
+  no: { no: 'NEI', en: 'NO', sv: 'NEJ' },
+  fetch: { no: 'Finn forslag', en: 'Find suggestions', sv: 'Hitta förslag' },
+  loading: { no: 'Henter…', en: 'Loading…', sv: 'Laddar…' },
+  swipeAtLeast: { no: 'Sveip minst 10 kort først.', en: 'Swipe at least 10 cards first.', sv: 'Svajpa minst 10 kort först.' },
+  openLink: { no: 'Åpne lenke', en: 'Open link', sv: 'Öppna länk' },
+};
 
 // --- Modes
 export type Mode = 'experiences' | 'restaurants';
@@ -253,10 +290,18 @@ export default function App() {
 
   // Default language for new users: English. Persist choice in localStorage.
   const [lang, setLang] = useState<Lang>(() => {
+    // 1) explicit user choice (sticky)
     try {
       const saved = (localStorage.getItem('ts_lang') || '') as Lang;
       if (saved === 'no' || saved === 'en' || saved === 'sv') return saved;
     } catch {}
+
+    // 2) auto-detect from browser language
+    const nav = (typeof navigator !== 'undefined' ? (navigator.language || '') : '').toLowerCase();
+    if (nav.startsWith('sv')) return 'sv';
+    if (nav.startsWith('no') || nav.startsWith('nb') || nav.startsWith('nn')) return 'no';
+
+    // 3) fallback
     return 'en';
   });
 
@@ -372,14 +417,12 @@ export default function App() {
 
       {page === 'landing' && (
         <div style={{ padding: 24, maxWidth: 760, margin: '0 auto' }}>
-          <h1 style={{ marginTop: 10 }}>Swipe → {lang === 'no' ? 'plan' : 'plan'} → {lang === 'no' ? 'bok' : 'book'}</h1>
+          <h1 style={{ marginTop: 10 }}>{UI.landingTitle[lang]}</h1>
           <p style={{ color: T.dim, lineHeight: 1.6 }}>
-            {lang === 'no'
-              ? 'Bygg en smakprofil på sekunder. Vi finner forslag som faktisk passer deg.'
-              : 'Build a taste profile in seconds. Get suggestions that actually fit you.'}
+            {UI.landingDesc[lang]}
           </p>
           <button onClick={() => setPage('home')} style={{ marginTop: 14, padding: '12px 16px', borderRadius: 12, border: 'none', cursor: 'pointer', background: `linear-gradient(135deg, ${T.gold}, ${T.teal})`, color: T.bg, fontWeight: 800 }}>
-            {lang === 'no' ? 'Kom i gang' : 'Get started'}
+            {UI.getStarted[lang]}
           </button>
           <div style={{ marginTop: 18, color: T.dim, fontSize: 12 }}>Build: {APP_VERSION}</div>
         </div>
@@ -387,7 +430,7 @@ export default function App() {
 
       {page === 'home' && (
         <div style={{ padding: 24, maxWidth: 760, margin: '0 auto' }}>
-          <h2 style={{ marginTop: 0 }}>{lang === 'no' ? 'Velg modus' : 'Choose mode'}</h2>
+          <h2 style={{ marginTop: 0 }}>{UI.chooseMode[lang]}</h2>
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
             {(['experiences', 'restaurants'] as Mode[]).map(m => (
               <button
@@ -409,7 +452,7 @@ export default function App() {
           </div>
 
           <div style={{ marginTop: 18 }}>
-            <label style={{ display: 'block', marginBottom: 6, color: T.dim }}>{lang === 'no' ? 'Destinasjon' : 'Destination'}</label>
+            <label style={{ display: 'block', marginBottom: 6, color: T.dim }}>{UI.destination[lang]}</label>
             <input
               value={destination}
               onChange={e => setDestination(e.target.value)}
@@ -427,25 +470,23 @@ export default function App() {
               style={{ width: '100%', padding: 12, borderRadius: 12, border: `1px solid ${T.border}`, background: T.card, color: T.txt, fontFamily: 'monospace' }}
             />
             <div style={{ marginTop: 6, fontSize: 12, color: T.dim }}>
-              {lang === 'no'
-                ? 'Demo: nøkkelen lagres kun i nettleseren din. Lansering: flyttes til backend.'
-                : 'Demo: key is stored only in your browser. Launch: move to backend.'}
+              {UI.apiKeyNote[lang]}
             </div>
           </div>
 
           <div style={{ marginTop: 16, display: 'flex', gap: 10, flexWrap: 'wrap' }}>
             <button
               onClick={() => {
-                if (!destination.trim()) { setError(lang === 'no' ? 'Destinasjon mangler' : 'Destination required'); return; }
+                if (!destination.trim()) { setError(UI.destinationMissing[lang]); return; }
                 localStorage.setItem('apiKey', apiKey.trim());
                 setPage('swipe');
               }}
               style={{ padding: '12px 16px', borderRadius: 12, border: 'none', cursor: 'pointer', background: `linear-gradient(135deg, ${T.gold}, ${T.teal})`, color: T.bg, fontWeight: 800 }}
             >
-              {lang === 'no' ? `Start ${labels}` : `Start ${labels}`}
+              {UI.startMode[lang](labels)}
             </button>
             <button onClick={() => setPage('landing')} style={{ padding: '12px 16px', borderRadius: 12, border: `1px solid ${T.border}`, cursor: 'pointer', background: 'transparent', color: T.txt }}>
-              {lang === 'no' ? 'Tilbake' : 'Back'}
+              {UI.back[lang]}
             </button>
           </div>
 
