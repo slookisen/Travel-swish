@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { T, globalCss } from './ui';
 
 // --- Versioning (shows in footer; also helps debugging cached deploys)
-const APP_VERSION = 'v0.1.2';
+const APP_VERSION = 'v0.1.3';
 
 // --- Strings
 const UI = {
