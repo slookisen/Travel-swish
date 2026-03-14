@@ -6,6 +6,10 @@ Goal: move the preference engine + destination-aware recommendations out of the 
 - Python + **FastAPI**
 - SQLite for local dev (easy to ship, easy migrations)
 
+### Windows note (Python 3.14)
+On this machine Python is 3.14. `pydantic-core` may need to compile.
+That requires **Rust + Cargo** installed and available on PATH.
+
 ## Run (local)
 ```powershell
 cd C:\Users\dafre\Travel-Swish\backend
