@@ -37,6 +37,8 @@ const UI = {
   yes: { no: 'JA', en: 'YES', sv: 'JA' },
   no: { no: 'NEI', en: 'NO', sv: 'NEJ' },
   fetch: { no: 'Finn forslag', en: 'Find suggestions', sv: 'Hitta förslag' },
+  findMore: { no: 'Finn flere', en: 'Find more', sv: 'Hitta fler' },
+  why: { no: 'Hvorfor', en: 'Why', sv: 'Varför' },
   loading: { no: 'Henter…', en: 'Loading…', sv: 'Laddar…' },
   swipeAtLeast: { no: 'Sveip minst 10 kort først.', en: 'Swipe at least 10 cards first.', sv: 'Svajpa minst 10 kort först.' },
   openLink: { no: 'Åpne lenke', en: 'Open link', sv: 'Öppna länk' },
@@ -1016,26 +1018,105 @@ export default function App() {
 
       {page === 'results' && (
         <div style={{ padding: 24, maxWidth: 760, margin: '0 auto' }}>
-          <button onClick={() => setPage('swipe')} style={{ marginBottom: 10, background: 'transparent', border: `1px solid ${T.border}`, color: T.txt, padding: '8px 10px', borderRadius: 10, cursor: 'pointer' }}>
-            {lang === 'no' ? 'Tilbake' : 'Back'}
-          </button>
-          <h2 style={{ marginTop: 0 }}>{labels}: {destination}</h2>
-          <div style={{ display: 'grid', gap: 12, marginTop: 14 }}>
-            {items.map((it, idx) => (
-              <div key={idx} style={{ background: T.card, border: `1px solid ${T.border}`, borderRadius: 14, padding: 14 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10 }}>
-                  <div style={{ fontWeight: 900 }}>{it.name}</div>
-                  <div style={{ color: T.gold, fontWeight: 900 }}>{Math.round(it.match || 0)}%</div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+            <button
+              onClick={() => setPage('swipe')}
+              style={{ background: 'transparent', border: `1px solid ${T.border}`, color: T.txt, padding: '8px 10px', borderRadius: 999, cursor: 'pointer' }}
+            >
+              {UI.back[lang]}
+            </button>
+
+            <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+              {cooldownUntil && cooldownUntil > Date.now() && (
+                <div style={{ color: T.dim, fontSize: 12 }}>
+                  {lang === 'no' ? `Cooldown: ${cooldownLeft}s` : lang === 'sv' ? `Cooldown: ${cooldownLeft}s` : `Cooldown: ${cooldownLeft}s`}
                 </div>
-                {it.cat && <div style={{ color: T.dim, fontSize: 12, marginTop: 4 }}>{it.cat}</div>}
-                {it.why && <div style={{ color: T.dim, marginTop: 8, lineHeight: 1.5 }}>{it.why}</div>}
-                {it.url && (
-                  <a href={it.url} target="_blank" rel="noreferrer" style={{ display: 'inline-block', marginTop: 10, color: T.teal }}>
-                    {lang === 'no' ? 'Åpne lenke' : 'Open link'}
-                  </a>
-                )}
-              </div>
-            ))}
+              )}
+              <button
+                onClick={findItems}
+                disabled={loading || (cooldownUntil && cooldownUntil > Date.now())}
+                style={{
+                  padding: '10px 14px',
+                  borderRadius: 999,
+                  border: 'none',
+                  cursor: loading ? 'not-allowed' : 'pointer',
+                  background: loading ? T.card : `linear-gradient(135deg, ${T.gold}, ${T.teal})`,
+                  color: loading ? T.dim : T.bg,
+                  fontWeight: 900,
+                }}
+                title={lang === 'no' ? 'Hent flere forslag basert på profilen din' : 'Fetch more suggestions based on your profile'}
+              >
+                {loading ? UI.loading[lang] : UI.findMore[lang]}
+              </button>
+            </div>
+          </div>
+
+          <h2 style={{ margin: '14px 0 0 0', letterSpacing: 0.2 }}>{labels}: {destination}</h2>
+          <div style={{ color: T.dim, marginTop: 6, fontSize: 12 }}>{lang === 'no' ? 'Tinder clean: store kort, lite støy. Klikk for «hvorfor».' : 'Big cards, low noise. Tap for “why”.'}</div>
+
+          <div style={{ display: 'grid', gap: 12, marginTop: 16 }}>
+            {items.map((it, idx) => {
+              const pct = Math.round(it.match || 0);
+              return (
+                <div
+                  key={idx}
+                  style={{
+                    background: `linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02))`,
+                    border: `1px solid ${T.border}`,
+                    borderRadius: 18,
+                    padding: 16,
+                    boxShadow: '0 10px 30px rgba(0,0,0,0.25)',
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'flex-start' }}>
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontWeight: 950, fontSize: 16, lineHeight: 1.2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {it.name}
+                      </div>
+                      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 8, alignItems: 'center' }}>
+                        {it.cat && (
+                          <span style={{ fontSize: 12, color: T.dim, border: `1px solid ${T.borderSoft}`, padding: '4px 10px', borderRadius: 999, background: 'rgba(255,255,255,0.02)' }}>
+                            {it.cat}
+                          </span>
+                        )}
+                        {it.url && (
+                          <a
+                            href={it.url}
+                            target="_blank"
+                            rel="noreferrer"
+                            style={{ fontSize: 12, color: T.teal, textDecoration: 'none', border: `1px solid ${T.borderSoft}`, padding: '4px 10px', borderRadius: 999 }}
+                          >
+                            {UI.openLink[lang]}
+                          </a>
+                        )}
+                      </div>
+                    </div>
+
+                    <div style={{
+                      flexShrink: 0,
+                      padding: '6px 10px',
+                      borderRadius: 999,
+                      background: 'rgba(212,165,116,0.14)',
+                      border: '1px solid rgba(212,165,116,0.28)',
+                      color: T.gold,
+                      fontWeight: 950,
+                      fontSize: 12,
+                    }}>
+                      {pct}%
+                    </div>
+                  </div>
+
+                  {it.why && (
+                    <details style={{ marginTop: 12 }}>
+                      <summary style={{ cursor: 'pointer', color: T.dim, fontWeight: 800 }}>
+                        {UI.why[lang]}
+                      </summary>
+                      <div style={{ color: T.dim, marginTop: 8, lineHeight: 1.55, whiteSpace: 'pre-wrap' }}>{it.why}</div>
+                    </details>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
       )}
