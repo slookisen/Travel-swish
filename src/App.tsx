@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { T, globalCss } from './ui';
 
 // --- Versioning (shows in footer; also helps debugging cached deploys)
-const APP_VERSION = 'v0.1.3';
+const APP_VERSION = 'v0.1.4';
 
 // --- Strings
 const UI = {
@@ -39,6 +39,12 @@ const UI = {
   fetch: { no: 'Finn forslag', en: 'Find suggestions', sv: 'Hitta förslag' },
   findMore: { no: 'Finn flere', en: 'Find more', sv: 'Hitta fler' },
   why: { no: 'Hvorfor', en: 'Why', sv: 'Varför' },
+  resetDeck: { no: 'Start på nytt', en: 'Start over', sv: 'Börja om' },
+  resetDeckHelp: {
+    no: 'Du har brukt opp kortstokken i denne modusen. Start på nytt for å få kort igjen.',
+    en: 'You have used up the deck in this mode. Start over to get cards again.',
+    sv: 'Du har använt upp kortleken i detta läge. Börja om för att få kort igen.',
+  },
   loading: { no: 'Henter…', en: 'Loading…', sv: 'Laddar…' },
   swipeAtLeast: { no: 'Sveip minst 10 kort først.', en: 'Swipe at least 10 cards first.', sv: 'Svajpa minst 10 kort först.' },
   openLink: { no: 'Åpne lenke', en: 'Open link', sv: 'Öppna länk' },
@@ -842,6 +848,21 @@ export default function App() {
     setDeckIndex((i) => Math.min(i + 1, deck.length));
   }
 
+  function resetDeck() {
+    const K = keysFor(mode);
+    try {
+      localStorage.removeItem(K.swipes);
+      localStorage.removeItem(K.totalSwipes);
+      localStorage.removeItem(K.seen);
+    } catch {}
+    // reset state
+    setSwipes({});
+    setTotalSwipes(0);
+    seenNames.current = [];
+    setDeckIndex(0);
+    setError('');
+  }
+
   // Guard: never allow swipe/results without destination
   useEffect(() => {
     if ((page === 'swipe' || page === 'results') && !destination.trim()) {
@@ -981,8 +1002,43 @@ export default function App() {
           {/* Swipe deck (stacked, Tinder-like) */}
           <div style={{ position: 'relative', minHeight: 360 }}>
             {deckIndex >= deck.length ? (
-              <div style={{ color: T.dim, paddingTop: 40 }}>
-                {lang === 'no' ? 'Ingen flere kort. Du kan gå tilbake og bytte modus, eller hente forslag.' : lang === 'sv' ? 'Inga fler kort. Gå tillbaka och byt läge, eller hämta förslag.' : 'No more cards. Go back and switch mode, or fetch suggestions.'}
+              <div style={{ color: T.dim, paddingTop: 28 }}>
+                <div style={{ fontWeight: 900, color: T.txt, marginBottom: 6 }}>
+                  {lang === 'no' ? 'Ingen flere kort' : lang === 'sv' ? 'Inga fler kort' : 'No more cards'}
+                </div>
+                <div style={{ lineHeight: 1.5 }}>
+                  {UI.resetDeckHelp[lang]}
+                </div>
+                <div style={{ marginTop: 14, display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                  <button
+                    onClick={resetDeck}
+                    style={{
+                      padding: '10px 14px',
+                      borderRadius: 999,
+                      border: `1px solid ${T.borderSoft}`,
+                      background: 'transparent',
+                      color: T.txt,
+                      fontWeight: 900,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {UI.resetDeck[lang]}
+                  </button>
+                  <button
+                    onClick={() => setPage('home')}
+                    style={{
+                      padding: '10px 14px',
+                      borderRadius: 999,
+                      border: `1px solid ${T.borderSoft}`,
+                      background: 'transparent',
+                      color: T.dim,
+                      fontWeight: 800,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {UI.back[lang]}
+                  </button>
+                </div>
               </div>
             ) : (
               <SwipeStack
