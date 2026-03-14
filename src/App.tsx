@@ -451,6 +451,239 @@ function SwipeDeckCard({
   );
 }
 
+function clamp(n: number, min: number, max: number) {
+  return Math.max(min, Math.min(max, n));
+}
+
+function SwipeStack({
+  cards,
+  lang,
+  onSwipe,
+}: {
+  cards: Card[];
+  lang: Lang;
+  onSwipe: (card: Card, val: number) => void;
+}) {
+  const top = cards[0];
+  const rest = cards.slice(1, 3);
+
+  const [dx, setDx] = useState(0);
+  const [dy, setDy] = useState(0);
+  const [dragging, setDragging] = useState(false);
+  const [animating, setAnimating] = useState(false);
+  const start = useRef<{ x: number; y: number } | null>(null);
+
+  const thresholdX = 95;
+
+  const badgeYesOpacity = clamp(dx / 90, 0, 1);
+  const badgeNoOpacity = clamp(-dx / 90, 0, 1);
+
+  function reset() {
+    setDx(0);
+    setDy(0);
+    setDragging(false);
+    start.current = null;
+  }
+
+  function commitSwipe(val: number) {
+    if (!top || animating) return;
+    setAnimating(true);
+
+    const offX = val * Math.max(420, Math.floor(window.innerWidth * 0.85));
+    setDx(offX);
+    setDy(dy);
+
+    window.setTimeout(() => {
+      onSwipe(top, val);
+      setAnimating(false);
+      reset();
+    }, 220);
+  }
+
+  function endGesture(finalDx: number) {
+    setDragging(false);
+    start.current = null;
+
+    if (finalDx > thresholdX) {
+      commitSwipe(1);
+      return;
+    }
+    if (finalDx < -thresholdX) {
+      commitSwipe(-1);
+      return;
+    }
+
+    // snap back
+    setDx(0);
+    setDy(0);
+  }
+
+  return (
+    <div
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (animating) return;
+        if (e.key === 'ArrowLeft') commitSwipe(-1);
+        if (e.key === 'ArrowRight') commitSwipe(1);
+      }}
+      style={{
+        position: 'relative',
+        height: 330,
+        maxWidth: 560,
+        margin: '0 auto',
+        outline: 'none',
+      }}
+    >
+      {/* Back cards */}
+      {rest
+        .slice()
+        .reverse()
+        .map((c, idxFromBack) => {
+          const idx = rest.length - 1 - idxFromBack + 1; // 1..2
+          const scale = 1 - idx * 0.04;
+          const y = idx * 10;
+          return (
+            <div
+              key={c.id}
+              style={{
+                position: 'absolute',
+                inset: 0,
+                display: 'grid',
+                placeItems: 'center',
+                pointerEvents: 'none',
+              }}
+            >
+              <div
+                style={{
+                  width: '100%',
+                  background: T.card,
+                  border: `1px solid ${T.border}`,
+                  borderRadius: 20,
+                  padding: 16,
+                  transform: `translateY(${y}px) scale(${scale})`,
+                  boxShadow: T.shadow,
+                  opacity: 0.55,
+                  userSelect: 'none',
+                }}
+              >
+                <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+                  <div style={{ fontSize: 28 }}>{c.emoji}</div>
+                  <div style={{ fontWeight: 900, fontSize: 16 }}>{c.q}</div>
+                </div>
+                <div style={{ color: T.dim, marginTop: 8, lineHeight: 1.5 }}>{c.desc}</div>
+              </div>
+            </div>
+          );
+        })}
+
+      {/* Top card */}
+      {top && (
+        <div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            display: 'grid',
+            placeItems: 'center',
+            touchAction: 'pan-y',
+          }}
+        >
+          <div
+            onPointerDown={(e) => {
+              if (animating) return;
+              setDragging(true);
+              start.current = { x: e.clientX, y: e.clientY };
+              (e.currentTarget as any).setPointerCapture?.(e.pointerId);
+            }}
+            onPointerMove={(e) => {
+              if (!dragging || !start.current) return;
+              setDx(e.clientX - start.current.x);
+              setDy(e.clientY - start.current.y);
+            }}
+            onPointerUp={() => endGesture(dx)}
+            onPointerCancel={() => endGesture(dx)}
+            style={{
+              width: '100%',
+              background: T.card,
+              border: `1px solid ${T.border}`,
+              borderRadius: 20,
+              padding: 16,
+              transform: `translate(${dx}px, ${dy}px) rotate(${dx / 18}deg)`,
+              transition: dragging ? 'none' : animating ? 'transform 220ms ease' : 'transform 180ms ease',
+              boxShadow: T.shadow,
+              userSelect: 'none',
+              position: 'relative',
+            }}
+          >
+            {/* Badges */}
+            <div
+              style={{
+                position: 'absolute',
+                top: 14,
+                left: 14,
+                padding: '6px 10px',
+                borderRadius: 10,
+                border: `3px solid ${T.red}`,
+                color: T.red,
+                fontWeight: 1000,
+                letterSpacing: 1,
+                transform: 'rotate(-14deg)',
+                opacity: badgeNoOpacity,
+                background: 'rgba(0,0,0,0.15)',
+              }}
+            >
+              {UI.no[lang]}
+            </div>
+            <div
+              style={{
+                position: 'absolute',
+                top: 14,
+                right: 14,
+                padding: '6px 10px',
+                borderRadius: 10,
+                border: `3px solid ${T.green}`,
+                color: T.green,
+                fontWeight: 1000,
+                letterSpacing: 1,
+                transform: 'rotate(14deg)',
+                opacity: badgeYesOpacity,
+                background: 'rgba(0,0,0,0.15)',
+              }}
+            >
+              {UI.yes[lang]}
+            </div>
+
+            <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+              <div style={{ fontSize: 28 }}>{top.emoji}</div>
+              <div style={{ fontWeight: 900, fontSize: 16 }}>{top.q}</div>
+            </div>
+            <div style={{ color: T.dim, marginTop: 8, lineHeight: 1.5 }}>{top.desc}</div>
+
+            <div style={{ display: 'flex', gap: 10, marginTop: 14, alignItems: 'center' }}>
+              <button
+                onClick={() => commitSwipe(-1)}
+                disabled={animating}
+                style={{ padding: '10px 12px', borderRadius: 12, border: `1px solid ${T.border}`, background: 'transparent', color: T.red, cursor: animating ? 'not-allowed' : 'pointer', fontWeight: 900 }}
+              >
+                {UI.no[lang]}
+              </button>
+              <button
+                onClick={() => commitSwipe(1)}
+                disabled={animating}
+                style={{ padding: '10px 12px', borderRadius: 12, border: `1px solid ${T.border}`, background: 'transparent', color: T.green, cursor: animating ? 'not-allowed' : 'pointer', fontWeight: 900 }}
+              >
+                {UI.yes[lang]}
+              </button>
+              <div style={{ marginLeft: 'auto', color: T.dim, fontSize: 12 }}>
+                {lang === 'no' ? 'Dra ←/→' : lang === 'sv' ? 'Dra ←/→' : 'Drag ←/→'}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function App() {
   const [page, setPage] = useState<Page>('landing');
 
@@ -743,18 +976,17 @@ export default function App() {
           <div style={{ color: T.dim, marginBottom: 10 }}>{UI.swipeHint[lang]}</div>
           <div style={{ color: T.dim, fontSize: 12, marginBottom: 16 }}>{UI.total[lang]}: {totalSwipes}</div>
 
-          {/* Swipe deck */}
-          <div style={{ position: 'relative', height: 220 }}>
+          {/* Swipe deck (stacked, Tinder-like) */}
+          <div style={{ position: 'relative', minHeight: 360 }}>
             {deckIndex >= deck.length ? (
               <div style={{ color: T.dim, paddingTop: 40 }}>
                 {lang === 'no' ? 'Ingen flere kort. Du kan gå tilbake og bytte modus, eller hente forslag.' : lang === 'sv' ? 'Inga fler kort. Gå tillbaka och byt läge, eller hämta förslag.' : 'No more cards. Go back and switch mode, or fetch suggestions.'}
               </div>
             ) : (
-              <SwipeDeckCard
-                key={deck[deckIndex].id}
-                card={deck[deckIndex]}
+              <SwipeStack
+                cards={deck.slice(deckIndex, deckIndex + 3)}
                 lang={lang}
-                onSwipe={(val) => swipeCard(deck[deckIndex], val)}
+                onSwipe={(card, val) => swipeCard(card, val)}
               />
             )}
           </div>
