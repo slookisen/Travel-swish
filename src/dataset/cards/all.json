@@ -1,0 +1,5405 @@
+{
+  "version": "v2.0.0",
+  "cards": [
+    {
+      "id": "p1",
+      "emoji": "🪂",
+      "modes": [
+        "experiences"
+      ],
+      "cat": "adrenaline",
+      "qKey": "cards.p1.q",
+      "descKey": "cards.p1.desc",
+      "dims": {
+        "adv": 1,
+        "soc": 0.2,
+        "lux": 0.1,
+        "act": 0.9,
+        "cul": -0.2,
+        "nat": 0.5,
+        "food": -0.3,
+        "night": -0.2,
+        "spont": 0.6
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "adrenaline"
+        }
+      ]
+    },
+    {
+      "id": "p2",
+      "emoji": "🧗",
+      "modes": [
+        "experiences"
+      ],
+      "cat": "adrenaline",
+      "qKey": "cards.p2.q",
+      "descKey": "cards.p2.desc",
+      "dims": {
+        "adv": 0.9,
+        "soc": 0.1,
+        "lux": -0.4,
+        "act": 1,
+        "cul": -0.1,
+        "nat": 0.8,
+        "food": -0.2,
+        "night": -0.3,
+        "spont": 0.3
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "adrenaline"
+        }
+      ]
+    },
+    {
+      "id": "p3",
+      "emoji": "🏄",
+      "modes": [
+        "experiences"
+      ],
+      "cat": "adrenaline",
+      "qKey": "cards.p3.q",
+      "descKey": "cards.p3.desc",
+      "dims": {
+        "adv": 0.8,
+        "soc": 0.4,
+        "lux": -0.1,
+        "act": 0.9,
+        "cul": -0.1,
+        "nat": 0.7,
+        "food": -0.1,
+        "night": -0.1,
+        "spont": 0.5
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "adrenaline"
+        }
+      ]
+    },
+    {
+      "id": "p4",
+      "emoji": "🤿",
+      "modes": [
+        "experiences"
+      ],
+      "cat": "adrenaline",
+      "qKey": "cards.p4.q",
+      "descKey": "cards.p4.desc",
+      "dims": {
+        "adv": 0.9,
+        "soc": 0.3,
+        "lux": 0.2,
+        "act": 0.7,
+        "cul": 0.1,
+        "nat": 0.9,
+        "food": -0.2,
+        "night": -0.3,
+        "spont": 0.3
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "adrenaline"
+        }
+      ]
+    },
+    {
+      "id": "p5",
+      "emoji": "🏍️",
+      "modes": [
+        "experiences"
+      ],
+      "cat": "adrenaline",
+      "qKey": "cards.p5.q",
+      "descKey": "cards.p5.desc",
+      "dims": {
+        "adv": 0.8,
+        "soc": 0.1,
+        "lux": -0.2,
+        "act": 0.6,
+        "cul": 0.2,
+        "nat": 0.6,
+        "food": -0.1,
+        "night": -0.2,
+        "spont": 0.8
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "adrenaline"
+        }
+      ]
+    },
+    {
+      "id": "p6",
+      "emoji": "🧖",
+      "modes": [
+        "experiences"
+      ],
+      "cat": "relaxation",
+      "qKey": "cards.p6.q",
+      "descKey": "cards.p6.desc",
+      "dims": {
+        "adv": -0.6,
+        "soc": 0.1,
+        "lux": 0.8,
+        "act": -0.7,
+        "cul": 0.1,
+        "nat": -0.1,
+        "food": 0.1,
+        "night": -0.4,
+        "spont": -0.3
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "relaxation"
+        }
+      ]
+    },
+    {
+      "id": "p7",
+      "emoji": "🧘",
+      "modes": [
+        "experiences"
+      ],
+      "cat": "relaxation",
+      "qKey": "cards.p7.q",
+      "descKey": "cards.p7.desc",
+      "dims": {
+        "adv": -0.3,
+        "soc": -0.1,
+        "lux": 0.3,
+        "act": 0.3,
+        "cul": 0.3,
+        "nat": 0.4,
+        "food": -0.1,
+        "night": -0.6,
+        "spont": -0.2
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "relaxation"
+        }
+      ]
+    },
+    {
+      "id": "p8",
+      "emoji": "🏖️",
+      "modes": [
+        "experiences"
+      ],
+      "cat": "relaxation",
+      "qKey": "cards.p8.q",
+      "descKey": "cards.p8.desc",
+      "dims": {
+        "adv": -0.7,
+        "soc": -0.3,
+        "lux": 0.2,
+        "act": -0.8,
+        "cul": -0.3,
+        "nat": 0.5,
+        "food": 0.1,
+        "night": -0.3,
+        "spont": 0.1
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "relaxation"
+        }
+      ]
+    },
+    {
+      "id": "p9",
+      "emoji": "🌊",
+      "modes": [
+        "experiences"
+      ],
+      "cat": "relaxation",
+      "qKey": "cards.p9.q",
+      "descKey": "cards.p9.desc",
+      "dims": {
+        "adv": -0.5,
+        "soc": -0.4,
+        "lux": 0,
+        "act": -0.6,
+        "cul": -0.2,
+        "nat": 0.8,
+        "food": -0.1,
+        "night": -0.5,
+        "spont": 0.1
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "relaxation"
+        }
+      ]
+    },
+    {
+      "id": "p10",
+      "emoji": "♨️",
+      "modes": [
+        "experiences"
+      ],
+      "cat": "relaxation",
+      "qKey": "cards.p10.q",
+      "descKey": "cards.p10.desc",
+      "dims": {
+        "adv": -0.2,
+        "soc": 0.2,
+        "lux": 0.5,
+        "act": -0.4,
+        "cul": 0.5,
+        "nat": 0.4,
+        "food": -0.1,
+        "night": -0.3,
+        "spont": -0.1
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "relaxation"
+        }
+      ]
+    },
+    {
+      "id": "p11",
+      "emoji": "🏛️",
+      "modes": [
+        "experiences"
+      ],
+      "cat": "culture",
+      "qKey": "cards.p11.q",
+      "descKey": "cards.p11.desc",
+      "dims": {
+        "adv": -0.2,
+        "soc": 0.1,
+        "lux": 0.3,
+        "act": -0.3,
+        "cul": 1,
+        "nat": -0.2,
+        "food": -0.1,
+        "night": -0.2,
+        "spont": -0.4
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "culture"
+        }
+      ]
+    },
+    {
+      "id": "p12",
+      "emoji": "🎭",
+      "modes": [
+        "experiences"
+      ],
+      "cat": "culture",
+      "qKey": "cards.p12.q",
+      "descKey": "cards.p12.desc",
+      "dims": {
+        "adv": 0.2,
+        "soc": 0.4,
+        "lux": 0.4,
+        "act": -0.2,
+        "cul": 0.9,
+        "nat": -0.3,
+        "food": -0.1,
+        "night": 0.3,
+        "spont": 0.1
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "culture"
+        }
+      ]
+    },
+    {
+      "id": "p13",
+      "emoji": "📜",
+      "modes": [
+        "experiences"
+      ],
+      "cat": "culture",
+      "qKey": "cards.p13.q",
+      "descKey": "cards.p13.desc",
+      "dims": {
+        "adv": 0.3,
+        "soc": 0.1,
+        "lux": -0.2,
+        "act": 0.4,
+        "cul": 1,
+        "nat": 0.3,
+        "food": -0.2,
+        "night": -0.4,
+        "spont": -0.1
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "culture"
+        }
+      ]
+    },
+    {
+      "id": "p14",
+      "emoji": "🕌",
+      "modes": [
+        "experiences"
+      ],
+      "cat": "culture",
+      "qKey": "cards.p14.q",
+      "descKey": "cards.p14.desc",
+      "dims": {
+        "adv": 0.1,
+        "soc": 0.1,
+        "lux": 0,
+        "act": 0.2,
+        "cul": 0.9,
+        "nat": -0.1,
+        "food": -0.2,
+        "night": -0.4,
+        "spont": -0.2
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "culture"
+        }
+      ]
+    },
+    {
+      "id": "p15",
+      "emoji": "🎨",
+      "modes": [
+        "experiences"
+      ],
+      "cat": "culture",
+      "qKey": "cards.p15.q",
+      "descKey": "cards.p15.desc",
+      "dims": {
+        "adv": 0.4,
+        "soc": 0.3,
+        "lux": -0.3,
+        "act": 0.4,
+        "cul": 0.8,
+        "nat": -0.2,
+        "food": -0.1,
+        "night": 0.3,
+        "spont": 0.5
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "culture"
+        }
+      ]
+    },
+    {
+      "id": "p16",
+      "emoji": "📸",
+      "modes": [
+        "experiences"
+      ],
+      "cat": "culture",
+      "qKey": "cards.p16.q",
+      "descKey": "cards.p16.desc",
+      "dims": {
+        "adv": 0.1,
+        "soc": -0.1,
+        "lux": 0.2,
+        "act": 0.3,
+        "cul": 0.8,
+        "nat": 0.1,
+        "food": -0.1,
+        "night": -0.1,
+        "spont": 0.1
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "culture"
+        }
+      ]
+    },
+    {
+      "id": "p17",
+      "emoji": "🍜",
+      "modes": [
+        "experiences"
+      ],
+      "cat": "food",
+      "qKey": "cards.p17.q",
+      "descKey": "cards.p17.desc",
+      "dims": {
+        "adv": 0.6,
+        "soc": 0.4,
+        "lux": -0.5,
+        "act": 0.2,
+        "cul": 0.6,
+        "nat": -0.1,
+        "food": 1,
+        "night": 0.1,
+        "spont": 0.7
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "food"
+        }
+      ]
+    },
+    {
+      "id": "p18",
+      "emoji": "👨‍🍳",
+      "modes": [
+        "experiences"
+      ],
+      "cat": "food",
+      "qKey": "cards.p18.q",
+      "descKey": "cards.p18.desc",
+      "dims": {
+        "adv": 0.3,
+        "soc": 0.6,
+        "lux": 0.3,
+        "act": 0.4,
+        "cul": 0.7,
+        "nat": -0.1,
+        "food": 0.9,
+        "night": -0.1,
+        "spont": -0.1
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "food"
+        }
+      ]
+    },
+    {
+      "id": "p19",
+      "emoji": "🍷",
+      "modes": [
+        "experiences"
+      ],
+      "cat": "food",
+      "qKey": "cards.p19.q",
+      "descKey": "cards.p19.desc",
+      "dims": {
+        "adv": 0.2,
+        "soc": 0.6,
+        "lux": 0.6,
+        "act": -0.1,
+        "cul": 0.5,
+        "nat": 0.1,
+        "food": 0.8,
+        "night": 0.4,
+        "spont": 0.2
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "food"
+        }
+      ]
+    },
+    {
+      "id": "p20",
+      "emoji": "🌶️",
+      "modes": [
+        "experiences"
+      ],
+      "cat": "food",
+      "qKey": "cards.p20.q",
+      "descKey": "cards.p20.desc",
+      "dims": {
+        "adv": 0.7,
+        "soc": 0.3,
+        "lux": 0,
+        "act": 0.1,
+        "cul": 0.5,
+        "nat": -0.1,
+        "food": 1,
+        "night": 0.1,
+        "spont": 0.6
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "food"
+        }
+      ]
+    },
+    {
+      "id": "p21",
+      "emoji": "🍽️",
+      "modes": [
+        "experiences"
+      ],
+      "cat": "food",
+      "qKey": "cards.p21.q",
+      "descKey": "cards.p21.desc",
+      "dims": {
+        "adv": 0.1,
+        "soc": 0.4,
+        "lux": 1,
+        "act": -0.2,
+        "cul": 0.4,
+        "nat": -0.2,
+        "food": 0.9,
+        "night": 0.2,
+        "spont": -0.4
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "food"
+        }
+      ]
+    },
+    {
+      "id": "p22",
+      "emoji": "☕",
+      "modes": [
+        "experiences"
+      ],
+      "cat": "food",
+      "qKey": "cards.p22.q",
+      "descKey": "cards.p22.desc",
+      "dims": {
+        "adv": 0.1,
+        "soc": 0.2,
+        "lux": 0.2,
+        "act": -0.2,
+        "cul": 0.4,
+        "nat": -0.1,
+        "food": 0.6,
+        "night": -0.3,
+        "spont": 0.2
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "food"
+        }
+      ]
+    },
+    {
+      "id": "p23",
+      "emoji": "🥾",
+      "modes": [
+        "experiences"
+      ],
+      "cat": "nature",
+      "qKey": "cards.p23.q",
+      "descKey": "cards.p23.desc",
+      "dims": {
+        "adv": 0.7,
+        "soc": 0.2,
+        "lux": -0.5,
+        "act": 1,
+        "cul": -0.1,
+        "nat": 1,
+        "food": -0.2,
+        "night": -0.5,
+        "spont": 0.1
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "nature"
+        }
+      ]
+    },
+    {
+      "id": "p24",
+      "emoji": "🏕️",
+      "modes": [
+        "experiences"
+      ],
+      "cat": "nature",
+      "qKey": "cards.p24.q",
+      "descKey": "cards.p24.desc",
+      "dims": {
+        "adv": 0.8,
+        "soc": 0.2,
+        "lux": -0.8,
+        "act": 0.6,
+        "cul": -0.2,
+        "nat": 1,
+        "food": -0.3,
+        "night": -0.4,
+        "spont": 0.4
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "nature"
+        }
+      ]
+    },
+    {
+      "id": "p25",
+      "emoji": "🌅",
+      "modes": [
+        "experiences"
+      ],
+      "cat": "nature",
+      "qKey": "cards.p25.q",
+      "descKey": "cards.p25.desc",
+      "dims": {
+        "adv": 0.5,
+        "soc": 0.1,
+        "lux": -0.2,
+        "act": 0.7,
+        "cul": -0.1,
+        "nat": 0.9,
+        "food": -0.2,
+        "night": -0.7,
+        "spont": -0.1
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "nature"
+        }
+      ]
+    },
+    {
+      "id": "p26",
+      "emoji": "🐋",
+      "modes": [
+        "experiences"
+      ],
+      "cat": "nature",
+      "qKey": "cards.p26.q",
+      "descKey": "cards.p26.desc",
+      "dims": {
+        "adv": 0.6,
+        "soc": 0.3,
+        "lux": 0.2,
+        "act": 0.4,
+        "cul": 0.1,
+        "nat": 1,
+        "food": -0.2,
+        "night": -0.3,
+        "spont": 0.2
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "nature"
+        }
+      ]
+    },
+    {
+      "id": "p27",
+      "emoji": "🛶",
+      "modes": [
+        "experiences"
+      ],
+      "cat": "nature",
+      "qKey": "cards.p27.q",
+      "descKey": "cards.p27.desc",
+      "dims": {
+        "adv": 0.6,
+        "soc": 0.1,
+        "lux": -0.1,
+        "act": 0.8,
+        "cul": -0.1,
+        "nat": 0.9,
+        "food": -0.2,
+        "night": -0.4,
+        "spont": 0.3
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "nature"
+        }
+      ]
+    },
+    {
+      "id": "p28",
+      "emoji": "🎉",
+      "modes": [
+        "experiences"
+      ],
+      "cat": "social",
+      "qKey": "cards.p28.q",
+      "descKey": "cards.p28.desc",
+      "dims": {
+        "adv": 0.5,
+        "soc": 1,
+        "lux": -0.1,
+        "act": 0.5,
+        "cul": 0.7,
+        "nat": -0.1,
+        "food": 0.4,
+        "night": 0.6,
+        "spont": 0.6
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "social"
+        }
+      ]
+    },
+    {
+      "id": "p29",
+      "emoji": "🍻",
+      "modes": [
+        "experiences"
+      ],
+      "cat": "social",
+      "qKey": "cards.p29.q",
+      "descKey": "cards.p29.desc",
+      "dims": {
+        "adv": 0.4,
+        "soc": 1,
+        "lux": -0.2,
+        "act": 0.1,
+        "cul": 0.3,
+        "nat": -0.3,
+        "food": 0.5,
+        "night": 0.7,
+        "spont": 0.7
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "social"
+        }
+      ]
+    },
+    {
+      "id": "p30",
+      "emoji": "🏠",
+      "modes": [
+        "experiences"
+      ],
+      "cat": "social",
+      "qKey": "cards.p30.q",
+      "descKey": "cards.p30.desc",
+      "dims": {
+        "adv": 0.6,
+        "soc": 0.9,
+        "lux": -0.6,
+        "act": 0.2,
+        "cul": 0.8,
+        "nat": -0.1,
+        "food": 0.5,
+        "night": -0.1,
+        "spont": 0.3
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "social"
+        }
+      ]
+    },
+    {
+      "id": "p31",
+      "emoji": "👥",
+      "modes": [
+        "experiences"
+      ],
+      "cat": "social",
+      "qKey": "cards.p31.q",
+      "descKey": "cards.p31.desc",
+      "dims": {
+        "adv": 0.2,
+        "soc": 0.9,
+        "lux": 0.1,
+        "act": 0.3,
+        "cul": 0.2,
+        "nat": 0.1,
+        "food": 0.2,
+        "night": 0.3,
+        "spont": -0.2
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "social"
+        }
+      ]
+    },
+    {
+      "id": "p32",
+      "emoji": "🎵",
+      "modes": [
+        "experiences"
+      ],
+      "cat": "nightlife",
+      "qKey": "cards.p32.q",
+      "descKey": "cards.p32.desc",
+      "dims": {
+        "adv": 0.4,
+        "soc": 0.7,
+        "lux": 0.1,
+        "act": 0.2,
+        "cul": 0.6,
+        "nat": -0.3,
+        "food": 0.1,
+        "night": 0.9,
+        "spont": 0.5
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "nightlife"
+        }
+      ]
+    },
+    {
+      "id": "p33",
+      "emoji": "🍸",
+      "modes": [
+        "experiences"
+      ],
+      "cat": "nightlife",
+      "qKey": "cards.p33.q",
+      "descKey": "cards.p33.desc",
+      "dims": {
+        "adv": 0.3,
+        "soc": 0.6,
+        "lux": 0.7,
+        "act": -0.1,
+        "cul": 0.2,
+        "nat": -0.3,
+        "food": 0.3,
+        "night": 0.9,
+        "spont": 0.4
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "nightlife"
+        }
+      ]
+    },
+    {
+      "id": "p34",
+      "emoji": "💃",
+      "modes": [
+        "experiences"
+      ],
+      "cat": "nightlife",
+      "qKey": "cards.p34.q",
+      "descKey": "cards.p34.desc",
+      "dims": {
+        "adv": 0.5,
+        "soc": 0.9,
+        "lux": 0.1,
+        "act": 0.6,
+        "cul": 0.2,
+        "nat": -0.4,
+        "food": -0.1,
+        "night": 1,
+        "spont": 0.7
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "nightlife"
+        }
+      ]
+    },
+    {
+      "id": "p35",
+      "emoji": "🎪",
+      "modes": [
+        "experiences"
+      ],
+      "cat": "nightlife",
+      "qKey": "cards.p35.q",
+      "descKey": "cards.p35.desc",
+      "dims": {
+        "adv": 0.4,
+        "soc": 0.5,
+        "lux": 0.5,
+        "act": -0.1,
+        "cul": 0.7,
+        "nat": -0.3,
+        "food": 0.1,
+        "night": 0.7,
+        "spont": 0.3
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "nightlife"
+        }
+      ]
+    },
+    {
+      "id": "p36",
+      "emoji": "🏨",
+      "modes": [
+        "experiences"
+      ],
+      "cat": "luxury",
+      "qKey": "cards.p36.q",
+      "descKey": "cards.p36.desc",
+      "dims": {
+        "adv": -0.3,
+        "soc": 0.2,
+        "lux": 1,
+        "act": -0.4,
+        "cul": 0.1,
+        "nat": 0.2,
+        "food": 0.3,
+        "night": 0.1,
+        "spont": -0.4
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "luxury"
+        }
+      ]
+    },
+    {
+      "id": "p37",
+      "emoji": "🚁",
+      "modes": [
+        "experiences"
+      ],
+      "cat": "luxury",
+      "qKey": "cards.p37.q",
+      "descKey": "cards.p37.desc",
+      "dims": {
+        "adv": 0.6,
+        "soc": 0.3,
+        "lux": 0.9,
+        "act": 0.2,
+        "cul": -0.1,
+        "nat": 0.6,
+        "food": -0.2,
+        "night": -0.2,
+        "spont": 0.1
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "luxury"
+        }
+      ]
+    },
+    {
+      "id": "p38",
+      "emoji": "🛥️",
+      "modes": [
+        "experiences"
+      ],
+      "cat": "luxury",
+      "qKey": "cards.p38.q",
+      "descKey": "cards.p38.desc",
+      "dims": {
+        "adv": 0.4,
+        "soc": 0.4,
+        "lux": 0.9,
+        "act": 0.2,
+        "cul": -0.1,
+        "nat": 0.7,
+        "food": 0.2,
+        "night": -0.1,
+        "spont": 0.2
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "luxury"
+        }
+      ]
+    },
+    {
+      "id": "p39",
+      "emoji": "🗺️",
+      "modes": [
+        "experiences"
+      ],
+      "cat": "spontaneous",
+      "qKey": "cards.p39.q",
+      "descKey": "cards.p39.desc",
+      "dims": {
+        "adv": 0.8,
+        "soc": 0.2,
+        "lux": -0.3,
+        "act": 0.5,
+        "cul": 0.3,
+        "nat": 0.3,
+        "food": 0.2,
+        "night": 0.1,
+        "spont": 1
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "spontaneous"
+        }
+      ]
+    },
+    {
+      "id": "p40",
+      "emoji": "🚌",
+      "modes": [
+        "experiences"
+      ],
+      "cat": "spontaneous",
+      "qKey": "cards.p40.q",
+      "descKey": "cards.p40.desc",
+      "dims": {
+        "adv": 0.7,
+        "soc": 0.4,
+        "lux": -0.5,
+        "act": 0.3,
+        "cul": 0.4,
+        "nat": 0.1,
+        "food": 0.1,
+        "night": -0.1,
+        "spont": 1
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "spontaneous"
+        }
+      ]
+    },
+    {
+      "id": "p41",
+      "emoji": "🏘️",
+      "modes": [
+        "experiences"
+      ],
+      "cat": "spontaneous",
+      "qKey": "cards.p41.q",
+      "descKey": "cards.p41.desc",
+      "dims": {
+        "adv": 0.6,
+        "soc": 0.5,
+        "lux": -0.4,
+        "act": 0.4,
+        "cul": 0.6,
+        "nat": -0.1,
+        "food": 0.4,
+        "night": 0.1,
+        "spont": 0.8
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "spontaneous"
+        }
+      ]
+    },
+    {
+      "id": "p42",
+      "emoji": "🎲",
+      "modes": [
+        "experiences"
+      ],
+      "cat": "spontaneous",
+      "qKey": "cards.p42.q",
+      "descKey": "cards.p42.desc",
+      "dims": {
+        "adv": 0.7,
+        "soc": 0.4,
+        "lux": -0.1,
+        "act": 0.3,
+        "cul": 0.2,
+        "nat": 0.1,
+        "food": 0.2,
+        "night": 0.3,
+        "spont": 1
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "spontaneous"
+        }
+      ]
+    },
+    {
+      "id": "p43",
+      "emoji": "🎓",
+      "modes": [
+        "experiences"
+      ],
+      "cat": "learning",
+      "qKey": "cards.p43.q",
+      "descKey": "cards.p43.desc",
+      "dims": {
+        "adv": 0.4,
+        "soc": 0.5,
+        "lux": 0.1,
+        "act": 0.4,
+        "cul": 0.7,
+        "nat": -0.2,
+        "food": -0.1,
+        "night": -0.2,
+        "spont": -0.1
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "learning"
+        }
+      ]
+    },
+    {
+      "id": "p44",
+      "emoji": "📚",
+      "modes": [
+        "experiences"
+      ],
+      "cat": "learning",
+      "qKey": "cards.p44.q",
+      "descKey": "cards.p44.desc",
+      "dims": {
+        "adv": -0.1,
+        "soc": -0.2,
+        "lux": 0.1,
+        "act": -0.3,
+        "cul": 0.9,
+        "nat": -0.2,
+        "food": -0.1,
+        "night": -0.4,
+        "spont": -0.1
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "learning"
+        }
+      ]
+    },
+    {
+      "id": "p45",
+      "emoji": "🗣️",
+      "modes": [
+        "experiences"
+      ],
+      "cat": "learning",
+      "qKey": "cards.p45.q",
+      "descKey": "cards.p45.desc",
+      "dims": {
+        "adv": 0.3,
+        "soc": 0.6,
+        "lux": -0.1,
+        "act": 0.1,
+        "cul": 0.8,
+        "nat": -0.1,
+        "food": 0.2,
+        "night": 0.1,
+        "spont": 0.2
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "learning"
+        }
+      ]
+    },
+    {
+      "id": "p46",
+      "emoji": "🛍️",
+      "modes": [
+        "experiences"
+      ],
+      "cat": "shopping",
+      "qKey": "cards.p46.q",
+      "descKey": "cards.p46.desc",
+      "dims": {
+        "adv": 0.3,
+        "soc": 0.5,
+        "lux": 0.2,
+        "act": 0.3,
+        "cul": 0.5,
+        "nat": -0.2,
+        "food": 0.3,
+        "night": -0.1,
+        "spont": 0.4
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "shopping"
+        }
+      ]
+    },
+    {
+      "id": "p47",
+      "emoji": "🎁",
+      "modes": [
+        "experiences"
+      ],
+      "cat": "shopping",
+      "qKey": "cards.p47.q",
+      "descKey": "cards.p47.desc",
+      "dims": {
+        "adv": 0.2,
+        "soc": 0.4,
+        "lux": 0.3,
+        "act": 0.2,
+        "cul": 0.7,
+        "nat": -0.1,
+        "food": -0.1,
+        "night": -0.2,
+        "spont": 0.2
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "shopping"
+        }
+      ]
+    },
+    {
+      "id": "p48",
+      "emoji": "⚡",
+      "modes": [
+        "experiences"
+      ],
+      "cat": "pace",
+      "qKey": "cards.p48.q",
+      "descKey": "cards.p48.desc",
+      "dims": {
+        "adv": 0.6,
+        "soc": 0.4,
+        "lux": 0.1,
+        "act": 0.8,
+        "cul": 0.3,
+        "nat": 0.2,
+        "food": 0.3,
+        "night": 0.4,
+        "spont": -0.2
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "pace"
+        }
+      ]
+    },
+    {
+      "id": "p49",
+      "emoji": "🐢",
+      "modes": [
+        "experiences"
+      ],
+      "cat": "pace",
+      "qKey": "cards.p49.q",
+      "descKey": "cards.p49.desc",
+      "dims": {
+        "adv": -0.2,
+        "soc": 0.3,
+        "lux": 0.2,
+        "act": -0.4,
+        "cul": 0.5,
+        "nat": 0.2,
+        "food": 0.4,
+        "night": -0.1,
+        "spont": -0.3
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "pace"
+        }
+      ]
+    },
+    {
+      "id": "p50",
+      "emoji": "🌙",
+      "modes": [
+        "experiences"
+      ],
+      "cat": "pace",
+      "qKey": "cards.p50.q",
+      "descKey": "cards.p50.desc",
+      "dims": {
+        "adv": 0.4,
+        "soc": 0.6,
+        "lux": 0.3,
+        "act": 0.2,
+        "cul": 0.1,
+        "nat": -0.3,
+        "food": 0.3,
+        "night": 1,
+        "spont": 0.5
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "pace"
+        }
+      ]
+    },
+    {
+      "id": "r1",
+      "emoji": "🍣",
+      "modes": [
+        "restaurants"
+      ],
+      "cat": "cuisine",
+      "qKey": "cards.r1.q",
+      "descKey": "cards.r1.desc",
+      "dims": {
+        "adv": 0.2,
+        "soc": 0.2,
+        "lux": 0.4,
+        "act": -0.2,
+        "cul": 0.6,
+        "nat": -0.2,
+        "food": 1,
+        "night": 0.2,
+        "spont": -0.1
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "cuisine"
+        }
+      ]
+    },
+    {
+      "id": "r2",
+      "emoji": "🍕",
+      "modes": [
+        "restaurants"
+      ],
+      "cat": "casual",
+      "qKey": "cards.r2.q",
+      "descKey": "cards.r2.desc",
+      "dims": {
+        "adv": -0.1,
+        "soc": 0.3,
+        "lux": -0.4,
+        "act": -0.2,
+        "cul": 0.1,
+        "nat": -0.1,
+        "food": 0.6,
+        "night": 0.2,
+        "spont": 0.1
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "casual"
+        }
+      ]
+    },
+    {
+      "id": "r3",
+      "emoji": "🌶️",
+      "modes": [
+        "restaurants"
+      ],
+      "cat": "spicy",
+      "qKey": "cards.r3.q",
+      "descKey": "cards.r3.desc",
+      "dims": {
+        "adv": 0.4,
+        "soc": 0.1,
+        "lux": -0.1,
+        "act": 0.1,
+        "cul": 0.2,
+        "nat": -0.1,
+        "food": 0.9,
+        "night": 0.1,
+        "spont": 0.2
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "spicy"
+        }
+      ]
+    },
+    {
+      "id": "r4",
+      "emoji": "🥂",
+      "modes": [
+        "restaurants"
+      ],
+      "cat": "fine",
+      "qKey": "cards.r4.q",
+      "descKey": "cards.r4.desc",
+      "dims": {
+        "adv": 0.1,
+        "soc": 0.2,
+        "lux": 1,
+        "act": -0.3,
+        "cul": 0.3,
+        "nat": -0.2,
+        "food": 0.8,
+        "night": 0.2,
+        "spont": -0.4
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "fine"
+        }
+      ]
+    },
+    {
+      "id": "r5",
+      "emoji": "🍔",
+      "modes": [
+        "restaurants"
+      ],
+      "cat": "casual",
+      "qKey": "cards.r5.q",
+      "descKey": "cards.r5.desc",
+      "dims": {
+        "adv": -0.1,
+        "soc": 0.2,
+        "lux": -0.5,
+        "act": -0.1,
+        "cul": -0.1,
+        "nat": -0.2,
+        "food": 0.5,
+        "night": 0.1,
+        "spont": 0.2
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "casual"
+        }
+      ]
+    },
+    {
+      "id": "r6",
+      "emoji": "🥗",
+      "modes": [
+        "restaurants"
+      ],
+      "cat": "fresh",
+      "qKey": "cards.r6.q",
+      "descKey": "cards.r6.desc",
+      "dims": {
+        "adv": -0.2,
+        "soc": -0.1,
+        "lux": 0.1,
+        "act": 0.3,
+        "cul": 0.2,
+        "nat": 0.2,
+        "food": 0.6,
+        "night": -0.3,
+        "spont": -0.2
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "fresh"
+        }
+      ]
+    },
+    {
+      "id": "r7",
+      "emoji": "🍷",
+      "modes": [
+        "restaurants"
+      ],
+      "cat": "drinks",
+      "qKey": "cards.r7.q",
+      "descKey": "cards.r7.desc",
+      "dims": {
+        "adv": 0.1,
+        "soc": 0.5,
+        "lux": 0.6,
+        "act": -0.2,
+        "cul": 0.4,
+        "nat": -0.1,
+        "food": 0.5,
+        "night": 0.6,
+        "spont": 0.1
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "drinks"
+        }
+      ]
+    },
+    {
+      "id": "r8",
+      "emoji": "🧆",
+      "modes": [
+        "restaurants"
+      ],
+      "cat": "sharing",
+      "qKey": "cards.r8.q",
+      "descKey": "cards.r8.desc",
+      "dims": {
+        "adv": 0.3,
+        "soc": 0.8,
+        "lux": 0.2,
+        "act": -0.1,
+        "cul": 0.6,
+        "nat": -0.1,
+        "food": 0.8,
+        "night": 0.3,
+        "spont": 0.4
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "sharing"
+        }
+      ]
+    },
+    {
+      "id": "r9",
+      "emoji": "🥩",
+      "modes": [
+        "restaurants"
+      ],
+      "cat": "hearty",
+      "qKey": "cards.r9.q",
+      "descKey": "cards.r9.desc",
+      "dims": {
+        "adv": -0.1,
+        "soc": 0.2,
+        "lux": 0.3,
+        "act": -0.1,
+        "cul": 0.1,
+        "nat": -0.1,
+        "food": 0.7,
+        "night": 0.2,
+        "spont": -0.2
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "hearty"
+        }
+      ]
+    },
+    {
+      "id": "r10",
+      "emoji": "🕯️",
+      "modes": [
+        "restaurants"
+      ],
+      "cat": "ambience",
+      "qKey": "cards.r10.q",
+      "descKey": "cards.r10.desc",
+      "dims": {
+        "adv": -0.3,
+        "soc": -0.1,
+        "lux": 0.5,
+        "act": -0.4,
+        "cul": 0.2,
+        "nat": -0.1,
+        "food": 0.4,
+        "night": -0.1,
+        "spont": -0.3
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "ambience"
+        }
+      ]
+    },
+    {
+      "id": "r11",
+      "emoji": "🎉",
+      "modes": [
+        "restaurants"
+      ],
+      "cat": "lively",
+      "qKey": "cards.r11.q",
+      "descKey": "cards.r11.desc",
+      "dims": {
+        "adv": 0.2,
+        "soc": 0.8,
+        "lux": 0.1,
+        "act": 0.1,
+        "cul": 0.2,
+        "nat": -0.2,
+        "food": 0.4,
+        "night": 0.8,
+        "spont": 0.3
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "lively"
+        }
+      ]
+    },
+    {
+      "id": "r12",
+      "emoji": "⏱️",
+      "modes": [
+        "restaurants"
+      ],
+      "cat": "quick",
+      "qKey": "cards.r12.q",
+      "descKey": "cards.r12.desc",
+      "dims": {
+        "adv": -0.2,
+        "soc": -0.1,
+        "lux": -0.2,
+        "act": 0.1,
+        "cul": -0.1,
+        "nat": -0.1,
+        "food": 0.3,
+        "night": -0.3,
+        "spont": 0.2
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "quick"
+        }
+      ]
+    },
+    {
+      "id": "r13",
+      "emoji": "🍜",
+      "modes": [
+        "restaurants"
+      ],
+      "cat": "cuisine",
+      "qKey": "cards.r13.q",
+      "descKey": "cards.r13.desc",
+      "dims": {
+        "adv": 0.2,
+        "soc": 0.1,
+        "lux": -0.1,
+        "act": -0.1,
+        "cul": 0.3,
+        "nat": -0.1,
+        "food": 0.8,
+        "night": 0.1,
+        "spont": 0.2
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "cuisine"
+        }
+      ]
+    },
+    {
+      "id": "r14",
+      "emoji": "🧁",
+      "modes": [
+        "restaurants"
+      ],
+      "cat": "dessert",
+      "qKey": "cards.r14.q",
+      "descKey": "cards.r14.desc",
+      "dims": {
+        "adv": -0.1,
+        "soc": 0.1,
+        "lux": 0.1,
+        "act": -0.2,
+        "cul": 0.1,
+        "nat": -0.1,
+        "food": 0.7,
+        "night": 0.1,
+        "spont": 0.1
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "dessert"
+        }
+      ]
+    },
+    {
+      "id": "r15",
+      "emoji": "📍",
+      "modes": [
+        "restaurants"
+      ],
+      "cat": "local",
+      "qKey": "cards.r15.q",
+      "descKey": "cards.r15.desc",
+      "dims": {
+        "adv": 0.4,
+        "soc": 0.1,
+        "lux": 0.1,
+        "act": 0.2,
+        "cul": 0.7,
+        "nat": -0.1,
+        "food": 0.6,
+        "night": 0.1,
+        "spont": 0.5
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "local"
+        }
+      ]
+    },
+    {
+      "id": "r16",
+      "emoji": "🧑‍🍳",
+      "modes": [
+        "restaurants"
+      ],
+      "cat": "craft",
+      "qKey": "cards.r16.q",
+      "descKey": "cards.r16.desc",
+      "dims": {
+        "adv": 0.2,
+        "soc": 0.2,
+        "lux": 0.4,
+        "act": -0.1,
+        "cul": 0.4,
+        "nat": -0.1,
+        "food": 0.6,
+        "night": 0.1,
+        "spont": 0.1
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "craft"
+        }
+      ]
+    },
+    {
+      "id": "r17",
+      "emoji": "🥘",
+      "modes": [
+        "restaurants"
+      ],
+      "cat": "hearty",
+      "qKey": "cards.r17.q",
+      "descKey": "cards.r17.desc",
+      "dims": {
+        "adv": -0.2,
+        "soc": 0.1,
+        "lux": -0.1,
+        "act": -0.2,
+        "cul": 0.1,
+        "nat": -0.1,
+        "food": 0.7,
+        "night": -0.1,
+        "spont": -0.2
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "hearty"
+        }
+      ]
+    },
+    {
+      "id": "r18",
+      "emoji": "🌿",
+      "modes": [
+        "restaurants"
+      ],
+      "cat": "diet",
+      "qKey": "cards.r18.q",
+      "descKey": "cards.r18.desc",
+      "dims": {
+        "adv": 0.1,
+        "soc": 0.1,
+        "lux": 0.1,
+        "act": 0.2,
+        "cul": 0.2,
+        "nat": 0.1,
+        "food": 0.5,
+        "night": -0.1,
+        "spont": 0.1
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "diet"
+        }
+      ]
+    },
+    {
+      "id": "r19",
+      "emoji": "👨‍👩‍👧‍👦",
+      "modes": [
+        "restaurants"
+      ],
+      "cat": "family",
+      "qKey": "cards.r19.q",
+      "descKey": "cards.r19.desc",
+      "dims": {
+        "adv": -0.3,
+        "soc": 0.3,
+        "lux": -0.3,
+        "act": -0.2,
+        "cul": -0.1,
+        "nat": -0.1,
+        "food": 0.3,
+        "night": -0.5,
+        "spont": -0.2
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "family"
+        }
+      ]
+    },
+    {
+      "id": "r20",
+      "emoji": "🎧",
+      "modes": [
+        "restaurants"
+      ],
+      "cat": "quiet",
+      "qKey": "cards.r20.q",
+      "descKey": "cards.r20.desc",
+      "dims": {
+        "adv": -0.2,
+        "soc": -0.1,
+        "lux": 0.2,
+        "act": -0.2,
+        "cul": 0.1,
+        "nat": -0.1,
+        "food": 0.3,
+        "night": -0.4,
+        "spont": -0.2
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "quiet"
+        }
+      ]
+    },
+    {
+      "id": "p51",
+      "emoji": "🪢",
+      "modes": [
+        "experiences"
+      ],
+      "cat": "adrenaline",
+      "qKey": "cards.p51.q",
+      "descKey": "cards.p51.desc",
+      "dims": {
+        "adv": 0.9,
+        "soc": 0.2,
+        "lux": 0,
+        "act": 0.9,
+        "cul": 0,
+        "nat": 0.7,
+        "food": -0.2,
+        "night": -0.1,
+        "spont": 0.6
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "adrenaline"
+        }
+      ]
+    },
+    {
+      "id": "p52",
+      "emoji": "🛶",
+      "modes": [
+        "experiences"
+      ],
+      "cat": "adrenaline",
+      "qKey": "cards.p52.q",
+      "descKey": "cards.p52.desc",
+      "dims": {
+        "adv": 0.9,
+        "soc": 0.30000000000000004,
+        "lux": 0,
+        "act": 0.9,
+        "cul": 0,
+        "nat": 0.8,
+        "food": -0.2,
+        "night": -0.1,
+        "spont": 0.5
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "adrenaline"
+        }
+      ]
+    },
+    {
+      "id": "p53",
+      "emoji": "🪂",
+      "modes": [
+        "experiences"
+      ],
+      "cat": "adrenaline",
+      "qKey": "cards.p53.q",
+      "descKey": "cards.p53.desc",
+      "dims": {
+        "adv": 0.9,
+        "soc": 0.2,
+        "lux": 0.1,
+        "act": 0.9,
+        "cul": 0,
+        "nat": 0.7,
+        "food": -0.2,
+        "night": -0.1,
+        "spont": 0.5
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "adrenaline"
+        }
+      ]
+    },
+    {
+      "id": "p54",
+      "emoji": "🧗",
+      "modes": [
+        "experiences"
+      ],
+      "cat": "adrenaline",
+      "qKey": "cards.p54.q",
+      "descKey": "cards.p54.desc",
+      "dims": {
+        "adv": 0.9,
+        "soc": 0.2,
+        "lux": 0,
+        "act": 1,
+        "cul": 0,
+        "nat": 0.8,
+        "food": -0.2,
+        "night": -0.1,
+        "spont": 0.5
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "adrenaline"
+        }
+      ]
+    },
+    {
+      "id": "p55",
+      "emoji": "🏜️",
+      "modes": [
+        "experiences"
+      ],
+      "cat": "adrenaline",
+      "qKey": "cards.p55.q",
+      "descKey": "cards.p55.desc",
+      "dims": {
+        "adv": 0.9,
+        "soc": 0.2,
+        "lux": 0,
+        "act": 0.9,
+        "cul": 0,
+        "nat": 0.8,
+        "food": -0.2,
+        "night": -0.1,
+        "spont": 0.6
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "adrenaline"
+        }
+      ]
+    },
+    {
+      "id": "p56",
+      "emoji": "🧊",
+      "modes": [
+        "experiences"
+      ],
+      "cat": "adrenaline",
+      "qKey": "cards.p56.q",
+      "descKey": "cards.p56.desc",
+      "dims": {
+        "adv": 0.9,
+        "soc": 0.2,
+        "lux": 0,
+        "act": 1,
+        "cul": 0,
+        "nat": 0.8999999999999999,
+        "food": -0.2,
+        "night": -0.1,
+        "spont": 0.5
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "adrenaline"
+        }
+      ]
+    },
+    {
+      "id": "p57",
+      "emoji": "🌋",
+      "modes": [
+        "experiences"
+      ],
+      "cat": "adrenaline",
+      "qKey": "cards.p57.q",
+      "descKey": "cards.p57.desc",
+      "dims": {
+        "adv": 0.9,
+        "soc": 0.2,
+        "lux": 0,
+        "act": 0.9,
+        "cul": 0.1,
+        "nat": 0.8999999999999999,
+        "food": -0.2,
+        "night": -0.1,
+        "spont": 0.5
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "adrenaline"
+        }
+      ]
+    },
+    {
+      "id": "p58",
+      "emoji": "🛵",
+      "modes": [
+        "experiences"
+      ],
+      "cat": "adrenaline",
+      "qKey": "cards.p58.q",
+      "descKey": "cards.p58.desc",
+      "dims": {
+        "adv": 0.9,
+        "soc": 0.30000000000000004,
+        "lux": 0,
+        "act": 0.9,
+        "cul": 0,
+        "nat": 0.6,
+        "food": -0.2,
+        "night": -0.1,
+        "spont": 0.7
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "adrenaline"
+        }
+      ]
+    },
+    {
+      "id": "p59",
+      "emoji": "🪁",
+      "modes": [
+        "experiences"
+      ],
+      "cat": "adrenaline",
+      "qKey": "cards.p59.q",
+      "descKey": "cards.p59.desc",
+      "dims": {
+        "adv": 0.9,
+        "soc": 0.2,
+        "lux": 0,
+        "act": 1,
+        "cul": 0,
+        "nat": 0.8,
+        "food": -0.2,
+        "night": -0.1,
+        "spont": 0.5
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "adrenaline"
+        }
+      ]
+    },
+    {
+      "id": "p60",
+      "emoji": "🚵",
+      "modes": [
+        "experiences"
+      ],
+      "cat": "adrenaline",
+      "qKey": "cards.p60.q",
+      "descKey": "cards.p60.desc",
+      "dims": {
+        "adv": 0.9,
+        "soc": 0.2,
+        "lux": 0,
+        "act": 1,
+        "cul": 0,
+        "nat": 0.8,
+        "food": -0.2,
+        "night": -0.1,
+        "spont": 0.5
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "adrenaline"
+        }
+      ]
+    },
+    {
+      "id": "p61",
+      "emoji": "🔥",
+      "modes": [
+        "experiences"
+      ],
+      "cat": "relaxation",
+      "qKey": "cards.p61.q",
+      "descKey": "cards.p61.desc",
+      "dims": {
+        "adv": -0.6,
+        "soc": -0.1,
+        "lux": 0.6,
+        "act": -0.6,
+        "cul": 0.2,
+        "nat": 0.4,
+        "food": 0.1,
+        "night": -0.5,
+        "spont": -0.2
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "relaxation"
+        }
+      ]
+    },
+    {
+      "id": "p62",
+      "emoji": "🍵",
+      "modes": [
+        "experiences"
+      ],
+      "cat": "relaxation",
+      "qKey": "cards.p62.q",
+      "descKey": "cards.p62.desc",
+      "dims": {
+        "adv": -0.6,
+        "soc": -0.1,
+        "lux": 0.7,
+        "act": -0.6,
+        "cul": 0.5,
+        "nat": 0.3,
+        "food": 0.1,
+        "night": -0.5,
+        "spont": -0.2
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "relaxation"
+        }
+      ]
+    },
+    {
+      "id": "p63",
+      "emoji": "🫧",
+      "modes": [
+        "experiences"
+      ],
+      "cat": "relaxation",
+      "qKey": "cards.p63.q",
+      "descKey": "cards.p63.desc",
+      "dims": {
+        "adv": -0.6,
+        "soc": -0.1,
+        "lux": 0.8,
+        "act": -0.7,
+        "cul": 0.2,
+        "nat": 0.3,
+        "food": 0.1,
+        "night": -0.5,
+        "spont": -0.2
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "relaxation"
+        }
+      ]
+    },
+    {
+      "id": "p64",
+      "emoji": "🎧",
+      "modes": [
+        "experiences"
+      ],
+      "cat": "relaxation",
+      "qKey": "cards.p64.q",
+      "descKey": "cards.p64.desc",
+      "dims": {
+        "adv": -0.6,
+        "soc": -0.1,
+        "lux": 0.6,
+        "act": -0.6,
+        "cul": 0.30000000000000004,
+        "nat": 0.3,
+        "food": 0.1,
+        "night": -0.7,
+        "spont": -0.2
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "relaxation"
+        }
+      ]
+    },
+    {
+      "id": "p65",
+      "emoji": "🧺",
+      "modes": [
+        "experiences"
+      ],
+      "cat": "relaxation",
+      "qKey": "cards.p65.q",
+      "descKey": "cards.p65.desc",
+      "dims": {
+        "adv": -0.6,
+        "soc": 0,
+        "lux": 0.6,
+        "act": -0.6,
+        "cul": 0.2,
+        "nat": 0.5,
+        "food": 0.1,
+        "night": -0.5,
+        "spont": -0.2
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "relaxation"
+        }
+      ]
+    },
+    {
+      "id": "p66",
+      "emoji": "💆",
+      "modes": [
+        "experiences"
+      ],
+      "cat": "relaxation",
+      "qKey": "cards.p66.q",
+      "descKey": "cards.p66.desc",
+      "dims": {
+        "adv": -0.6,
+        "soc": -0.1,
+        "lux": 0.8,
+        "act": -0.6,
+        "cul": 0.2,
+        "nat": 0.3,
+        "food": 0.1,
+        "night": -0.5,
+        "spont": -0.2
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "relaxation"
+        }
+      ]
+    },
+    {
+      "id": "p67",
+      "emoji": "🌅",
+      "modes": [
+        "experiences"
+      ],
+      "cat": "relaxation",
+      "qKey": "cards.p67.q",
+      "descKey": "cards.p67.desc",
+      "dims": {
+        "adv": -0.6,
+        "soc": -0.1,
+        "lux": 0.6,
+        "act": -0.6,
+        "cul": 0.2,
+        "nat": 0.5,
+        "food": 0.1,
+        "night": -0.7,
+        "spont": -0.2
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "relaxation"
+        }
+      ]
+    },
+    {
+      "id": "p68",
+      "emoji": "📓",
+      "modes": [
+        "experiences"
+      ],
+      "cat": "relaxation",
+      "qKey": "cards.p68.q",
+      "descKey": "cards.p68.desc",
+      "dims": {
+        "adv": -0.6,
+        "soc": -0.2,
+        "lux": 0.6,
+        "act": -0.6,
+        "cul": 0.30000000000000004,
+        "nat": 0.3,
+        "food": 0.1,
+        "night": -0.5,
+        "spont": -0.2
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "relaxation"
+        }
+      ]
+    },
+    {
+      "id": "p69",
+      "emoji": "🌿",
+      "modes": [
+        "experiences"
+      ],
+      "cat": "relaxation",
+      "qKey": "cards.p69.q",
+      "descKey": "cards.p69.desc",
+      "dims": {
+        "adv": -0.6,
+        "soc": -0.1,
+        "lux": 0.6,
+        "act": -0.6,
+        "cul": 0.2,
+        "nat": 0.5,
+        "food": 0.2,
+        "night": -0.5,
+        "spont": -0.2
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "relaxation"
+        }
+      ]
+    },
+    {
+      "id": "p70",
+      "emoji": "🛏️",
+      "modes": [
+        "experiences"
+      ],
+      "cat": "relaxation",
+      "qKey": "cards.p70.q",
+      "descKey": "cards.p70.desc",
+      "dims": {
+        "adv": -0.6,
+        "soc": -0.1,
+        "lux": 0.7,
+        "act": -0.8,
+        "cul": 0.2,
+        "nat": 0.3,
+        "food": 0.1,
+        "night": -0.5,
+        "spont": -0.2
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "relaxation"
+        }
+      ]
+    },
+    {
+      "id": "p71",
+      "emoji": "🏰",
+      "modes": [
+        "experiences"
+      ],
+      "cat": "culture",
+      "qKey": "cards.p71.q",
+      "descKey": "cards.p71.desc",
+      "dims": {
+        "adv": 0.1,
+        "soc": 0.2,
+        "lux": 0.2,
+        "act": 0.2,
+        "cul": 1,
+        "nat": -0.1,
+        "food": 0.1,
+        "night": 0,
+        "spont": 0.1
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "culture"
+        }
+      ]
+    },
+    {
+      "id": "p72",
+      "emoji": "🖼️",
+      "modes": [
+        "experiences"
+      ],
+      "cat": "culture",
+      "qKey": "cards.p72.q",
+      "descKey": "cards.p72.desc",
+      "dims": {
+        "adv": 0.1,
+        "soc": 0.2,
+        "lux": 0.2,
+        "act": 0.1,
+        "cul": 1,
+        "nat": -0.1,
+        "food": 0.1,
+        "night": 0,
+        "spont": 0.1
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "culture"
+        }
+      ]
+    },
+    {
+      "id": "p73",
+      "emoji": "🎻",
+      "modes": [
+        "experiences"
+      ],
+      "cat": "culture",
+      "qKey": "cards.p73.q",
+      "descKey": "cards.p73.desc",
+      "dims": {
+        "adv": 0.1,
+        "soc": 0.2,
+        "lux": 0.4,
+        "act": 0.1,
+        "cul": 0.9,
+        "nat": -0.1,
+        "food": 0.1,
+        "night": 0.2,
+        "spont": 0.1
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "culture"
+        }
+      ]
+    },
+    {
+      "id": "p74",
+      "emoji": "📷",
+      "modes": [
+        "experiences"
+      ],
+      "cat": "learning",
+      "qKey": "cards.p74.q",
+      "descKey": "cards.p74.desc",
+      "dims": {
+        "adv": 0.1,
+        "soc": 0.3,
+        "lux": 0,
+        "act": 0.2,
+        "cul": 1,
+        "nat": -0.1,
+        "food": 0,
+        "night": -0.2,
+        "spont": 0.1
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "learning"
+        }
+      ]
+    },
+    {
+      "id": "p75",
+      "emoji": "💃",
+      "modes": [
+        "experiences"
+      ],
+      "cat": "learning",
+      "qKey": "cards.p75.q",
+      "descKey": "cards.p75.desc",
+      "dims": {
+        "adv": 0.1,
+        "soc": 0.5,
+        "lux": 0,
+        "act": 0.1,
+        "cul": 0.8,
+        "nat": -0.1,
+        "food": 0,
+        "night": -0.1,
+        "spont": 0.1
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "learning"
+        }
+      ]
+    },
+    {
+      "id": "p76",
+      "emoji": "🧑‍🎨",
+      "modes": [
+        "experiences"
+      ],
+      "cat": "learning",
+      "qKey": "cards.p76.q",
+      "descKey": "cards.p76.desc",
+      "dims": {
+        "adv": 0.1,
+        "soc": 0.3,
+        "lux": 0.1,
+        "act": 0.1,
+        "cul": 0.9,
+        "nat": -0.1,
+        "food": 0,
+        "night": -0.2,
+        "spont": 0.1
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "learning"
+        }
+      ]
+    },
+    {
+      "id": "p77",
+      "emoji": "🕌",
+      "modes": [
+        "experiences"
+      ],
+      "cat": "culture",
+      "qKey": "cards.p77.q",
+      "descKey": "cards.p77.desc",
+      "dims": {
+        "adv": 0.1,
+        "soc": 0.2,
+        "lux": 0.2,
+        "act": 0.1,
+        "cul": 1,
+        "nat": -0.1,
+        "food": 0.1,
+        "night": 0,
+        "spont": 0.1
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "culture"
+        }
+      ]
+    },
+    {
+      "id": "p78",
+      "emoji": "🎬",
+      "modes": [
+        "experiences"
+      ],
+      "cat": "culture",
+      "qKey": "cards.p78.q",
+      "descKey": "cards.p78.desc",
+      "dims": {
+        "adv": 0.1,
+        "soc": 0.30000000000000004,
+        "lux": 0.2,
+        "act": 0.1,
+        "cul": 0.9,
+        "nat": -0.1,
+        "food": 0.1,
+        "night": 0.1,
+        "spont": 0.1
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "culture"
+        }
+      ]
+    },
+    {
+      "id": "p79",
+      "emoji": "🗣️",
+      "modes": [
+        "experiences"
+      ],
+      "cat": "learning",
+      "qKey": "cards.p79.q",
+      "descKey": "cards.p79.desc",
+      "dims": {
+        "adv": 0.1,
+        "soc": 0.5,
+        "lux": 0,
+        "act": 0.1,
+        "cul": 0.8,
+        "nat": -0.1,
+        "food": 0,
+        "night": -0.2,
+        "spont": 0.2
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "learning"
+        }
+      ]
+    },
+    {
+      "id": "p80",
+      "emoji": "🧑‍🍳",
+      "modes": [
+        "experiences"
+      ],
+      "cat": "food",
+      "qKey": "cards.p80.q",
+      "descKey": "cards.p80.desc",
+      "dims": {
+        "adv": 0.3,
+        "soc": 0.6000000000000001,
+        "lux": 0.2,
+        "act": 0.1,
+        "cul": 0.6,
+        "nat": 0,
+        "food": 1,
+        "night": 0.2,
+        "spont": 0.3
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "food"
+        }
+      ]
+    },
+    {
+      "id": "p81",
+      "emoji": "🏞️",
+      "modes": [
+        "experiences"
+      ],
+      "cat": "nature",
+      "qKey": "cards.p81.q",
+      "descKey": "cards.p81.desc",
+      "dims": {
+        "adv": 0.5,
+        "soc": 0.1,
+        "lux": -0.3,
+        "act": 0.7999999999999999,
+        "cul": 0,
+        "nat": 1,
+        "food": -0.1,
+        "night": -0.3,
+        "spont": 0.2
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "nature"
+        }
+      ]
+    },
+    {
+      "id": "p82",
+      "emoji": "💦",
+      "modes": [
+        "experiences"
+      ],
+      "cat": "nature",
+      "qKey": "cards.p82.q",
+      "descKey": "cards.p82.desc",
+      "dims": {
+        "adv": 0.5,
+        "soc": 0.1,
+        "lux": -0.3,
+        "act": 0.7999999999999999,
+        "cul": 0,
+        "nat": 1,
+        "food": -0.1,
+        "night": -0.3,
+        "spont": 0.2
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "nature"
+        }
+      ]
+    },
+    {
+      "id": "p83",
+      "emoji": "🔭",
+      "modes": [
+        "experiences"
+      ],
+      "cat": "nature",
+      "qKey": "cards.p83.q",
+      "descKey": "cards.p83.desc",
+      "dims": {
+        "adv": 0.5,
+        "soc": 0,
+        "lux": -0.3,
+        "act": 0.7,
+        "cul": 0,
+        "nat": 1,
+        "food": -0.1,
+        "night": 0,
+        "spont": 0.2
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "nature"
+        }
+      ]
+    },
+    {
+      "id": "p84",
+      "emoji": "🐢",
+      "modes": [
+        "experiences"
+      ],
+      "cat": "nature",
+      "qKey": "cards.p84.q",
+      "descKey": "cards.p84.desc",
+      "dims": {
+        "adv": 0.6,
+        "soc": 0.1,
+        "lux": -0.3,
+        "act": 0.7,
+        "cul": 0,
+        "nat": 1,
+        "food": -0.1,
+        "night": -0.3,
+        "spont": 0.2
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "nature"
+        }
+      ]
+    },
+    {
+      "id": "p85",
+      "emoji": "🎈",
+      "modes": [
+        "experiences"
+      ],
+      "cat": "nature",
+      "qKey": "cards.p85.q",
+      "descKey": "cards.p85.desc",
+      "dims": {
+        "adv": 0.7,
+        "soc": 0.1,
+        "lux": 0,
+        "act": 0.7,
+        "cul": 0,
+        "nat": 1,
+        "food": -0.1,
+        "night": -0.3,
+        "spont": 0.2
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "nature"
+        }
+      ]
+    },
+    {
+      "id": "p86",
+      "emoji": "🦜",
+      "modes": [
+        "experiences"
+      ],
+      "cat": "nature",
+      "qKey": "cards.p86.q",
+      "descKey": "cards.p86.desc",
+      "dims": {
+        "adv": 0.5,
+        "soc": 0.2,
+        "lux": -0.3,
+        "act": 0.7,
+        "cul": 0.1,
+        "nat": 1,
+        "food": -0.1,
+        "night": -0.3,
+        "spont": 0.2
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "nature"
+        }
+      ]
+    },
+    {
+      "id": "p87",
+      "emoji": "🚣",
+      "modes": [
+        "experiences"
+      ],
+      "cat": "nature",
+      "qKey": "cards.p87.q",
+      "descKey": "cards.p87.desc",
+      "dims": {
+        "adv": 0.5,
+        "soc": 0.1,
+        "lux": -0.3,
+        "act": 0.8999999999999999,
+        "cul": 0,
+        "nat": 1,
+        "food": -0.1,
+        "night": -0.3,
+        "spont": 0.2
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "nature"
+        }
+      ]
+    },
+    {
+      "id": "p88",
+      "emoji": "🏕️",
+      "modes": [
+        "experiences"
+      ],
+      "cat": "nature",
+      "qKey": "cards.p88.q",
+      "descKey": "cards.p88.desc",
+      "dims": {
+        "adv": 0.5,
+        "soc": 0.1,
+        "lux": -0.5,
+        "act": 0.7,
+        "cul": 0,
+        "nat": 1,
+        "food": -0.1,
+        "night": -0.3,
+        "spont": 0.4
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "nature"
+        }
+      ]
+    },
+    {
+      "id": "p89",
+      "emoji": "🌌",
+      "modes": [
+        "experiences"
+      ],
+      "cat": "nature",
+      "qKey": "cards.p89.q",
+      "descKey": "cards.p89.desc",
+      "dims": {
+        "adv": 0.5,
+        "soc": 0.1,
+        "lux": -0.3,
+        "act": 0.7,
+        "cul": 0,
+        "nat": 1,
+        "food": -0.1,
+        "night": 0.10000000000000003,
+        "spont": 0.2
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "nature"
+        }
+      ]
+    },
+    {
+      "id": "p90",
+      "emoji": "🏖️",
+      "modes": [
+        "experiences"
+      ],
+      "cat": "nature",
+      "qKey": "cards.p90.q",
+      "descKey": "cards.p90.desc",
+      "dims": {
+        "adv": 0.5,
+        "soc": 0.1,
+        "lux": -0.19999999999999998,
+        "act": 0.49999999999999994,
+        "cul": 0,
+        "nat": 1,
+        "food": -0.1,
+        "night": -0.3,
+        "spont": 0.2
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "nature"
+        }
+      ]
+    },
+    {
+      "id": "p91",
+      "emoji": "🍻",
+      "modes": [
+        "experiences"
+      ],
+      "cat": "nightlife",
+      "qKey": "cards.p91.q",
+      "descKey": "cards.p91.desc",
+      "dims": {
+        "adv": 0.3,
+        "soc": 0.9,
+        "lux": 0.3,
+        "act": 0.2,
+        "cul": 0.2,
+        "nat": -0.3,
+        "food": 0.1,
+        "night": 1,
+        "spont": 0.5
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "nightlife"
+        }
+      ]
+    },
+    {
+      "id": "p92",
+      "emoji": "🤝",
+      "modes": [
+        "experiences"
+      ],
+      "cat": "social",
+      "qKey": "cards.p92.q",
+      "descKey": "cards.p92.desc",
+      "dims": {
+        "adv": 0.3,
+        "soc": 1,
+        "lux": 0,
+        "act": 0.30000000000000004,
+        "cul": 0.6000000000000001,
+        "nat": -0.1,
+        "food": 0.2,
+        "night": 0.3,
+        "spont": 0.5
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "social"
+        }
+      ]
+    },
+    {
+      "id": "p93",
+      "emoji": "🧳",
+      "modes": [
+        "experiences"
+      ],
+      "cat": "spontaneous",
+      "qKey": "cards.p93.q",
+      "descKey": "cards.p93.desc",
+      "dims": {
+        "adv": 0.6,
+        "soc": 0.3,
+        "lux": -0.2,
+        "act": 0.3,
+        "cul": 0.3,
+        "nat": 0.1,
+        "food": 0.2,
+        "night": 0.1,
+        "spont": 1
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "spontaneous"
+        }
+      ]
+    },
+    {
+      "id": "p94",
+      "emoji": "🚆",
+      "modes": [
+        "experiences"
+      ],
+      "cat": "spontaneous",
+      "qKey": "cards.p94.q",
+      "descKey": "cards.p94.desc",
+      "dims": {
+        "adv": 0.7,
+        "soc": 0.3,
+        "lux": -0.2,
+        "act": 0.3,
+        "cul": 0.4,
+        "nat": 0.1,
+        "food": 0.2,
+        "night": 0.1,
+        "spont": 1
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "spontaneous"
+        }
+      ]
+    },
+    {
+      "id": "p95",
+      "emoji": "🚗",
+      "modes": [
+        "experiences"
+      ],
+      "cat": "luxury",
+      "qKey": "cards.p95.q",
+      "descKey": "cards.p95.desc",
+      "dims": {
+        "adv": -0.1,
+        "soc": 0.2,
+        "lux": 1,
+        "act": -0.2,
+        "cul": 0.2,
+        "nat": 0.1,
+        "food": 0.3,
+        "night": 0.1,
+        "spont": -0.4
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "luxury"
+        }
+      ]
+    },
+    {
+      "id": "p96",
+      "emoji": "🛍️",
+      "modes": [
+        "experiences"
+      ],
+      "cat": "shopping",
+      "qKey": "cards.p96.q",
+      "descKey": "cards.p96.desc",
+      "dims": {
+        "adv": 0,
+        "soc": 0.3,
+        "lux": 0.5,
+        "act": 0.2,
+        "cul": 0.5,
+        "nat": -0.2,
+        "food": 0.1,
+        "night": 0.1,
+        "spont": 0.2
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "shopping"
+        }
+      ]
+    },
+    {
+      "id": "p97",
+      "emoji": "🥂",
+      "modes": [
+        "experiences"
+      ],
+      "cat": "luxury",
+      "qKey": "cards.p97.q",
+      "descKey": "cards.p97.desc",
+      "dims": {
+        "adv": -0.1,
+        "soc": 0.30000000000000004,
+        "lux": 1,
+        "act": -0.2,
+        "cul": 0.2,
+        "nat": 0.1,
+        "food": 0.3,
+        "night": 0.30000000000000004,
+        "spont": -0.3
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "luxury"
+        }
+      ]
+    },
+    {
+      "id": "p98",
+      "emoji": "🏃",
+      "modes": [
+        "experiences"
+      ],
+      "cat": "pace",
+      "qKey": "cards.p98.q",
+      "descKey": "cards.p98.desc",
+      "dims": {
+        "adv": 0.1,
+        "soc": 0.2,
+        "lux": 0.1,
+        "act": 0.8,
+        "cul": 0.2,
+        "nat": 0,
+        "food": 0.1,
+        "night": 0.1,
+        "spont": -0.1
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "pace"
+        }
+      ]
+    },
+    {
+      "id": "p99",
+      "emoji": "🧘",
+      "modes": [
+        "experiences"
+      ],
+      "cat": "pace",
+      "qKey": "cards.p99.q",
+      "descKey": "cards.p99.desc",
+      "dims": {
+        "adv": 0.1,
+        "soc": 0.2,
+        "lux": 0.2,
+        "act": -0.5,
+        "cul": 0.2,
+        "nat": 0,
+        "food": 0.1,
+        "night": 0.1,
+        "spont": 0
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "pace"
+        }
+      ]
+    },
+    {
+      "id": "p100",
+      "emoji": "🎫",
+      "modes": [
+        "experiences"
+      ],
+      "cat": "spontaneous",
+      "qKey": "cards.p100.q",
+      "descKey": "cards.p100.desc",
+      "dims": {
+        "adv": 0.6,
+        "soc": 0.4,
+        "lux": -0.2,
+        "act": 0.3,
+        "cul": 0.4,
+        "nat": 0.1,
+        "food": 0.2,
+        "night": 0.1,
+        "spont": 1
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "spontaneous"
+        }
+      ]
+    },
+    {
+      "id": "r21",
+      "emoji": "🌮",
+      "modes": [
+        "restaurants"
+      ],
+      "cat": "cuisine",
+      "qKey": "cards.r21.q",
+      "descKey": "cards.r21.desc",
+      "dims": {
+        "adv": 0.2,
+        "soc": 0.2,
+        "lux": 0.1,
+        "act": -0.1,
+        "cul": 0.4,
+        "nat": -0.1,
+        "food": 1,
+        "night": 0.1,
+        "spont": 0.30000000000000004
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "cuisine"
+        }
+      ]
+    },
+    {
+      "id": "r22",
+      "emoji": "🥟",
+      "modes": [
+        "restaurants"
+      ],
+      "cat": "cuisine",
+      "qKey": "cards.r22.q",
+      "descKey": "cards.r22.desc",
+      "dims": {
+        "adv": 0.2,
+        "soc": 0.2,
+        "lux": 0.1,
+        "act": -0.1,
+        "cul": 0.5,
+        "nat": -0.1,
+        "food": 1,
+        "night": 0.1,
+        "spont": 0.1
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "cuisine"
+        }
+      ]
+    },
+    {
+      "id": "r23",
+      "emoji": "🍛",
+      "modes": [
+        "restaurants"
+      ],
+      "cat": "cuisine",
+      "qKey": "cards.r23.q",
+      "descKey": "cards.r23.desc",
+      "dims": {
+        "adv": 0.30000000000000004,
+        "soc": 0.2,
+        "lux": 0.1,
+        "act": -0.1,
+        "cul": 0.4,
+        "nat": -0.1,
+        "food": 1,
+        "night": 0.1,
+        "spont": 0.1
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "cuisine"
+        }
+      ]
+    },
+    {
+      "id": "r24",
+      "emoji": "🥘",
+      "modes": [
+        "restaurants"
+      ],
+      "cat": "cuisine",
+      "qKey": "cards.r24.q",
+      "descKey": "cards.r24.desc",
+      "dims": {
+        "adv": 0.2,
+        "soc": 0.30000000000000004,
+        "lux": 0.1,
+        "act": -0.1,
+        "cul": 0.4,
+        "nat": -0.1,
+        "food": 1,
+        "night": 0.1,
+        "spont": 0.1
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "cuisine"
+        }
+      ]
+    },
+    {
+      "id": "r25",
+      "emoji": "🥙",
+      "modes": [
+        "restaurants"
+      ],
+      "cat": "cuisine",
+      "qKey": "cards.r25.q",
+      "descKey": "cards.r25.desc",
+      "dims": {
+        "adv": 0.2,
+        "soc": 0.2,
+        "lux": -0.1,
+        "act": -0.1,
+        "cul": 0.4,
+        "nat": -0.1,
+        "food": 1,
+        "night": 0.1,
+        "spont": 0.30000000000000004
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "cuisine"
+        }
+      ]
+    },
+    {
+      "id": "r26",
+      "emoji": "🍜",
+      "modes": [
+        "restaurants"
+      ],
+      "cat": "cuisine",
+      "qKey": "cards.r26.q",
+      "descKey": "cards.r26.desc",
+      "dims": {
+        "adv": 0.2,
+        "soc": 0.2,
+        "lux": 0,
+        "act": -0.1,
+        "cul": 0.4,
+        "nat": -0.1,
+        "food": 1,
+        "night": 0.1,
+        "spont": 0.1
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "cuisine"
+        }
+      ]
+    },
+    {
+      "id": "r27",
+      "emoji": "🥡",
+      "modes": [
+        "restaurants"
+      ],
+      "cat": "cuisine",
+      "qKey": "cards.r27.q",
+      "descKey": "cards.r27.desc",
+      "dims": {
+        "adv": 0.2,
+        "soc": 0.2,
+        "lux": 0.1,
+        "act": -0.1,
+        "cul": 0.4,
+        "nat": -0.1,
+        "food": 1,
+        "night": 0.1,
+        "spont": 0.1
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "cuisine"
+        }
+      ]
+    },
+    {
+      "id": "r28",
+      "emoji": "🍣",
+      "modes": [
+        "restaurants"
+      ],
+      "cat": "cuisine",
+      "qKey": "cards.r28.q",
+      "descKey": "cards.r28.desc",
+      "dims": {
+        "adv": 0.2,
+        "soc": 0.2,
+        "lux": 0.30000000000000004,
+        "act": -0.1,
+        "cul": 0.4,
+        "nat": -0.1,
+        "food": 1,
+        "night": 0.1,
+        "spont": 0.1
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "cuisine"
+        }
+      ]
+    },
+    {
+      "id": "r29",
+      "emoji": "🍝",
+      "modes": [
+        "restaurants"
+      ],
+      "cat": "cuisine",
+      "qKey": "cards.r29.q",
+      "descKey": "cards.r29.desc",
+      "dims": {
+        "adv": 0.2,
+        "soc": 0.2,
+        "lux": 0.1,
+        "act": -0.1,
+        "cul": 0.4,
+        "nat": -0.1,
+        "food": 1,
+        "night": 0.1,
+        "spont": 0.1
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "cuisine"
+        }
+      ]
+    },
+    {
+      "id": "r30",
+      "emoji": "🥗",
+      "modes": [
+        "restaurants"
+      ],
+      "cat": "fresh",
+      "qKey": "cards.r30.q",
+      "descKey": "cards.r30.desc",
+      "dims": {
+        "adv": -0.1,
+        "soc": -0.1,
+        "lux": 0.1,
+        "act": 0.4,
+        "cul": 0.1,
+        "nat": 0.2,
+        "food": 0.6,
+        "night": -0.3,
+        "spont": -0.1
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "fresh"
+        }
+      ]
+    },
+    {
+      "id": "r31",
+      "emoji": "🥞",
+      "modes": [
+        "restaurants"
+      ],
+      "cat": "brunch",
+      "qKey": "cards.r31.q",
+      "descKey": "cards.r31.desc",
+      "dims": {
+        "adv": 0,
+        "soc": 0.5,
+        "lux": 0.1,
+        "act": -0.1,
+        "cul": 0.1,
+        "nat": 0.1,
+        "food": 0.6,
+        "night": -0.4,
+        "spont": 0.2
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "brunch"
+        }
+      ]
+    },
+    {
+      "id": "r32",
+      "emoji": "🥐",
+      "modes": [
+        "restaurants"
+      ],
+      "cat": "brunch",
+      "qKey": "cards.r32.q",
+      "descKey": "cards.r32.desc",
+      "dims": {
+        "adv": 0,
+        "soc": 0.4,
+        "lux": 0.2,
+        "act": -0.1,
+        "cul": 0.1,
+        "nat": 0.1,
+        "food": 0.6,
+        "night": -0.4,
+        "spont": 0.2
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "brunch"
+        }
+      ]
+    },
+    {
+      "id": "r33",
+      "emoji": "☕",
+      "modes": [
+        "restaurants"
+      ],
+      "cat": "coffee",
+      "qKey": "cards.r33.q",
+      "descKey": "cards.r33.desc",
+      "dims": {
+        "adv": -0.1,
+        "soc": 0.1,
+        "lux": 0.1,
+        "act": -0.2,
+        "cul": 0.30000000000000004,
+        "nat": -0.1,
+        "food": 0.4,
+        "night": -0.6,
+        "spont": 0.1
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "coffee"
+        }
+      ]
+    },
+    {
+      "id": "r34",
+      "emoji": "🧇",
+      "modes": [
+        "restaurants"
+      ],
+      "cat": "brunch",
+      "qKey": "cards.r34.q",
+      "descKey": "cards.r34.desc",
+      "dims": {
+        "adv": 0,
+        "soc": 0.4,
+        "lux": 0.1,
+        "act": -0.1,
+        "cul": 0.1,
+        "nat": 0.1,
+        "food": 0.6,
+        "night": -0.4,
+        "spont": 0.30000000000000004
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "brunch"
+        }
+      ]
+    },
+    {
+      "id": "r35",
+      "emoji": "🥪",
+      "modes": [
+        "restaurants"
+      ],
+      "cat": "quick",
+      "qKey": "cards.r35.q",
+      "descKey": "cards.r35.desc",
+      "dims": {
+        "adv": -0.2,
+        "soc": -0.1,
+        "lux": -0.2,
+        "act": 0.1,
+        "cul": -0.1,
+        "nat": -0.1,
+        "food": 0.4,
+        "night": -0.3,
+        "spont": 0.5
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "quick"
+        }
+      ]
+    },
+    {
+      "id": "r36",
+      "emoji": "🦐",
+      "modes": [
+        "restaurants"
+      ],
+      "cat": "seafood",
+      "qKey": "cards.r36.q",
+      "descKey": "cards.r36.desc",
+      "dims": {
+        "adv": 0.1,
+        "soc": 0.2,
+        "lux": 0.30000000000000004,
+        "act": -0.1,
+        "cul": 0.2,
+        "nat": 0.2,
+        "food": 0.8,
+        "night": 0.1,
+        "spont": 0.1
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "seafood"
+        }
+      ]
+    },
+    {
+      "id": "r37",
+      "emoji": "🦪",
+      "modes": [
+        "restaurants"
+      ],
+      "cat": "seafood",
+      "qKey": "cards.r37.q",
+      "descKey": "cards.r37.desc",
+      "dims": {
+        "adv": 0.1,
+        "soc": 0.2,
+        "lux": 0.4,
+        "act": -0.1,
+        "cul": 0.2,
+        "nat": 0.2,
+        "food": 0.8,
+        "night": 0.1,
+        "spont": 0.1
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "seafood"
+        }
+      ]
+    },
+    {
+      "id": "r38",
+      "emoji": "🐟",
+      "modes": [
+        "restaurants"
+      ],
+      "cat": "seafood",
+      "qKey": "cards.r38.q",
+      "descKey": "cards.r38.desc",
+      "dims": {
+        "adv": 0.1,
+        "soc": 0.2,
+        "lux": 0.2,
+        "act": -0.1,
+        "cul": 0.2,
+        "nat": 0.2,
+        "food": 0.8,
+        "night": 0.1,
+        "spont": 0.1
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "seafood"
+        }
+      ]
+    },
+    {
+      "id": "r39",
+      "emoji": "🍖",
+      "modes": [
+        "restaurants"
+      ],
+      "cat": "bbq",
+      "qKey": "cards.r39.q",
+      "descKey": "cards.r39.desc",
+      "dims": {
+        "adv": 0,
+        "soc": 0.6000000000000001,
+        "lux": 0,
+        "act": -0.1,
+        "cul": 0.1,
+        "nat": 0.1,
+        "food": 0.8,
+        "night": 0.4,
+        "spont": 0.2
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "bbq"
+        }
+      ]
+    },
+    {
+      "id": "r40",
+      "emoji": "🔥",
+      "modes": [
+        "restaurants"
+      ],
+      "cat": "bbq",
+      "qKey": "cards.r40.q",
+      "descKey": "cards.r40.desc",
+      "dims": {
+        "adv": 0,
+        "soc": 0.5,
+        "lux": 0,
+        "act": -0.1,
+        "cul": 0.1,
+        "nat": 0.1,
+        "food": 0.8,
+        "night": 0.2,
+        "spont": 0.2
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "bbq"
+        }
+      ]
+    },
+    {
+      "id": "r41",
+      "emoji": "🧆",
+      "modes": [
+        "restaurants"
+      ],
+      "cat": "streetfood",
+      "qKey": "cards.r41.q",
+      "descKey": "cards.r41.desc",
+      "dims": {
+        "adv": 0.5,
+        "soc": 0.4,
+        "lux": -0.6,
+        "act": 0.2,
+        "cul": 0.4,
+        "nat": -0.1,
+        "food": 0.9,
+        "night": 0.2,
+        "spont": 0.9
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "streetfood"
+        }
+      ]
+    },
+    {
+      "id": "r42",
+      "emoji": "🍢",
+      "modes": [
+        "restaurants"
+      ],
+      "cat": "streetfood",
+      "qKey": "cards.r42.q",
+      "descKey": "cards.r42.desc",
+      "dims": {
+        "adv": 0.5,
+        "soc": 0.4,
+        "lux": -0.6,
+        "act": 0.2,
+        "cul": 0.4,
+        "nat": -0.1,
+        "food": 0.9,
+        "night": 0.30000000000000004,
+        "spont": 0.8
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "streetfood"
+        }
+      ]
+    },
+    {
+      "id": "r43",
+      "emoji": "🍗",
+      "modes": [
+        "restaurants"
+      ],
+      "cat": "streetfood",
+      "qKey": "cards.r43.q",
+      "descKey": "cards.r43.desc",
+      "dims": {
+        "adv": 0.5,
+        "soc": 0.4,
+        "lux": -0.6,
+        "act": 0.2,
+        "cul": 0.4,
+        "nat": -0.1,
+        "food": 0.9,
+        "night": 0.2,
+        "spont": 1
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "streetfood"
+        }
+      ]
+    },
+    {
+      "id": "r44",
+      "emoji": "🌿",
+      "modes": [
+        "restaurants"
+      ],
+      "cat": "ambience",
+      "qKey": "cards.r44.q",
+      "descKey": "cards.r44.desc",
+      "dims": {
+        "adv": -0.2,
+        "soc": -0.1,
+        "lux": 0.6,
+        "act": -0.3,
+        "cul": 0.2,
+        "nat": 0.2,
+        "food": 0.4,
+        "night": 0,
+        "spont": -0.2
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "ambience"
+        }
+      ]
+    },
+    {
+      "id": "r45",
+      "emoji": "🏙️",
+      "modes": [
+        "restaurants"
+      ],
+      "cat": "ambience",
+      "qKey": "cards.r45.q",
+      "descKey": "cards.r45.desc",
+      "dims": {
+        "adv": -0.2,
+        "soc": -0.1,
+        "lux": 0.7,
+        "act": -0.3,
+        "cul": 0.2,
+        "nat": 0,
+        "food": 0.4,
+        "night": 0.1,
+        "spont": -0.2
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "ambience"
+        }
+      ]
+    },
+    {
+      "id": "r46",
+      "emoji": "🕯️",
+      "modes": [
+        "restaurants"
+      ],
+      "cat": "ambience",
+      "qKey": "cards.r46.q",
+      "descKey": "cards.r46.desc",
+      "dims": {
+        "adv": -0.2,
+        "soc": -0.2,
+        "lux": 0.5,
+        "act": -0.3,
+        "cul": 0.2,
+        "nat": 0,
+        "food": 0.4,
+        "night": 0,
+        "spont": -0.2
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "ambience"
+        }
+      ]
+    },
+    {
+      "id": "r47",
+      "emoji": "🎶",
+      "modes": [
+        "restaurants"
+      ],
+      "cat": "lively",
+      "qKey": "cards.r47.q",
+      "descKey": "cards.r47.desc",
+      "dims": {
+        "adv": 0.1,
+        "soc": 0.8,
+        "lux": 0.1,
+        "act": 0.1,
+        "cul": 0.1,
+        "nat": -0.2,
+        "food": 0.4,
+        "night": 1,
+        "spont": 0.3
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "lively"
+        }
+      ]
+    },
+    {
+      "id": "r48",
+      "emoji": "🍷",
+      "modes": [
+        "restaurants"
+      ],
+      "cat": "drinks",
+      "qKey": "cards.r48.q",
+      "descKey": "cards.r48.desc",
+      "dims": {
+        "adv": 0.1,
+        "soc": 0.5,
+        "lux": 0.6,
+        "act": -0.2,
+        "cul": 0.2,
+        "nat": -0.1,
+        "food": 0.4,
+        "night": 0.8,
+        "spont": 0.2
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "drinks"
+        }
+      ]
+    },
+    {
+      "id": "r49",
+      "emoji": "🍸",
+      "modes": [
+        "restaurants"
+      ],
+      "cat": "drinks",
+      "qKey": "cards.r49.q",
+      "descKey": "cards.r49.desc",
+      "dims": {
+        "adv": 0.1,
+        "soc": 0.5,
+        "lux": 0.5,
+        "act": -0.2,
+        "cul": 0.2,
+        "nat": -0.1,
+        "food": 0.4,
+        "night": 1,
+        "spont": 0.2
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "drinks"
+        }
+      ]
+    },
+    {
+      "id": "r50",
+      "emoji": "🧁",
+      "modes": [
+        "restaurants"
+      ],
+      "cat": "dessert",
+      "qKey": "cards.r50.q",
+      "descKey": "cards.r50.desc",
+      "dims": {
+        "adv": -0.1,
+        "soc": 0.1,
+        "lux": 0.2,
+        "act": -0.2,
+        "cul": 0.1,
+        "nat": -0.1,
+        "food": 0.7,
+        "night": 0.1,
+        "spont": 0.1
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "dessert"
+        }
+      ]
+    },
+    {
+      "id": "r51",
+      "emoji": "🥦",
+      "modes": [
+        "restaurants"
+      ],
+      "cat": "diet",
+      "qKey": "cards.r51.q",
+      "descKey": "cards.r51.desc",
+      "dims": {
+        "adv": 0.1,
+        "soc": 0.1,
+        "lux": 0.1,
+        "act": 0.30000000000000004,
+        "cul": 0.1,
+        "nat": 0.1,
+        "food": 0.5,
+        "night": -0.1,
+        "spont": 0.1
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "diet"
+        }
+      ]
+    },
+    {
+      "id": "r52",
+      "emoji": "🌾",
+      "modes": [
+        "restaurants"
+      ],
+      "cat": "diet",
+      "qKey": "cards.r52.q",
+      "descKey": "cards.r52.desc",
+      "dims": {
+        "adv": 0.1,
+        "soc": 0.1,
+        "lux": 0.1,
+        "act": 0.2,
+        "cul": 0.1,
+        "nat": 0.1,
+        "food": 0.5,
+        "night": -0.1,
+        "spont": 0.1
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "diet"
+        }
+      ]
+    },
+    {
+      "id": "r53",
+      "emoji": "🧑‍🍳",
+      "modes": [
+        "restaurants"
+      ],
+      "cat": "craft",
+      "qKey": "cards.r53.q",
+      "descKey": "cards.r53.desc",
+      "dims": {
+        "adv": 0.1,
+        "soc": 0.2,
+        "lux": 0.5,
+        "act": -0.1,
+        "cul": 0.4,
+        "nat": -0.1,
+        "food": 0.6,
+        "night": 0.1,
+        "spont": 0.1
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "craft"
+        }
+      ]
+    },
+    {
+      "id": "r54",
+      "emoji": "📍",
+      "modes": [
+        "restaurants"
+      ],
+      "cat": "local",
+      "qKey": "cards.r54.q",
+      "descKey": "cards.r54.desc",
+      "dims": {
+        "adv": 0.3,
+        "soc": 0.1,
+        "lux": 0.1,
+        "act": 0.2,
+        "cul": 0.7,
+        "nat": -0.1,
+        "food": 0.6,
+        "night": 0.1,
+        "spont": 0.8
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "local"
+        }
+      ]
+    },
+    {
+      "id": "r55",
+      "emoji": "🧂",
+      "modes": [
+        "restaurants"
+      ],
+      "cat": "craft",
+      "qKey": "cards.r55.q",
+      "descKey": "cards.r55.desc",
+      "dims": {
+        "adv": 0.1,
+        "soc": 0.2,
+        "lux": 0.4,
+        "act": -0.1,
+        "cul": 0.5,
+        "nat": -0.1,
+        "food": 0.6,
+        "night": 0.1,
+        "spont": 0.1
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "craft"
+        }
+      ]
+    },
+    {
+      "id": "r56",
+      "emoji": "👨‍👩‍👧‍👦",
+      "modes": [
+        "restaurants"
+      ],
+      "cat": "family",
+      "qKey": "cards.r56.q",
+      "descKey": "cards.r56.desc",
+      "dims": {
+        "adv": -0.3,
+        "soc": 0.4,
+        "lux": -0.3,
+        "act": -0.2,
+        "cul": -0.1,
+        "nat": -0.1,
+        "food": 0.3,
+        "night": -0.6,
+        "spont": -0.1
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "family"
+        }
+      ]
+    },
+    {
+      "id": "r57",
+      "emoji": "🔇",
+      "modes": [
+        "restaurants"
+      ],
+      "cat": "quiet",
+      "qKey": "cards.r57.q",
+      "descKey": "cards.r57.desc",
+      "dims": {
+        "adv": -0.2,
+        "soc": -0.2,
+        "lux": 0.2,
+        "act": -0.2,
+        "cul": 0.1,
+        "nat": -0.1,
+        "food": 0.3,
+        "night": -0.5,
+        "spont": -0.1
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "quiet"
+        }
+      ]
+    },
+    {
+      "id": "r58",
+      "emoji": "⏱️",
+      "modes": [
+        "restaurants"
+      ],
+      "cat": "quick",
+      "qKey": "cards.r58.q",
+      "descKey": "cards.r58.desc",
+      "dims": {
+        "adv": -0.2,
+        "soc": -0.1,
+        "lux": -0.2,
+        "act": 0.1,
+        "cul": -0.1,
+        "nat": -0.1,
+        "food": 0.4,
+        "night": -0.3,
+        "spont": 0.4
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "quick"
+        }
+      ]
+    },
+    {
+      "id": "r59",
+      "emoji": "🍔",
+      "modes": [
+        "restaurants"
+      ],
+      "cat": "casual",
+      "qKey": "cards.r59.q",
+      "descKey": "cards.r59.desc",
+      "dims": {
+        "adv": -0.1,
+        "soc": 0.2,
+        "lux": -0.7,
+        "act": -0.1,
+        "cul": 0,
+        "nat": -0.1,
+        "food": 0.6,
+        "night": 0.1,
+        "spont": 0.2
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "casual"
+        }
+      ]
+    },
+    {
+      "id": "r60",
+      "emoji": "🍕",
+      "modes": [
+        "restaurants"
+      ],
+      "cat": "casual",
+      "qKey": "cards.r60.q",
+      "descKey": "cards.r60.desc",
+      "dims": {
+        "adv": -0.1,
+        "soc": 0.30000000000000004,
+        "lux": -0.6,
+        "act": -0.1,
+        "cul": 0,
+        "nat": -0.1,
+        "food": 0.6,
+        "night": 0.1,
+        "spont": 0.2
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "casual"
+        }
+      ]
+    },
+    {
+      "id": "r61",
+      "emoji": "🧆",
+      "modes": [
+        "restaurants"
+      ],
+      "cat": "sharing",
+      "qKey": "cards.r61.q",
+      "descKey": "cards.r61.desc",
+      "dims": {
+        "adv": 0.2,
+        "soc": 0.9,
+        "lux": 0.2,
+        "act": -0.1,
+        "cul": 0.4,
+        "nat": -0.1,
+        "food": 0.8,
+        "night": 0.3,
+        "spont": 0.4
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "sharing"
+        }
+      ]
+    },
+    {
+      "id": "r62",
+      "emoji": "🥂",
+      "modes": [
+        "restaurants"
+      ],
+      "cat": "fine",
+      "qKey": "cards.r62.q",
+      "descKey": "cards.r62.desc",
+      "dims": {
+        "adv": 0,
+        "soc": 0.2,
+        "lux": 1,
+        "act": -0.3,
+        "cul": 0.3,
+        "nat": -0.2,
+        "food": 0.9,
+        "night": 0.2,
+        "spont": -0.4
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "fine"
+        }
+      ]
+    },
+    {
+      "id": "r63",
+      "emoji": "⭐",
+      "modes": [
+        "restaurants"
+      ],
+      "cat": "fine",
+      "qKey": "cards.r63.q",
+      "descKey": "cards.r63.desc",
+      "dims": {
+        "adv": 0,
+        "soc": 0.2,
+        "lux": 1,
+        "act": -0.3,
+        "cul": 0.3,
+        "nat": -0.2,
+        "food": 0.9,
+        "night": 0.2,
+        "spont": -0.4
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "fine"
+        }
+      ]
+    },
+    {
+      "id": "r64",
+      "emoji": "💸",
+      "modes": [
+        "restaurants"
+      ],
+      "cat": "fine",
+      "qKey": "cards.r64.q",
+      "descKey": "cards.r64.desc",
+      "dims": {
+        "adv": 0,
+        "soc": 0.2,
+        "lux": 1,
+        "act": -0.3,
+        "cul": 0.3,
+        "nat": -0.2,
+        "food": 0.9,
+        "night": 0.2,
+        "spont": -0.4
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "fine"
+        }
+      ]
+    },
+    {
+      "id": "r65",
+      "emoji": "🥖",
+      "modes": [
+        "restaurants"
+      ],
+      "cat": "local",
+      "qKey": "cards.r65.q",
+      "descKey": "cards.r65.desc",
+      "dims": {
+        "adv": 0.3,
+        "soc": 0.1,
+        "lux": 0.1,
+        "act": 0.2,
+        "cul": 0.7999999999999999,
+        "nat": -0.1,
+        "food": 0.6,
+        "night": 0.1,
+        "spont": 0.6
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "local"
+        }
+      ]
+    },
+    {
+      "id": "r66",
+      "emoji": "🍨",
+      "modes": [
+        "restaurants"
+      ],
+      "cat": "dessert",
+      "qKey": "cards.r66.q",
+      "descKey": "cards.r66.desc",
+      "dims": {
+        "adv": -0.1,
+        "soc": 0.1,
+        "lux": 0.1,
+        "act": -0.2,
+        "cul": 0.1,
+        "nat": -0.1,
+        "food": 0.7,
+        "night": 0.1,
+        "spont": 0.2
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "dessert"
+        }
+      ]
+    },
+    {
+      "id": "r67",
+      "emoji": "🍰",
+      "modes": [
+        "restaurants"
+      ],
+      "cat": "dessert",
+      "qKey": "cards.r67.q",
+      "descKey": "cards.r67.desc",
+      "dims": {
+        "adv": -0.1,
+        "soc": 0.1,
+        "lux": 0.2,
+        "act": -0.2,
+        "cul": 0.1,
+        "nat": -0.1,
+        "food": 0.7,
+        "night": 0.1,
+        "spont": 0.1
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "dessert"
+        }
+      ]
+    },
+    {
+      "id": "r68",
+      "emoji": "☕",
+      "modes": [
+        "restaurants"
+      ],
+      "cat": "coffee",
+      "qKey": "cards.r68.q",
+      "descKey": "cards.r68.desc",
+      "dims": {
+        "adv": -0.1,
+        "soc": 0.2,
+        "lux": 0.1,
+        "act": -0.2,
+        "cul": 0.2,
+        "nat": -0.1,
+        "food": 0.4,
+        "night": -0.6,
+        "spont": 0.1
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "coffee"
+        }
+      ]
+    },
+    {
+      "id": "r69",
+      "emoji": "🍲",
+      "modes": [
+        "restaurants"
+      ],
+      "cat": "streetfood",
+      "qKey": "cards.r69.q",
+      "descKey": "cards.r69.desc",
+      "dims": {
+        "adv": 0.5,
+        "soc": 0.4,
+        "lux": -0.6,
+        "act": 0.2,
+        "cul": 0.4,
+        "nat": -0.1,
+        "food": 0.9,
+        "night": 0.30000000000000004,
+        "spont": 0.8
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "streetfood"
+        }
+      ]
+    },
+    {
+      "id": "r70",
+      "emoji": "🥤",
+      "modes": [
+        "restaurants"
+      ],
+      "cat": "streetfood",
+      "qKey": "cards.r70.q",
+      "descKey": "cards.r70.desc",
+      "dims": {
+        "adv": 0.5,
+        "soc": 0.5,
+        "lux": -0.6,
+        "act": 0.2,
+        "cul": 0.4,
+        "nat": -0.1,
+        "food": 0.9,
+        "night": 0.2,
+        "spont": 0.8
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "streetfood"
+        }
+      ]
+    },
+    {
+      "id": "r71",
+      "emoji": "🍲",
+      "modes": [
+        "restaurants"
+      ],
+      "cat": "cuisine",
+      "qKey": "cards.r71.q",
+      "descKey": "cards.r71.desc",
+      "dims": {
+        "adv": 0.2,
+        "soc": 0.2,
+        "lux": 0.1,
+        "act": -0.1,
+        "cul": 0.4,
+        "nat": -0.1,
+        "food": 1,
+        "night": 0.1,
+        "spont": 0.30000000000000004
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "cuisine"
+        }
+      ]
+    },
+    {
+      "id": "r72",
+      "emoji": "🍽️",
+      "modes": [
+        "restaurants"
+      ],
+      "cat": "sharing",
+      "qKey": "cards.r72.q",
+      "descKey": "cards.r72.desc",
+      "dims": {
+        "adv": 0.2,
+        "soc": 0.9,
+        "lux": 0.2,
+        "act": -0.1,
+        "cul": 0.4,
+        "nat": -0.1,
+        "food": 0.8,
+        "night": 0.3,
+        "spont": 0.4
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "sharing"
+        }
+      ]
+    },
+    {
+      "id": "r73",
+      "emoji": "🧭",
+      "modes": [
+        "restaurants"
+      ],
+      "cat": "local",
+      "qKey": "cards.r73.q",
+      "descKey": "cards.r73.desc",
+      "dims": {
+        "adv": 0.3,
+        "soc": 0.1,
+        "lux": 0.1,
+        "act": 0.30000000000000004,
+        "cul": 0.7,
+        "nat": -0.1,
+        "food": 0.6,
+        "night": 0.1,
+        "spont": 0.7
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "local"
+        }
+      ]
+    },
+    {
+      "id": "r74",
+      "emoji": "🪟",
+      "modes": [
+        "restaurants"
+      ],
+      "cat": "ambience",
+      "qKey": "cards.r74.q",
+      "descKey": "cards.r74.desc",
+      "dims": {
+        "adv": -0.2,
+        "soc": -0.1,
+        "lux": 0.6,
+        "act": -0.3,
+        "cul": 0.2,
+        "nat": 0,
+        "food": 0.4,
+        "night": 0,
+        "spont": -0.2
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "ambience"
+        }
+      ]
+    },
+    {
+      "id": "r75",
+      "emoji": "🥡",
+      "modes": [
+        "restaurants"
+      ],
+      "cat": "quick",
+      "qKey": "cards.r75.q",
+      "descKey": "cards.r75.desc",
+      "dims": {
+        "adv": -0.2,
+        "soc": -0.1,
+        "lux": -0.2,
+        "act": 0.1,
+        "cul": -0.1,
+        "nat": -0.1,
+        "food": 0.4,
+        "night": -0.3,
+        "spont": 0.4
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "quick"
+        }
+      ]
+    },
+    {
+      "id": "r76",
+      "emoji": "🥜",
+      "modes": [
+        "restaurants"
+      ],
+      "cat": "diet",
+      "qKey": "cards.r76.q",
+      "descKey": "cards.r76.desc",
+      "dims": {
+        "adv": 0.1,
+        "soc": 0.1,
+        "lux": 0.1,
+        "act": 0.2,
+        "cul": 0.1,
+        "nat": 0.1,
+        "food": 0.5,
+        "night": -0.1,
+        "spont": 0.1
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "diet"
+        }
+      ]
+    },
+    {
+      "id": "r77",
+      "emoji": "🎉",
+      "modes": [
+        "restaurants"
+      ],
+      "cat": "lively",
+      "qKey": "cards.r77.q",
+      "descKey": "cards.r77.desc",
+      "dims": {
+        "adv": 0.1,
+        "soc": 0.8,
+        "lux": 0.1,
+        "act": 0.1,
+        "cul": 0.1,
+        "nat": -0.2,
+        "food": 0.4,
+        "night": 1,
+        "spont": 0.3
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "lively"
+        }
+      ]
+    },
+    {
+      "id": "r78",
+      "emoji": "🪑",
+      "modes": [
+        "restaurants"
+      ],
+      "cat": "quiet",
+      "qKey": "cards.r78.q",
+      "descKey": "cards.r78.desc",
+      "dims": {
+        "adv": -0.2,
+        "soc": -0.1,
+        "lux": 0.2,
+        "act": -0.2,
+        "cul": 0.1,
+        "nat": -0.1,
+        "food": 0.3,
+        "night": -0.5,
+        "spont": -0.1
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "quiet"
+        }
+      ]
+    },
+    {
+      "id": "r79",
+      "emoji": "🍳",
+      "modes": [
+        "restaurants"
+      ],
+      "cat": "brunch",
+      "qKey": "cards.r79.q",
+      "descKey": "cards.r79.desc",
+      "dims": {
+        "adv": 0,
+        "soc": 0.4,
+        "lux": 0.1,
+        "act": -0.1,
+        "cul": 0.1,
+        "nat": 0.1,
+        "food": 0.6,
+        "night": -0.4,
+        "spont": 0.2
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "brunch"
+        }
+      ]
+    },
+    {
+      "id": "r80",
+      "emoji": "🐙",
+      "modes": [
+        "restaurants"
+      ],
+      "cat": "seafood",
+      "qKey": "cards.r80.q",
+      "descKey": "cards.r80.desc",
+      "dims": {
+        "adv": 0.1,
+        "soc": 0.2,
+        "lux": 0.2,
+        "act": -0.1,
+        "cul": 0.2,
+        "nat": 0.2,
+        "food": 0.8,
+        "night": 0.1,
+        "spont": 0.1
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "seafood"
+        }
+      ]
+    },
+    {
+      "id": "r81",
+      "emoji": "🍲",
+      "modes": [
+        "restaurants"
+      ],
+      "cat": "cuisine",
+      "qKey": "cards.r81.q",
+      "descKey": "cards.r81.desc",
+      "dims": {
+        "adv": 0.2,
+        "soc": 0.2,
+        "lux": 0.1,
+        "act": -0.1,
+        "cul": 0.4,
+        "nat": -0.1,
+        "food": 1,
+        "night": 0.1,
+        "spont": 0.30000000000000004
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "cuisine"
+        }
+      ]
+    },
+    {
+      "id": "r82",
+      "emoji": "🍽️",
+      "modes": [
+        "restaurants"
+      ],
+      "cat": "sharing",
+      "qKey": "cards.r82.q",
+      "descKey": "cards.r82.desc",
+      "dims": {
+        "adv": 0.2,
+        "soc": 0.9,
+        "lux": 0.2,
+        "act": -0.1,
+        "cul": 0.4,
+        "nat": -0.1,
+        "food": 0.8,
+        "night": 0.3,
+        "spont": 0.4
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "sharing"
+        }
+      ]
+    },
+    {
+      "id": "r83",
+      "emoji": "🧭",
+      "modes": [
+        "restaurants"
+      ],
+      "cat": "local",
+      "qKey": "cards.r83.q",
+      "descKey": "cards.r83.desc",
+      "dims": {
+        "adv": 0.3,
+        "soc": 0.1,
+        "lux": 0.1,
+        "act": 0.30000000000000004,
+        "cul": 0.7,
+        "nat": -0.1,
+        "food": 0.6,
+        "night": 0.1,
+        "spont": 0.7
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "local"
+        }
+      ]
+    },
+    {
+      "id": "r84",
+      "emoji": "🪟",
+      "modes": [
+        "restaurants"
+      ],
+      "cat": "ambience",
+      "qKey": "cards.r84.q",
+      "descKey": "cards.r84.desc",
+      "dims": {
+        "adv": -0.2,
+        "soc": -0.1,
+        "lux": 0.6,
+        "act": -0.3,
+        "cul": 0.2,
+        "nat": 0,
+        "food": 0.4,
+        "night": 0,
+        "spont": -0.2
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "ambience"
+        }
+      ]
+    },
+    {
+      "id": "r85",
+      "emoji": "🥡",
+      "modes": [
+        "restaurants"
+      ],
+      "cat": "quick",
+      "qKey": "cards.r85.q",
+      "descKey": "cards.r85.desc",
+      "dims": {
+        "adv": -0.2,
+        "soc": -0.1,
+        "lux": -0.2,
+        "act": 0.1,
+        "cul": -0.1,
+        "nat": -0.1,
+        "food": 0.4,
+        "night": -0.3,
+        "spont": 0.4
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "quick"
+        }
+      ]
+    },
+    {
+      "id": "r86",
+      "emoji": "🥜",
+      "modes": [
+        "restaurants"
+      ],
+      "cat": "diet",
+      "qKey": "cards.r86.q",
+      "descKey": "cards.r86.desc",
+      "dims": {
+        "adv": 0.1,
+        "soc": 0.1,
+        "lux": 0.1,
+        "act": 0.2,
+        "cul": 0.1,
+        "nat": 0.1,
+        "food": 0.5,
+        "night": -0.1,
+        "spont": 0.1
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "diet"
+        }
+      ]
+    },
+    {
+      "id": "r87",
+      "emoji": "🎉",
+      "modes": [
+        "restaurants"
+      ],
+      "cat": "lively",
+      "qKey": "cards.r87.q",
+      "descKey": "cards.r87.desc",
+      "dims": {
+        "adv": 0.1,
+        "soc": 0.8,
+        "lux": 0.1,
+        "act": 0.1,
+        "cul": 0.1,
+        "nat": -0.2,
+        "food": 0.4,
+        "night": 1,
+        "spont": 0.3
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "lively"
+        }
+      ]
+    },
+    {
+      "id": "r88",
+      "emoji": "🪑",
+      "modes": [
+        "restaurants"
+      ],
+      "cat": "quiet",
+      "qKey": "cards.r88.q",
+      "descKey": "cards.r88.desc",
+      "dims": {
+        "adv": -0.2,
+        "soc": -0.1,
+        "lux": 0.2,
+        "act": -0.2,
+        "cul": 0.1,
+        "nat": -0.1,
+        "food": 0.3,
+        "night": -0.5,
+        "spont": -0.1
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "quiet"
+        }
+      ]
+    },
+    {
+      "id": "r89",
+      "emoji": "🍳",
+      "modes": [
+        "restaurants"
+      ],
+      "cat": "brunch",
+      "qKey": "cards.r89.q",
+      "descKey": "cards.r89.desc",
+      "dims": {
+        "adv": 0,
+        "soc": 0.4,
+        "lux": 0.1,
+        "act": -0.1,
+        "cul": 0.1,
+        "nat": 0.1,
+        "food": 0.6,
+        "night": -0.4,
+        "spont": 0.2
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "brunch"
+        }
+      ]
+    },
+    {
+      "id": "r90",
+      "emoji": "🐙",
+      "modes": [
+        "restaurants"
+      ],
+      "cat": "seafood",
+      "qKey": "cards.r90.q",
+      "descKey": "cards.r90.desc",
+      "dims": {
+        "adv": 0.1,
+        "soc": 0.2,
+        "lux": 0.2,
+        "act": -0.1,
+        "cul": 0.2,
+        "nat": 0.2,
+        "food": 0.8,
+        "night": 0.1,
+        "spont": 0.1
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "seafood"
+        }
+      ]
+    },
+    {
+      "id": "r91",
+      "emoji": "🍲",
+      "modes": [
+        "restaurants"
+      ],
+      "cat": "cuisine",
+      "qKey": "cards.r91.q",
+      "descKey": "cards.r91.desc",
+      "dims": {
+        "adv": 0.2,
+        "soc": 0.2,
+        "lux": 0.1,
+        "act": -0.1,
+        "cul": 0.4,
+        "nat": -0.1,
+        "food": 1,
+        "night": 0.1,
+        "spont": 0.30000000000000004
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "cuisine"
+        }
+      ]
+    },
+    {
+      "id": "r92",
+      "emoji": "🍽️",
+      "modes": [
+        "restaurants"
+      ],
+      "cat": "sharing",
+      "qKey": "cards.r92.q",
+      "descKey": "cards.r92.desc",
+      "dims": {
+        "adv": 0.2,
+        "soc": 0.9,
+        "lux": 0.2,
+        "act": -0.1,
+        "cul": 0.4,
+        "nat": -0.1,
+        "food": 0.8,
+        "night": 0.3,
+        "spont": 0.4
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "sharing"
+        }
+      ]
+    },
+    {
+      "id": "r93",
+      "emoji": "🧭",
+      "modes": [
+        "restaurants"
+      ],
+      "cat": "local",
+      "qKey": "cards.r93.q",
+      "descKey": "cards.r93.desc",
+      "dims": {
+        "adv": 0.3,
+        "soc": 0.1,
+        "lux": 0.1,
+        "act": 0.30000000000000004,
+        "cul": 0.7,
+        "nat": -0.1,
+        "food": 0.6,
+        "night": 0.1,
+        "spont": 0.7
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "local"
+        }
+      ]
+    },
+    {
+      "id": "r94",
+      "emoji": "🪟",
+      "modes": [
+        "restaurants"
+      ],
+      "cat": "ambience",
+      "qKey": "cards.r94.q",
+      "descKey": "cards.r94.desc",
+      "dims": {
+        "adv": -0.2,
+        "soc": -0.1,
+        "lux": 0.6,
+        "act": -0.3,
+        "cul": 0.2,
+        "nat": 0,
+        "food": 0.4,
+        "night": 0,
+        "spont": -0.2
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "ambience"
+        }
+      ]
+    },
+    {
+      "id": "r95",
+      "emoji": "🥡",
+      "modes": [
+        "restaurants"
+      ],
+      "cat": "quick",
+      "qKey": "cards.r95.q",
+      "descKey": "cards.r95.desc",
+      "dims": {
+        "adv": -0.2,
+        "soc": -0.1,
+        "lux": -0.2,
+        "act": 0.1,
+        "cul": -0.1,
+        "nat": -0.1,
+        "food": 0.4,
+        "night": -0.3,
+        "spont": 0.4
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "quick"
+        }
+      ]
+    },
+    {
+      "id": "r96",
+      "emoji": "🥜",
+      "modes": [
+        "restaurants"
+      ],
+      "cat": "diet",
+      "qKey": "cards.r96.q",
+      "descKey": "cards.r96.desc",
+      "dims": {
+        "adv": 0.1,
+        "soc": 0.1,
+        "lux": 0.1,
+        "act": 0.2,
+        "cul": 0.1,
+        "nat": 0.1,
+        "food": 0.5,
+        "night": -0.1,
+        "spont": 0.1
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "diet"
+        }
+      ]
+    },
+    {
+      "id": "r97",
+      "emoji": "🎉",
+      "modes": [
+        "restaurants"
+      ],
+      "cat": "lively",
+      "qKey": "cards.r97.q",
+      "descKey": "cards.r97.desc",
+      "dims": {
+        "adv": 0.1,
+        "soc": 0.8,
+        "lux": 0.1,
+        "act": 0.1,
+        "cul": 0.1,
+        "nat": -0.2,
+        "food": 0.4,
+        "night": 1,
+        "spont": 0.3
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "lively"
+        }
+      ]
+    },
+    {
+      "id": "r98",
+      "emoji": "🪑",
+      "modes": [
+        "restaurants"
+      ],
+      "cat": "quiet",
+      "qKey": "cards.r98.q",
+      "descKey": "cards.r98.desc",
+      "dims": {
+        "adv": -0.2,
+        "soc": -0.1,
+        "lux": 0.2,
+        "act": -0.2,
+        "cul": 0.1,
+        "nat": -0.1,
+        "food": 0.3,
+        "night": -0.5,
+        "spont": -0.1
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "quiet"
+        }
+      ]
+    },
+    {
+      "id": "r99",
+      "emoji": "🍳",
+      "modes": [
+        "restaurants"
+      ],
+      "cat": "brunch",
+      "qKey": "cards.r99.q",
+      "descKey": "cards.r99.desc",
+      "dims": {
+        "adv": 0,
+        "soc": 0.4,
+        "lux": 0.1,
+        "act": -0.1,
+        "cul": 0.1,
+        "nat": 0.1,
+        "food": 0.6,
+        "night": -0.4,
+        "spont": 0.2
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "brunch"
+        }
+      ]
+    },
+    {
+      "id": "r100",
+      "emoji": "🐙",
+      "modes": [
+        "restaurants"
+      ],
+      "cat": "seafood",
+      "qKey": "cards.r100.q",
+      "descKey": "cards.r100.desc",
+      "dims": {
+        "adv": 0.1,
+        "soc": 0.2,
+        "lux": 0.2,
+        "act": -0.1,
+        "cul": 0.2,
+        "nat": 0.2,
+        "food": 0.8,
+        "night": 0.1,
+        "spont": 0.1
+      },
+      "facets": [
+        {
+          "facetId": "category",
+          "valueId": "seafood"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,291 @@
+{
+  "version": "v2.0.0",
+  "facets": [
+    {
+      "id": "category",
+      "labelKey": "facet.category",
+      "values": [
+        {
+          "id": "adrenaline",
+          "labelKey": "cats.adrenaline",
+          "modes": [
+            "experiences"
+          ]
+        },
+        {
+          "id": "relaxation",
+          "labelKey": "cats.relaxation",
+          "modes": [
+            "experiences"
+          ]
+        },
+        {
+          "id": "culture",
+          "labelKey": "cats.culture",
+          "modes": [
+            "experiences"
+          ]
+        },
+        {
+          "id": "food",
+          "labelKey": "cats.food",
+          "modes": [
+            "experiences"
+          ]
+        },
+        {
+          "id": "nature",
+          "labelKey": "cats.nature",
+          "modes": [
+            "experiences"
+          ]
+        },
+        {
+          "id": "social",
+          "labelKey": "cats.social",
+          "modes": [
+            "experiences"
+          ]
+        },
+        {
+          "id": "nightlife",
+          "labelKey": "cats.nightlife",
+          "modes": [
+            "experiences"
+          ]
+        },
+        {
+          "id": "luxury",
+          "labelKey": "cats.luxury",
+          "modes": [
+            "experiences"
+          ]
+        },
+        {
+          "id": "spontaneous",
+          "labelKey": "cats.spontaneous",
+          "modes": [
+            "experiences"
+          ]
+        },
+        {
+          "id": "learning",
+          "labelKey": "cats.learning",
+          "modes": [
+            "experiences"
+          ]
+        },
+        {
+          "id": "shopping",
+          "labelKey": "cats.shopping",
+          "modes": [
+            "experiences"
+          ]
+        },
+        {
+          "id": "pace",
+          "labelKey": "cats.pace",
+          "modes": [
+            "experiences"
+          ]
+        },
+        {
+          "id": "cuisine",
+          "labelKey": "cats.cuisine",
+          "modes": [
+            "restaurants"
+          ]
+        },
+        {
+          "id": "casual",
+          "labelKey": "cats.casual",
+          "modes": [
+            "restaurants"
+          ]
+        },
+        {
+          "id": "spicy",
+          "labelKey": "cats.spicy",
+          "modes": [
+            "restaurants"
+          ]
+        },
+        {
+          "id": "fine",
+          "labelKey": "cats.fine",
+          "modes": [
+            "restaurants"
+          ]
+        },
+        {
+          "id": "fresh",
+          "labelKey": "cats.fresh",
+          "modes": [
+            "restaurants"
+          ]
+        },
+        {
+          "id": "drinks",
+          "labelKey": "cats.drinks",
+          "modes": [
+            "restaurants"
+          ]
+        },
+        {
+          "id": "sharing",
+          "labelKey": "cats.sharing",
+          "modes": [
+            "restaurants"
+          ]
+        },
+        {
+          "id": "hearty",
+          "labelKey": "cats.hearty",
+          "modes": [
+            "restaurants"
+          ]
+        },
+        {
+          "id": "ambience",
+          "labelKey": "cats.ambience",
+          "modes": [
+            "restaurants"
+          ]
+        },
+        {
+          "id": "lively",
+          "labelKey": "cats.lively",
+          "modes": [
+            "restaurants"
+          ]
+        },
+        {
+          "id": "quick",
+          "labelKey": "cats.quick",
+          "modes": [
+            "restaurants"
+          ]
+        },
+        {
+          "id": "dessert",
+          "labelKey": "cats.dessert",
+          "modes": [
+            "restaurants"
+          ]
+        },
+        {
+          "id": "local",
+          "labelKey": "cats.local",
+          "modes": [
+            "restaurants"
+          ]
+        },
+        {
+          "id": "craft",
+          "labelKey": "cats.craft",
+          "modes": [
+            "restaurants"
+          ]
+        },
+        {
+          "id": "diet",
+          "labelKey": "cats.diet",
+          "modes": [
+            "restaurants"
+          ]
+        },
+        {
+          "id": "family",
+          "labelKey": "cats.family",
+          "modes": [
+            "restaurants"
+          ]
+        },
+        {
+          "id": "quiet",
+          "labelKey": "cats.quiet",
+          "modes": [
+            "restaurants"
+          ]
+        },
+        {
+          "id": "brunch",
+          "labelKey": "cats.brunch",
+          "modes": [
+            "restaurants"
+          ]
+        },
+        {
+          "id": "seafood",
+          "labelKey": "cats.seafood",
+          "modes": [
+            "restaurants"
+          ]
+        },
+        {
+          "id": "bbq",
+          "labelKey": "cats.bbq",
+          "modes": [
+            "restaurants"
+          ]
+        },
+        {
+          "id": "streetfood",
+          "labelKey": "cats.streetfood",
+          "modes": [
+            "restaurants"
+          ]
+        },
+        {
+          "id": "coffee",
+          "labelKey": "cats.coffee",
+          "modes": [
+            "restaurants"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "dim",
+      "labelKey": "facet.dim",
+      "values": [
+        {
+          "id": "adv",
+          "labelKey": "dims.adv"
+        },
+        {
+          "id": "soc",
+          "labelKey": "dims.soc"
+        },
+        {
+          "id": "lux",
+          "labelKey": "dims.lux"
+        },
+        {
+          "id": "act",
+          "labelKey": "dims.act"
+        },
+        {
+          "id": "cul",
+          "labelKey": "dims.cul"
+        },
+        {
+          "id": "nat",
+          "labelKey": "dims.nat"
+        },
+        {
+          "id": "food",
+          "labelKey": "dims.food"
+        },
+        {
+          "id": "night",
+          "labelKey": "dims.night"
+        },
+        {
+          "id": "spont",
+          "labelKey": "dims.spont"
+        }
+      ]
+    }
+  ]
+}
