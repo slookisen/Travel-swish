@@ -67,6 +67,17 @@ def init_db() -> None:
               tax_json TEXT NOT NULL,
               updated_ts INTEGER NOT NULL
             );
+
+            CREATE TABLE IF NOT EXISTS pois (
+              id TEXT PRIMARY KEY,
+              mode TEXT NOT NULL,
+              destination TEXT NOT NULL,
+              name TEXT NOT NULL,
+              url TEXT,
+              cat TEXT,
+              tags_json TEXT NOT NULL,
+              updated_ts INTEGER NOT NULL
+            );
             """
         )
         con.commit()

@@ -8,6 +8,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
 from .db import connect, init_db
+from .seed import seed_if_empty
 from .schemas import (
     CardsResponse,
     EventIn,
@@ -38,6 +39,7 @@ app.add_middleware(
 @app.on_event("startup")
 def _startup() -> None:
     init_db()
+    seed_if_empty()
 
 
 @app.get("/health", response_model=Health)
@@ -153,7 +155,62 @@ def get_taxonomy() -> TaxonomyResponse:
 
 @app.post("/recs", response_model=RecsResponse)
 def recs(req: RecsRequest) -> RecsResponse:
-    # Stub for now: backend-first means we move the actual ranking here next.
+    """Very small v1 ranking.
+
+    For now we only rank from the local POI table.
+    Next: proper filters + diversification + explainability using taxonomy.
+    """
     if not req.destination.strip():
         raise HTTPException(status_code=400, detail="destination required")
-    return RecsResponse(items=[], model_version="v1-stub")
+
+    con = connect()
+    try:
+        # load prefs (if any)
+        prow = con.execute(
+            "SELECT prefs_json FROM prefs WHERE user_id=? AND mode=?",
+            (req.user_id, req.mode),
+        ).fetchone()
+        prefs = json.loads(prow["prefs_json"]) if prow and prow["prefs_json"] else {}
+
+        rows = con.execute(
+            """
+            SELECT id, name, url, cat, tags_json
+            FROM pois
+            WHERE mode=? AND lower(destination)=lower(?)
+            """,
+            (req.mode, req.destination),
+        ).fetchall()
+
+        items = []
+        for r in rows:
+            tags = json.loads(r["tags_json"] or "{}")
+            score = 0.0
+            why_bits = []
+            for k, w in (prefs or {}).items():
+                try:
+                    w = float(w)
+                except Exception:
+                    continue
+                tv = float(tags.get(k) or 0.0)
+                if tv == 0.0:
+                    continue
+                score += w * tv
+                if abs(w * tv) > 0.15:
+                    why_bits.append(k)
+            # normalize-ish into 0-100
+            match = max(0.0, min(100.0, 50.0 + score * 50.0))
+            items.append(
+                {
+                    "id": r["id"],
+                    "name": r["name"],
+                    "match": match,
+                    "why": "Matched facets: " + ", ".join(why_bits[:5]) if why_bits else "Bootstrap match (no prefs yet)",
+                    "url": r["url"] or "",
+                    "cat": r["cat"] or "",
+                }
+            )
+
+        items.sort(key=lambda x: x.get("match") or 0, reverse=True)
+        return RecsResponse(items=items[: max(1, min(200, req.limit))], model_version="v1-db")
+    finally:
+        con.close()
