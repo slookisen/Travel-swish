@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import json
 import logging
-import re
 import sqlite3
 import time
 import uuid
@@ -12,6 +11,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from .db import connect, init_db
 from .seed import seed_if_empty
+from .algo import DISLIKE_WEIGHT, LIKE_WEIGHT, detect_direction, diversify
 
 log = logging.getLogger(__name__)
 from .schemas import (
@@ -53,34 +53,6 @@ def _startup() -> None:
 def health() -> Health:
     return Health(ok=True, service="travel-swish-backend")
 
-
-_LIKE_RE = re.compile(r"(like|right|swipe_right)", re.IGNORECASE)
-_NOPE_RE = re.compile(r"(nope|dislike|left|swipe_left)", re.IGNORECASE)
-
-LIKE_WEIGHT = 1.0
-DISLIKE_WEIGHT = -0.3
-
-
-def _detect_direction(ev: EventIn) -> float | None:
-    """Return +1 (like) / -1 (dislike) or None if event is not a swipe."""
-    payload = ev.payload or {}
-    # 1. explicit dir field
-    d = payload.get("dir")
-    if d is not None:
-        try:
-            return 1.0 if float(d) >= 0 else -1.0
-        except (ValueError, TypeError):
-            pass
-    # 2. liked boolean
-    liked = payload.get("liked")
-    if liked is not None:
-        return 1.0 if liked else -1.0
-    # 3. event name heuristic
-    if _LIKE_RE.search(ev.name):
-        return 1.0
-    if _NOPE_RE.search(ev.name):
-        return -1.0
-    return None
 
 
 def _get_card_delta(con: sqlite3.Connection, card_id: str) -> dict[str, float] | None:
@@ -189,7 +161,7 @@ def ingest_event(ev: EventIn) -> dict:
         # --- prefs update from swipe ---
         prefs_updated = False
         if ev.card_id:
-            direction = _detect_direction(ev)
+            direction = detect_direction(ev.payload, ev.name)
             if direction is not None:
                 try:
                     prefs_updated = _update_prefs_from_swipe(
@@ -327,34 +299,6 @@ def get_taxonomy() -> TaxonomyResponse:
         con.close()
 
 
-def _diversify(items: list[dict], limit: int) -> list[dict]:
-    """Round-robin pick across categories so no single cat dominates the list.
-
-    Items must already be sorted by score (descending) on input.
-    Within each category the original score order is preserved.
-    """
-    from collections import OrderedDict
-
-    buckets: OrderedDict[str, list[dict]] = OrderedDict()
-    for it in items:
-        cat = it.get("cat") or "_uncategorized"
-        buckets.setdefault(cat, []).append(it)
-
-    result: list[dict] = []
-    while len(result) < limit:
-        added = False
-        for cat in list(buckets):
-            if len(result) >= limit:
-                break
-            if buckets[cat]:
-                result.append(buckets[cat].pop(0))
-                added = True
-            if not buckets[cat]:
-                del buckets[cat]
-        if not added:
-            break
-    return result
-
 
 @app.post("/recs", response_model=RecsResponse)
 def recs(req: RecsRequest) -> RecsResponse:
@@ -434,7 +378,7 @@ def recs(req: RecsRequest) -> RecsResponse:
 
         # apply diversity: round-robin across categories
         final_limit = max(1, min(200, req.limit))
-        items = _diversify(items, final_limit)
+        items = diversify(items, final_limit)
 
         return RecsResponse(items=items, model_version="v1-diverse")
     finally:
