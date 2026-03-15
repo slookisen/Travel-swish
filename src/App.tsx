@@ -5,6 +5,13 @@ import { DIMS, getDeckCards, t as tData, type Card, type Lang, type Mode } from 
 // --- Versioning (shows in footer; also helps debugging cached deploys)
 const APP_VERSION = 'v0.1.5';
 
+// Backend API (local dev default). On GitHub Pages we intentionally keep this empty.
+const DEFAULT_BACKEND_URL =
+  (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'))
+    ? 'http://127.0.0.1:8787'
+    : '';
+const BACKEND_URL = (String((import.meta as any).env?.VITE_BACKEND_URL || '').trim()) || DEFAULT_BACKEND_URL;
+
 // --- Strings
 const UI = {
   landingTitle: {
@@ -94,6 +101,20 @@ function saveSeen(mode: Mode, seen: string[]) {
   try {
     localStorage.setItem(K.seen, JSON.stringify(seen));
   } catch {}
+}
+
+function getOrCreateId(key: string) {
+  try {
+    const cur = localStorage.getItem(key);
+    if (cur) return cur;
+    const id = (typeof crypto !== 'undefined' && 'randomUUID' in crypto)
+      ? (crypto as any).randomUUID()
+      : `u_${Math.random().toString(16).slice(2)}_${Date.now()}`;
+    localStorage.setItem(key, id);
+    return id;
+  } catch {
+    return `u_${Math.random().toString(16).slice(2)}_${Date.now()}`;
+  }
 }
 
 // --- Cards (dataset-driven)
@@ -619,6 +640,7 @@ export default function App() {
 
   // API key removed (backend-first). Keep legacy localStorage key untouched.
   const apiKey = '';
+  const [userId] = useState(() => getOrCreateId('ts_user_id'));
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [cooldownUntil, setCooldownUntil] = useState(0);
@@ -689,16 +711,69 @@ export default function App() {
   const canSearch = totalSwipes >= 10 || Object.keys(swipes).length >= 10;
 
   async function findItems() {
-    // v1 without external API key: keep this deterministic.
-    // TODO(v2): call backend /recs once content catalog is in place.
     if (cooldownUntil && cooldownUntil > Date.now()) {
       setError(`For mange forespørsler. Vent ${cooldownLeft}s og prøv igjen.`);
       return;
     }
+
     setLoading(true);
     setError('');
+
     try {
       const profile = calcProfile(swipes, cards);
+
+      // v2: backend-first (local dev). If backend isn't available, fall back to local placeholder.
+      const prefs: Record<string, number> = Object.fromEntries(
+        Object.entries(profile).map(([k, v]) => [k, Math.round((v / 100) * 1000) / 1000])
+      );
+
+      if (BACKEND_URL) {
+        try {
+          // Persist prefs so /recs can use them.
+          await fetch(`${BACKEND_URL}/prefs`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ user_id: userId, mode, prefs, updated_ts: Date.now() }),
+          });
+
+          const r = await fetch(`${BACKEND_URL}/recs`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ user_id: userId, mode, destination, limit: 20 }),
+          });
+
+          if (!r.ok) throw new Error(`Backend /recs failed (${r.status})`);
+          const j = await r.json();
+
+          const raw = Array.isArray(j?.items) ? j.items : [];
+          if (raw.length) {
+            let newItems: Item[] = raw
+              .map((x: any) => ({
+                name: String(x?.name || ''),
+                cat: String(x?.cat || ''),
+                why: String(x?.why || ''),
+                url: String(x?.url || ''),
+                match: typeof x?.match === 'number' ? Math.round(x.match) : undefined,
+              }))
+              .filter(i => i.name);
+
+            const seen = new Set(seenNames.current);
+            const filtered = newItems.filter(i => !seen.has(i.name));
+            newItems = filtered.length ? filtered : newItems;
+
+            const newNames = newItems.map(i => i.name).filter(Boolean);
+            seenNames.current = [...seenNames.current, ...newNames];
+            saveSeen(mode, seenNames.current);
+
+            setItems(newItems);
+            setPage('results');
+            return;
+          }
+        } catch (e) {
+          // Keep app usable even if backend is down.
+          console.warn('Backend recs unavailable; falling back to local suggestions.', e);
+        }
+      }
 
       // Minimal local suggestions (placeholder) based on strongest dims.
       const top = Object.entries(profile)
