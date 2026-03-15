@@ -68,6 +68,16 @@ def init_db() -> None:
               updated_ts INTEGER NOT NULL
             );
 
+            CREATE TABLE IF NOT EXISTS pref_stats (
+              user_id TEXT NOT NULL,
+              mode TEXT NOT NULL,
+              facet TEXT NOT NULL,
+              num REAL NOT NULL DEFAULT 0,
+              den REAL NOT NULL DEFAULT 0,
+              PRIMARY KEY(user_id, mode, facet),
+              FOREIGN KEY(user_id) REFERENCES users(id)
+            );
+
             CREATE TABLE IF NOT EXISTS pois (
               id TEXT PRIMARY KEY,
               mode TEXT NOT NULL,

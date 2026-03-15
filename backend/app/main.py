@@ -1,6 +1,9 @@
 from __future__ import annotations
 
 import json
+import logging
+import re
+import sqlite3
 import time
 import uuid
 
@@ -9,6 +12,8 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from .db import connect, init_db
 from .seed import seed_if_empty
+
+log = logging.getLogger(__name__)
 from .schemas import (
     CardsResponse,
     EventIn,
@@ -49,6 +54,110 @@ def health() -> Health:
     return Health(ok=True, service="travel-swish-backend")
 
 
+_LIKE_RE = re.compile(r"(like|right|swipe_right)", re.IGNORECASE)
+_NOPE_RE = re.compile(r"(nope|dislike|left|swipe_left)", re.IGNORECASE)
+
+LIKE_WEIGHT = 1.0
+DISLIKE_WEIGHT = -0.3
+
+
+def _detect_direction(ev: EventIn) -> float | None:
+    """Return +1 (like) / -1 (dislike) or None if event is not a swipe."""
+    payload = ev.payload or {}
+    # 1. explicit dir field
+    d = payload.get("dir")
+    if d is not None:
+        try:
+            return 1.0 if float(d) >= 0 else -1.0
+        except (ValueError, TypeError):
+            pass
+    # 2. liked boolean
+    liked = payload.get("liked")
+    if liked is not None:
+        return 1.0 if liked else -1.0
+    # 3. event name heuristic
+    if _LIKE_RE.search(ev.name):
+        return 1.0
+    if _NOPE_RE.search(ev.name):
+        return -1.0
+    return None
+
+
+def _get_card_delta(con: sqlite3.Connection, card_id: str) -> dict[str, float] | None:
+    """Load facet deltas from the card table. Supports {delta:{…}} and {dims:{…}}."""
+    row = con.execute("SELECT card_json FROM cards WHERE id=?", (card_id,)).fetchone()
+    if not row:
+        return None
+    card = json.loads(row["card_json"])
+    delta = card.get("delta") or card.get("dims")
+    if not isinstance(delta, dict):
+        return None
+    # coerce values to float
+    out: dict[str, float] = {}
+    for k, v in delta.items():
+        try:
+            out[k] = float(v)
+        except (ValueError, TypeError):
+            continue
+    return out or None
+
+
+def _update_prefs_from_swipe(
+    con: sqlite3.Connection,
+    user_id: str,
+    mode: str,
+    card_id: str,
+    direction: float,
+    ts: int,
+) -> bool:
+    """Increment pref_stats, recompute prefs row. Returns True if updated."""
+    delta = _get_card_delta(con, card_id)
+    if not delta:
+        return False
+
+    weight = LIKE_WEIGHT if direction > 0 else DISLIKE_WEIGHT
+
+    for facet, facet_val in delta.items():
+        contribution = weight * facet_val
+        den_add = abs(facet_val)
+        if den_add == 0:
+            continue
+        con.execute(
+            """
+            INSERT INTO pref_stats(user_id, mode, facet, num, den)
+            VALUES(?, ?, ?, ?, ?)
+            ON CONFLICT(user_id, mode, facet) DO UPDATE SET
+              num = num + excluded.num,
+              den = den + excluded.den
+            """,
+            (user_id, mode, facet, contribution, den_add),
+        )
+
+    # recompute full prefs dict from pref_stats
+    rows = con.execute(
+        "SELECT facet, num, den FROM pref_stats WHERE user_id=? AND mode=?",
+        (user_id, mode),
+    ).fetchall()
+    prefs: dict[str, float] = {}
+    for r in rows:
+        den = r["den"]
+        if den == 0:
+            continue
+        prefs[r["facet"]] = max(-1.0, min(1.0, r["num"] / den))
+
+    con.execute(
+        """
+        INSERT INTO prefs(user_id, mode, prefs_json, updated_ts)
+        VALUES(?, ?, ?, ?)
+        ON CONFLICT(user_id, mode) DO UPDATE SET
+          prefs_json=excluded.prefs_json,
+          updated_ts=excluded.updated_ts
+        """,
+        (user_id, mode, json.dumps(prefs, ensure_ascii=False), ts),
+    )
+    return True
+
+
 @app.post("/events")
 def ingest_event(ev: EventIn) -> dict:
     con = connect()
@@ -76,8 +185,22 @@ def ingest_event(ev: EventIn) -> dict:
                 json.dumps(ev.payload, ensure_ascii=False),
             ),
         )
+
+        # --- prefs update from swipe ---
+        prefs_updated = False
+        if ev.card_id:
+            direction = _detect_direction(ev)
+            if direction is not None:
+                try:
+                    prefs_updated = _update_prefs_from_swipe(
+                        con, ev.user_id, ev.mode, ev.card_id, direction, ev.ts,
+                    )
+                except Exception:
+                    log.exception("pref_stats update failed (non-fatal)")
+        # --------------------------------
+
         con.commit()
-        return {"ok": True, "id": eid}
+        return {"ok": True, "id": eid, "prefs_updated": prefs_updated}
     finally:
         con.close()
 

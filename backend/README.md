@@ -37,6 +37,21 @@ Open:
 | GET | `/taxonomy` | Get taxonomy |
 | POST | `/recs` | Get ranked recommendations |
 
+## Swipe → prefs (automatic)
+When you `POST /events` with:
+- `card_id` present, and
+- the event indicates swipe direction via:
+  - `payload.dir` (>=0 like, <0 dislike), or
+  - `payload.liked` (boolean), or
+  - `name` matching like/right vs nope/left
+
+…the backend will update `pref_stats` and recompute normalized weights into `prefs` for that `user_id` + `mode`.
+
+Weights:
+- Like: `+1.0`
+- Dislike: `-0.3`
+- Normalization: per facet/dim `weight = clamp(num / den, -1..1)` where `den` accumulates `abs(delta)`.
+
 ## Notes
 - This is **local-only** initially.
 - No real auth yet. Before any public deployment we add auth + rate limits.
