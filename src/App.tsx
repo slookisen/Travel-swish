@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { T, globalCss, F, R } from './ui';
+import { T, globalCss, F, R, S } from './ui';
 import { DIMS, getDeckCards, t as tData, type Card, type Lang, type Mode } from './dataset';
 
 // --- Versioning (shows in footer; also helps debugging cached deploys)
@@ -337,30 +337,30 @@ function SwipeDeckCard({
           maxWidth: 520,
           background: T.card,
           border: `1px solid ${T.border}`,
-          borderRadius: 18,
-          padding: 16,
+          borderRadius: R.lg,
+          padding: S.md2,
           transform: `translateX(${dx}px) rotate(${dx / 18}deg)`,
           transition: dragging ? 'none' : 'transform 180ms ease',
           boxShadow: '0 18px 50px rgba(0,0,0,0.35)',
           userSelect: 'none',
         }}
       >
-        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: S.sm, alignItems: 'center' }}>
           <div style={{ fontSize: 28 }}>{card.emoji}</div>
           <div style={{ fontWeight: 900, fontSize: 16 }}>{card.q}</div>
         </div>
-        <div style={{ color: T.dim, marginTop: 8, lineHeight: 1.5 }}>{card.desc}</div>
+        <div style={{ color: T.dim, marginTop: S.xs2, lineHeight: 1.5 }}>{card.desc}</div>
 
-        <div style={{ display: 'flex', gap: 10, marginTop: 14 }}>
+        <div style={{ display: 'flex', gap: S.sm, marginTop: S.md }}>
           <button
             onClick={() => onSwipe(-1)}
-            style={{ padding: '10px 12px', borderRadius: 12, border: `1px solid ${T.border}`, background: 'transparent', color: T.red, cursor: 'pointer', fontWeight: 900 }}
+            style={{ padding: `${S.sm}px ${S.sm2}px`, borderRadius: R.md, border: `1px solid ${T.border}`, background: 'transparent', color: T.red, cursor: 'pointer', fontWeight: 900 }}
           >
             {UI.no[lang]}
           </button>
           <button
             onClick={() => onSwipe(1)}
-            style={{ padding: '10px 12px', borderRadius: 12, border: `1px solid ${T.border}`, background: 'transparent', color: T.green, cursor: 'pointer', fontWeight: 900 }}
+            style={{ padding: `${S.sm}px ${S.sm2}px`, borderRadius: R.md, border: `1px solid ${T.border}`, background: 'transparent', color: T.green, cursor: 'pointer', fontWeight: 900 }}
           >
             {UI.yes[lang]}
           </button>
@@ -480,19 +480,19 @@ function SwipeStack({
                   width: '100%',
                   background: T.card,
                   border: `1px solid ${T.border}`,
-                  borderRadius: 20,
-                  padding: 16,
+                  borderRadius: R.xl,
+                  padding: S.md2,
                   transform: `translateY(${y}px) scale(${scale})`,
                   boxShadow: T.shadow,
                   opacity: 0.55,
                   userSelect: 'none',
                 }}
               >
-                <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+                <div style={{ display: 'flex', gap: S.sm, alignItems: 'center' }}>
                   <div style={{ fontSize: 28 }}>{c.emoji}</div>
                   <div style={{ fontWeight: 900, fontSize: 16 }}>{c.q}</div>
                 </div>
-                <div style={{ color: T.dim, marginTop: 8, lineHeight: 1.5 }}>{c.desc}</div>
+                <div style={{ color: T.dim, marginTop: S.xs2, lineHeight: 1.5 }}>{c.desc}</div>
               </div>
             </div>
           );
@@ -527,8 +527,8 @@ function SwipeStack({
               width: '100%',
               background: T.card,
               border: `1px solid ${T.border}`,
-              borderRadius: 20,
-              padding: 16,
+              borderRadius: R.xl,
+              padding: S.md2,
               transform: `translate(${dx}px, ${dy}px) rotate(${dx / 18}deg)`,
               transition: dragging ? 'none' : animating ? 'transform 220ms ease' : 'transform 180ms ease',
               boxShadow: T.shadow,
@@ -540,10 +540,10 @@ function SwipeStack({
             <div
               style={{
                 position: 'absolute',
-                top: 14,
-                left: 14,
-                padding: '6px 10px',
-                borderRadius: 10,
+                top: S.md,
+                left: S.md,
+                padding: `${S.xs}px ${S.sm}px`,
+                borderRadius: R.sm,
                 border: `3px solid ${T.red}`,
                 color: T.red,
                 fontWeight: 1000,
@@ -558,10 +558,10 @@ function SwipeStack({
             <div
               style={{
                 position: 'absolute',
-                top: 14,
-                right: 14,
-                padding: '6px 10px',
-                borderRadius: 10,
+                top: S.md,
+                right: S.md,
+                padding: `${S.xs}px ${S.sm}px`,
+                borderRadius: R.sm,
                 border: `3px solid ${T.green}`,
                 color: T.green,
                 fontWeight: 1000,
@@ -574,24 +574,24 @@ function SwipeStack({
               {UI.yes[lang]}
             </div>
 
-            <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+            <div style={{ display: 'flex', gap: S.sm, alignItems: 'center' }}>
               <div style={{ fontSize: 28 }}>{top.emoji}</div>
               <div style={{ fontWeight: 900, fontSize: 16 }}>{top.q}</div>
             </div>
-            <div style={{ color: T.dim, marginTop: 8, lineHeight: 1.5 }}>{top.desc}</div>
+            <div style={{ color: T.dim, marginTop: S.xs2, lineHeight: 1.5 }}>{top.desc}</div>
 
-            <div style={{ display: 'flex', gap: 10, marginTop: 14, alignItems: 'center' }}>
+            <div style={{ display: 'flex', gap: S.sm, marginTop: S.md, alignItems: 'center' }}>
               <button
                 onClick={() => commitSwipe(-1)}
                 disabled={animating}
-                style={{ padding: '10px 12px', borderRadius: 12, border: `1px solid ${T.border}`, background: 'transparent', color: T.red, cursor: animating ? 'not-allowed' : 'pointer', fontWeight: 900 }}
+                style={{ padding: `${S.sm}px ${S.sm2}px`, borderRadius: R.md, border: `1px solid ${T.border}`, background: 'transparent', color: T.red, cursor: animating ? 'not-allowed' : 'pointer', fontWeight: 900 }}
               >
                 {UI.no[lang]}
               </button>
               <button
                 onClick={() => commitSwipe(1)}
                 disabled={animating}
-                style={{ padding: '10px 12px', borderRadius: 12, border: `1px solid ${T.border}`, background: 'transparent', color: T.green, cursor: animating ? 'not-allowed' : 'pointer', fontWeight: 900 }}
+                style={{ padding: `${S.sm}px ${S.sm2}px`, borderRadius: R.md, border: `1px solid ${T.border}`, background: 'transparent', color: T.green, cursor: animating ? 'not-allowed' : 'pointer', fontWeight: 900 }}
               >
                 {UI.yes[lang]}
               </button>

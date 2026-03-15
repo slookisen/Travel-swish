@@ -23,8 +23,11 @@ export const TOKENS = {
   },
   space: {
     xs: 6,
+    xs2: 8,
     sm: 10,
+    sm2: 12,
     md: 14,
+    md2: 16,
     lg: 18,
     xl: 22,
     page: 24,
@@ -70,8 +73,11 @@ export const globalCss = `
     --r-pill: ${R.pill}px;
 
     --s-xs: ${S.xs}px;
+    --s-xs2: ${S.xs2}px;
     --s-sm: ${S.sm}px;
+    --s-sm2: ${S.sm2}px;
     --s-md: ${S.md}px;
+    --s-md2: ${S.md2}px;
     --s-lg: ${S.lg}px;
     --s-xl: ${S.xl}px;
     --s-page: ${S.page}px;
