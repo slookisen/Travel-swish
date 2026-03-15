@@ -3,7 +3,7 @@ import { T, globalCss } from './ui';
 import { DIMS, getDeckCards, t as tData, type Card, type Lang, type Mode } from './dataset';
 
 // --- Versioning (shows in footer; also helps debugging cached deploys)
-const APP_VERSION = 'v0.1.4';
+const APP_VERSION = 'v0.1.5';
 
 // --- Strings
 const UI = {
@@ -22,10 +22,11 @@ const UI = {
   destination: { no: 'Destinasjon', en: 'Destination', sv: 'Destination' },
   destinationMissing: { no: 'Destinasjon mangler', en: 'Destination required', sv: 'Destination krävs' },
   apiKeyNote: {
-    no: 'Demo: nøkkelen lagres kun i nettleseren din. Lansering: flyttes til backend.',
-    en: 'Demo: key is stored only in your browser. Launch: move to backend.',
-    sv: 'Demo: nyckeln lagras bara i din webbläsare. Lansering: flyttas till backend.',
+    no: 'API-nøkkel er ikke lenger nødvendig i appen.',
+    en: 'API key is no longer required in the app.',
+    sv: 'API-nyckel behövs inte längre i appen.',
   },
+  // kept for backwards compatibility (not used)
   apiKeyMissing: { no: 'API-nøkkel mangler', en: 'API key required', sv: 'API-nyckel krävs' },
   back: { no: 'Tilbake', en: 'Back', sv: 'Tillbaka' },
   startMode: {
@@ -616,9 +617,8 @@ export default function App() {
     try { return localStorage.getItem('ts_destination') || ''; } catch { return ''; }
   });
 
-  const [apiKey, setApiKey] = useState(() => {
-    try { return localStorage.getItem('apiKey') || ''; } catch { return ''; }
-  });
+  // API key removed (backend-first). Keep legacy localStorage key untouched.
+  const apiKey = '';
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [cooldownUntil, setCooldownUntil] = useState(0);
@@ -655,9 +655,7 @@ export default function App() {
     try { localStorage.setItem('ts_destination', destination); } catch {}
   }, [destination]);
 
-  useEffect(() => {
-    try { localStorage.setItem('apiKey', apiKey); } catch {}
-  }, [apiKey]);
+  // (no apiKey persistence)
 
   const cards = useMemo(() => getDeckCards(mode, lang), [mode, lang]);
 
@@ -691,11 +689,8 @@ export default function App() {
   const canSearch = totalSwipes >= 10 || Object.keys(swipes).length >= 10;
 
   async function findItems() {
-    if (!apiKey.trim()) {
-      setError(UI.apiKeyMissing[lang]);
-      setPage('home');
-      return;
-    }
+    // v1 without external API key: keep this deterministic.
+    // TODO(v2): call backend /recs once content catalog is in place.
     if (cooldownUntil && cooldownUntil > Date.now()) {
       setError(`For mange forespørsler. Vent ${cooldownLeft}s og prøv igjen.`);
       return;
@@ -704,10 +699,23 @@ export default function App() {
     setError('');
     try {
       const profile = calcProfile(swipes, cards);
-      const profileText = describeProfile(profile, lang);
-      const prompt = buildPrompt(mode, destination, profileText, lang, seenNames.current);
-      const result = await askClaude(prompt, apiKey);
-      const newItems = parseItems(result, lang).sort((a, b) => (b.match || 0) - (a.match || 0));
+
+      // Minimal local suggestions (placeholder) based on strongest dims.
+      const top = Object.entries(profile)
+        .sort((a, b) => Math.abs(b[1]) - Math.abs(a[1]))
+        .slice(0, 3)
+        .map(([k, v]) => `${k}:${Math.round(v)}`)
+        .join(', ');
+
+      const newItems: Item[] = [
+        {
+          name: lang === 'no' ? `Forslag (lokal) for ${destination}` : lang === 'sv' ? `Förslag (lokalt) för ${destination}` : `Local suggestions for ${destination}`,
+          cat: mode === 'restaurants' ? (lang === 'no' ? 'Restauranter' : 'Restaurants') : (lang === 'no' ? 'Opplevelser' : 'Experiences'),
+          why: lang === 'no' ? `Basert på profilen din (${top}).` : `Based on your profile (${top}).`,
+          match: 70,
+          url: '',
+        },
+      ];
 
       const newNames = newItems.map(i => i.name).filter(Boolean);
       seenNames.current = [...seenNames.current, ...newNames];
@@ -717,13 +725,7 @@ export default function App() {
       setPage('results');
     } catch (e: any) {
       const msg = String(e?.message || 'Unknown error');
-      if (msg.startsWith('RATE_LIMIT:')) {
-        const waitS = parseInt(msg.split(':')[1] || '60', 10) || 60;
-        setCooldownUntil(Date.now() + waitS * 1000);
-        setError(`Rate limit. Prøv igjen om ${waitS}s.`);
-      } else {
-        setError(msg);
-      }
+      setError(msg);
     } finally {
       setLoading(false);
     }
@@ -847,25 +849,11 @@ export default function App() {
             />
           </div>
 
-          <div style={{ marginTop: 14 }}>
-            <label style={{ display: 'block', marginBottom: 6, color: T.dim }}>Anthropic API key</label>
-            <input
-              value={apiKey}
-              onChange={e => setApiKey(e.target.value)}
-              placeholder="sk-ant-…"
-              style={{ width: '100%', padding: 12, borderRadius: 12, border: `1px solid ${T.border}`, background: T.card, color: T.txt, fontFamily: 'monospace' }}
-            />
-            <div style={{ marginTop: 6, fontSize: 12, color: T.dim }}>
-              {UI.apiKeyNote[lang]}
-            </div>
-          </div>
 
           <div style={{ marginTop: 16, display: 'flex', gap: 10, flexWrap: 'wrap' }}>
             <button
               onClick={() => {
                 if (!destination.trim()) { setError(UI.destinationMissing[lang]); return; }
-                if (!apiKey.trim()) { setError(UI.apiKeyMissing[lang]); return; }
-                localStorage.setItem('apiKey', apiKey.trim());
                 setPage('swipe');
               }}
               style={{ padding: '12px 16px', borderRadius: 12, border: 'none', cursor: 'pointer', background: `linear-gradient(135deg, ${T.gold}, ${T.teal})`, color: T.bg, fontWeight: 800 }}
