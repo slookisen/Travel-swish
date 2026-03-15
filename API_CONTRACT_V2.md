@@ -293,6 +293,58 @@ Returns `{"ok": true, "taxonomy": {}, "updated_ts": 0}` if no taxonomy is seeded
 
 ---
 
+### `GET /search/brave`
+
+Server-side **Brave Web Search** proxy. Uses a server-side API key (no key is exposed to the browser).
+
+**API key env (first one found wins):**
+- `BRAVE_SEARCH_API_KEY` (preferred)
+- `BRAVE_API_KEY`
+- `OPENCLAW_BRAVE_API_KEY`
+- `TS_BRAVE_API_KEY` (Travel‑Swish fallback)
+
+**Query parameters**
+
+| Param | Type | Required | Description |
+|---|---|---|---|
+| `q` | `string` | ✅ | Search query |
+| `count` | `int` | ❌ | Results count, 1–20 (default: `10`) |
+| `country` | `string` | ❌ | Brave `country` param (optional) |
+| `search_lang` | `string` | ❌ | Brave `search_lang` param (optional) |
+| `safesearch` | `string` | ❌ | `moderate` (default), `strict`, `off` |
+| `freshness` | `string` | ❌ | Brave `freshness` param (optional) |
+
+**Response** `200 OK` (`WebSearchResponse`)
+
+```json
+{
+  "ok": true,
+  "q": "best street food bangkok",
+  "provider": "brave",
+  "cached": false,
+  "items": [
+    {
+      "id": "brave:5a9f3c9d1b4d2e11",
+      "name": "10 Best Street Food Spots in Bangkok",
+      "url": "https://example.com/bangkok-street-food",
+      "cat": "web",
+      "why": "Brave web search result (rank 1)",
+      "match": 0,
+      "source": "brave",
+      "snippet": "From Chinatown to Victory Monument..."
+    }
+  ]
+}
+```
+
+**Normalized item shape:** `{id,name,url,cat,why,match,source,snippet}` (RecItem-like + `source` + `snippet`).
+
+**Reliability (baseline):**
+- Timeouts + retries on transient errors (429/5xx)
+- Minimal in-process TTL cache (~5 min) to avoid hammering
+
+---
+
 ### `POST /recs`
 
 Get personalized recommendations for a destination. Uses dot-product scoring with category diversity and facet-level explainability.

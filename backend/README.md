@@ -36,6 +36,25 @@ Open:
 | GET | `/cards` | List cards by mode |
 | GET | `/taxonomy` | Get taxonomy |
 | POST | `/recs` | Get ranked recommendations |
+| GET | `/search/brave` | Brave web search proxy (server-side key) |
+
+## Brave Search (server-side)
+
+Env (first one found wins):
+- `BRAVE_SEARCH_API_KEY` (preferred)
+- `BRAVE_API_KEY`
+- `OPENCLAW_BRAVE_API_KEY`
+- `TS_BRAVE_API_KEY` (Travel‑Swish fallback)
+
+Quick smoke (after starting uvicorn):
+
+```powershell
+# 1) Sanity: Python syntax compile
+py -3.12 -m compileall -q .\app
+
+# 2) Brave search endpoint
+curl "http://127.0.0.1:8787/search/brave?q=best%20coffee%20oslo&count=3"
+```
 
 ## Swipe → prefs (automatic)
 When you `POST /events` with:
