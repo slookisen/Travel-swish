@@ -60,6 +60,27 @@ Weights:
 
 **Diversity:** After scoring and sorting, a round-robin diversifier interleaves results across categories (`cat`) so the final list doesn't cluster items from a single category. Within each category, score order is preserved.
 
+## Reset / reseed DB
+
+A small CLI script lives in `scripts/reset_db.py`.  
+Run it **from the `backend/` directory** with the 3.12 venv active:
+
+```powershell
+cd C:\Users\dafre\Travel-Swish\backend
+.\.venv312\Scripts\Activate.ps1          # or whichever venv you use
+
+# 1. Dry-run – just print DB path & status (safe, changes nothing)
+py -3.12 -m scripts.reset_db
+
+# 2. Re-seed empty tables (additive, won't touch existing data)
+py -3.12 -m scripts.reset_db --reseed
+
+# 3. Full reset – DELETE the DB, recreate tables, seed demo data
+py -3.12 -m scripts.reset_db --force
+```
+
+> **Safety:** without `--force` or `--reseed`, the script only prints info and exits.
+
 ## Notes
 - This is **local-only** initially.
 - No real auth yet. Before any public deployment we add auth + rate limits.
