@@ -16,6 +16,17 @@
       html, body, #root { margin: 0; padding: 0; height: 100%; background: #0a0d1a; }
       * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     </style>
+
+    <!-- SPA redirect: pick up route from 404.html ?p= param and restore history -->
+    <script>
+      (function () {
+        var p = new URLSearchParams(window.location.search).get('p');
+        if (p) {
+          // Replace the ?p= URL with the real SPA route (no reload)
+          window.history.replaceState(null, '', window.location.pathname + decodeURIComponent(p));
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

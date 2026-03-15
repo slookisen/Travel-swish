@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Travel-Swish</title>
+    <!--
+      GitHub Pages SPA redirect:
+      Pages serves this file for any 404.  We redirect to index.html,
+      encoding the original path+query in a query param so the SPA
+      can reconstruct the route after hydration.
+      Technique from https://github.com/rafgraph/spa-github-pages
+    -->
+    <script>
+      (function () {
+        // Base path must match vite.config.ts `base`
+        var base = '/Travel-swish/';
+        var path = window.location.pathname;
+        // Strip the base prefix to get the SPA route
+        var route = path.startsWith(base) ? path.slice(base.length) : path;
+        var search = window.location.search || '';
+        var hash = window.location.hash || '';
+        // Redirect to index with the route encoded in `?p=`
+        var dest = base + '?p=' + encodeURIComponent('/' + route + search + hash);
+        window.location.replace(dest);
+      })();
+    </script>
+  </head>
+  <body>
+    <!-- Redirecting... -->
+  </body>
+</html>

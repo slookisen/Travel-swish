@@ -1,0 +1,3 @@
+# Travel-Swish — discourage indexing (link-only / unlisted)
+User-agent: *
+Disallow: /
