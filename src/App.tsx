@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { T, globalCss } from './ui';
+import { T, globalCss, F, R } from './ui';
 import { DIMS, getDeckCards, t as tData, type Card, type Lang, type Mode } from './dataset';
 
 // --- Versioning (shows in footer; also helps debugging cached deploys)
@@ -767,7 +767,7 @@ export default function App() {
 
   // --- UI (stable; with swipe deck)
   return (
-    <div style={{ minHeight: '100vh', background: T.bg, color: T.txt, fontFamily: 'system-ui, -apple-system, Segoe UI, Roboto, Arial' }}>
+    <div style={{ minHeight: '100vh', background: T.bg, color: T.txt, fontFamily: F.system }}>
       <style>{globalCss}</style>
       <div style={{ padding: '14px 18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: `1px solid ${T.borderSoft}` }}>
         <div style={{ fontWeight: 900, color: T.gold, letterSpacing: 0.2 }}>Travel‑Swish</div>
@@ -826,7 +826,7 @@ export default function App() {
                 onClick={() => setMode(m)}
                 style={{
                   padding: '10px 14px',
-                  borderRadius: 999,
+                  borderRadius: R.pill,
                   border: `1px solid ${T.border}`,
                   cursor: 'pointer',
                   background: mode === m ? `linear-gradient(135deg, ${T.gold}, ${T.teal})` : T.card,
@@ -894,7 +894,7 @@ export default function App() {
                     onClick={resetDeck}
                     style={{
                       padding: '10px 14px',
-                      borderRadius: 999,
+                      borderRadius: R.pill,
                       border: `1px solid ${T.borderSoft}`,
                       background: 'transparent',
                       color: T.txt,
@@ -908,7 +908,7 @@ export default function App() {
                     onClick={() => setPage('home')}
                     style={{
                       padding: '10px 14px',
-                      borderRadius: 999,
+                      borderRadius: R.pill,
                       border: `1px solid ${T.borderSoft}`,
                       background: 'transparent',
                       color: T.dim,
@@ -957,7 +957,7 @@ export default function App() {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
             <button
               onClick={() => setPage('swipe')}
-              style={{ background: 'transparent', border: `1px solid ${T.border}`, color: T.txt, padding: '8px 10px', borderRadius: 999, cursor: 'pointer' }}
+              style={{ background: 'transparent', border: `1px solid ${T.border}`, color: T.txt, padding: '8px 10px', borderRadius: R.pill, cursor: 'pointer' }}
             >
               {UI.back[lang]}
             </button>
@@ -973,7 +973,7 @@ export default function App() {
                 disabled={loading || (cooldownUntil && cooldownUntil > Date.now())}
                 style={{
                   padding: '10px 14px',
-                  borderRadius: 999,
+                  borderRadius: R.pill,
                   border: 'none',
                   cursor: loading ? 'not-allowed' : 'pointer',
                   background: loading ? T.card : `linear-gradient(135deg, ${T.gold}, ${T.teal})`,
@@ -1011,7 +1011,7 @@ export default function App() {
                       </div>
                       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 8, alignItems: 'center' }}>
                         {it.cat && (
-                          <span style={{ fontSize: 12, color: T.dim, border: `1px solid ${T.borderSoft}`, padding: '4px 10px', borderRadius: 999, background: 'rgba(255,255,255,0.02)' }}>
+                          <span style={{ fontSize: 12, color: T.dim, border: `1px solid ${T.borderSoft}`, padding: '4px 10px', borderRadius: R.pill, background: 'rgba(255,255,255,0.02)' }}>
                             {it.cat}
                           </span>
                         )}
@@ -1020,7 +1020,7 @@ export default function App() {
                             href={it.url}
                             target="_blank"
                             rel="noreferrer"
-                            style={{ fontSize: 12, color: T.teal, textDecoration: 'none', border: `1px solid ${T.borderSoft}`, padding: '4px 10px', borderRadius: 999 }}
+                            style={{ fontSize: 12, color: T.teal, textDecoration: 'none', border: `1px solid ${T.borderSoft}`, padding: '4px 10px', borderRadius: R.pill }}
                           >
                             {UI.openLink[lang]}
                           </a>
@@ -1031,7 +1031,7 @@ export default function App() {
                     <div style={{
                       flexShrink: 0,
                       padding: '6px 10px',
-                      borderRadius: 999,
+                      borderRadius: R.pill,
                       background: 'rgba(212,165,116,0.14)',
                       border: '1px solid rgba(212,165,116,0.28)',
                       color: T.gold,
