@@ -4,7 +4,10 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
+    "gen:buildmeta": "node ./tools/gen-build-meta.mjs",
+    "predev": "npm run gen:buildmeta",
     "dev": "vite",
+    "prebuild": "npm run gen:buildmeta",
     "build": "vite build",
     "preview": "vite preview --port 4173",
     "test:smoke": "node ./tools/smoke-check.mjs",

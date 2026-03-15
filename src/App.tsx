@@ -1,9 +1,10 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { T, globalCss, F, R, S } from './ui';
 import { DIMS, getDeckCards, t as tData, type Card, type Lang, type Mode } from './dataset';
+import { BUILD_META } from './buildMeta';
 
 // --- Versioning (shows in footer; also helps debugging cached deploys)
-const APP_VERSION = 'v0.1.5';
+const APP_VERSION = BUILD_META.version;
 
 // Backend API (local dev default). On GitHub Pages we intentionally keep this empty.
 const DEFAULT_BACKEND_URL =
@@ -648,6 +649,21 @@ export default function App() {
   const [items, setItems] = useState<Item[]>([]);
   const seenNames = useRef<string[]>([]);
 
+  // If the browser shows a cached build after a deploy, we want a simple
+  // “new version available” banner that can force a reload.
+  const [updateAvailable, setUpdateAvailable] = useState<string | null>(null);
+  useEffect(() => {
+    const base = String((import.meta as any).env?.BASE_URL || '/');
+    const url = `${base}version.json?ts=${Date.now()}`;
+    fetch(url, { cache: 'no-store' })
+      .then(r => (r.ok ? r.json() : null))
+      .then((j: any) => {
+        const remote = String(j?.version || '').trim();
+        if (remote && remote !== APP_VERSION) setUpdateAvailable(remote);
+      })
+      .catch(() => {});
+  }, []);
+
   // keep seen cache per mode
   useEffect(() => {
     const mem = loadMemory(mode);
@@ -863,6 +879,32 @@ export default function App() {
           </select>
         </div>
       </div>
+
+      {updateAvailable && (
+        <div
+          style={{
+            padding: '10px 18px',
+            borderBottom: `1px solid ${T.borderSoft}`,
+            background: 'rgba(212,165,116,0.10)',
+            display: 'flex',
+            gap: 12,
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+          }}
+        >
+          <div style={{ fontWeight: 900, color: T.gold }}>
+            Update available: {updateAvailable} (you are {APP_VERSION})
+          </div>
+          <button
+            className="pill"
+            onClick={() => window.location.reload()}
+            style={{ background: 'transparent', color: T.txt, border: `1px solid ${T.border}` }}
+          >
+            Refresh
+          </button>
+        </div>
+      )}
 
       {page === 'landing' && (
         <div className="container fadeUp">
