@@ -12,6 +12,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from .db import connect, init_db
 from .seed import seed_if_empty
 from .algo import DISLIKE_WEIGHT, LIKE_WEIGHT, detect_direction, diversify
+from .brave_search import brave_web_search
 
 log = logging.getLogger(__name__)
 from .schemas import (
@@ -24,6 +25,7 @@ from .schemas import (
     RecsRequest,
     RecsResponse,
     TaxonomyResponse,
+    WebSearchResponse,
 )
 
 app = FastAPI(title="Travel-Swish API", version="0.1.0")
@@ -298,6 +300,43 @@ def get_taxonomy() -> TaxonomyResponse:
     finally:
         con.close()
 
+
+@app.get("/search/brave", response_model=WebSearchResponse)
+def brave_search(
+    q: str,
+    count: int = 10,
+    country: str | None = None,
+    search_lang: str | None = None,
+    safesearch: str = "moderate",
+    freshness: str | None = None,
+) -> WebSearchResponse:
+    """Server-side Brave web search.
+
+    Notes:
+    - Uses env-provided API key (prefer OpenClaw env, fallback TS_BRAVE_API_KEY).
+    - Adds basic timeouts, retries and a small in-process TTL cache to avoid hammering.
+    """
+
+    q = (q or "").strip()
+    if not q:
+        raise HTTPException(status_code=400, detail="q required")
+
+    try:
+        items, cached = brave_web_search(
+            q=q,
+            count=count,
+            country=country,
+            search_lang=search_lang,
+            safesearch=safesearch,
+            freshness=freshness,
+        )
+        return WebSearchResponse(q=q, provider="brave", cached=cached, items=items)
+    except RuntimeError as e:
+        # config / missing key
+        raise HTTPException(status_code=500, detail=str(e))
+    except Exception:
+        log.exception("brave_search failed")
+        raise HTTPException(status_code=502, detail="brave_search_failed")
 
 
 @app.post("/recs", response_model=RecsResponse)

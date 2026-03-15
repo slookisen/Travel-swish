@@ -88,3 +88,27 @@ class RecsResponse(BaseModel):
     ok: bool = True
     items: List[RecItem]
     model_version: str = "v1-stub"
+
+
+# --- Web search (Brave) ---
+
+
+class WebSearchItem(BaseModel):
+    """RecItem-like shape used for external web results."""
+
+    id: str
+    name: str
+    url: str = ""
+    cat: str = ""
+    why: str = ""
+    match: float = 0
+    source: str = "brave"
+    snippet: str = ""
+
+
+class WebSearchResponse(BaseModel):
+    ok: bool = True
+    q: str
+    provider: str = "brave"
+    cached: bool = False
+    items: List[WebSearchItem]
