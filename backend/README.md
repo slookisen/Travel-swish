@@ -52,6 +52,14 @@ Weights:
 - Dislike: `-0.3`
 - Normalization: per facet/dim `weight = clamp(num / den, -1..1)` where `den` accumulates `abs(delta)`.
 
+## `/recs` scoring, diversity & explainability (v1-diverse)
+
+**Scoring:** For each POI, compute the dot-product of the user's learned pref weights and the POI's tag values. The raw score is normalized into a 0–100 `match` value via `50 + score × 50` (clamped).
+
+**Explainability:** The `why` field now lists the top 5 contributing facets with their signed contribution (e.g. `"Top factors: adventure (+0.42), culture (+0.31), nightlife (−0.18)"`). When no prefs exist yet the string says "Bootstrap match (no prefs yet)".
+
+**Diversity:** After scoring and sorting, a round-robin diversifier interleaves results across categories (`cat`) so the final list doesn't cluster items from a single category. Within each category, score order is preserved.
+
 ## Notes
 - This is **local-only** initially.
 - No real auth yet. Before any public deployment we add auth + rate limits.

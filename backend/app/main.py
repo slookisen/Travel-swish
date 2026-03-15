@@ -327,12 +327,42 @@ def get_taxonomy() -> TaxonomyResponse:
         con.close()
 
 
+def _diversify(items: list[dict], limit: int) -> list[dict]:
+    """Round-robin pick across categories so no single cat dominates the list.
+
+    Items must already be sorted by score (descending) on input.
+    Within each category the original score order is preserved.
+    """
+    from collections import OrderedDict
+
+    buckets: OrderedDict[str, list[dict]] = OrderedDict()
+    for it in items:
+        cat = it.get("cat") or "_uncategorized"
+        buckets.setdefault(cat, []).append(it)
+
+    result: list[dict] = []
+    while len(result) < limit:
+        added = False
+        for cat in list(buckets):
+            if len(result) >= limit:
+                break
+            if buckets[cat]:
+                result.append(buckets[cat].pop(0))
+                added = True
+            if not buckets[cat]:
+                del buckets[cat]
+        if not added:
+            break
+    return result
+
+
 @app.post("/recs", response_model=RecsResponse)
 def recs(req: RecsRequest) -> RecsResponse:
-    """Very small v1 ranking.
+    """v1 ranking with category diversity and facet-level explainability.
 
-    For now we only rank from the local POI table.
-    Next: proper filters + diversification + explainability using taxonomy.
+    Scoring: dot-product of user pref weights × POI tag values → normalized to 0-100.
+    Diversity: round-robin across categories so the result list stays varied.
+    Explainability: `why` includes the top contributing facets with their direction (+/-).
     """
     if not req.destination.strip():
         raise HTTPException(status_code=400, detail="destination required")
@@ -359,7 +389,8 @@ def recs(req: RecsRequest) -> RecsResponse:
         for r in rows:
             tags = json.loads(r["tags_json"] or "{}")
             score = 0.0
-            why_bits = []
+            # collect (facet_name, contribution) for explainability
+            contributions: list[tuple[str, float]] = []
             for k, w in (prefs or {}).items():
                 try:
                     w = float(w)
@@ -368,23 +399,43 @@ def recs(req: RecsRequest) -> RecsResponse:
                 tv = float(tags.get(k) or 0.0)
                 if tv == 0.0:
                     continue
-                score += w * tv
-                if abs(w * tv) > 0.15:
-                    why_bits.append(k)
+                contrib = w * tv
+                score += contrib
+                contributions.append((k, contrib))
+
             # normalize-ish into 0-100
             match = max(0.0, min(100.0, 50.0 + score * 50.0))
+
+            # build explainable why string with top facet contributions
+            if contributions:
+                # sort by absolute contribution descending
+                contributions.sort(key=lambda x: abs(x[1]), reverse=True)
+                top = contributions[:5]
+                parts = []
+                for facet, c in top:
+                    sign = "+" if c > 0 else "−"
+                    parts.append(f"{facet} ({sign}{abs(c):.2f})")
+                why = "Top factors: " + ", ".join(parts)
+            else:
+                why = "Bootstrap match (no prefs yet)"
+
             items.append(
                 {
                     "id": r["id"],
                     "name": r["name"],
                     "match": match,
-                    "why": "Matched facets: " + ", ".join(why_bits[:5]) if why_bits else "Bootstrap match (no prefs yet)",
+                    "why": why,
                     "url": r["url"] or "",
                     "cat": r["cat"] or "",
                 }
             )
 
         items.sort(key=lambda x: x.get("match") or 0, reverse=True)
-        return RecsResponse(items=items[: max(1, min(200, req.limit))], model_version="v1-db")
+
+        # apply diversity: round-robin across categories
+        final_limit = max(1, min(200, req.limit))
+        items = _diversify(items, final_limit)
+
+        return RecsResponse(items=items, model_version="v1-diverse")
     finally:
         con.close()
