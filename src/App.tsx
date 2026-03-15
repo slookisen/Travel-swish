@@ -347,25 +347,25 @@ function SwipeDeckCard({
         }}
       >
         <div style={{ display: 'flex', gap: S.sm, alignItems: 'center' }}>
-          <div style={{ fontSize: 28 }}>{card.emoji}</div>
-          <div style={{ fontWeight: 900, fontSize: 16 }}>{card.q}</div>
+          <div style={{ fontSize: 28 /* emoji; no token match */ }}>{card.emoji}</div>
+          <div style={{ fontWeight: F.weight.black, fontSize: F.size.md }}>{card.q}</div>
         </div>
         <div style={{ color: T.dim, marginTop: S.xs2, lineHeight: 1.5 }}>{card.desc}</div>
 
         <div style={{ display: 'flex', gap: S.sm, marginTop: S.md }}>
           <button
             onClick={() => onSwipe(-1)}
-            style={{ padding: `${S.sm}px ${S.sm2}px`, borderRadius: R.md, border: `1px solid ${T.border}`, background: 'transparent', color: T.red, cursor: 'pointer', fontWeight: 900 }}
+            style={{ padding: `${S.sm}px ${S.sm2}px`, borderRadius: R.md, border: `1px solid ${T.border}`, background: 'transparent', color: T.red, cursor: 'pointer', fontWeight: F.weight.black }}
           >
             {UI.no[lang]}
           </button>
           <button
             onClick={() => onSwipe(1)}
-            style={{ padding: `${S.sm}px ${S.sm2}px`, borderRadius: R.md, border: `1px solid ${T.border}`, background: 'transparent', color: T.green, cursor: 'pointer', fontWeight: 900 }}
+            style={{ padding: `${S.sm}px ${S.sm2}px`, borderRadius: R.md, border: `1px solid ${T.border}`, background: 'transparent', color: T.green, cursor: 'pointer', fontWeight: F.weight.black }}
           >
             {UI.yes[lang]}
           </button>
-          <div style={{ marginLeft: 'auto', color: T.dim, fontSize: 12, alignSelf: 'center' }}>
+          <div style={{ marginLeft: 'auto', color: T.dim, fontSize: F.size.sm, alignSelf: 'center' }}>
             {lang === 'no' ? 'Dra ←/→' : lang === 'sv' ? 'Dra ←/→' : 'Drag ←/→'}
           </div>
         </div>
@@ -490,8 +490,8 @@ function SwipeStack({
                 }}
               >
                 <div style={{ display: 'flex', gap: S.sm, alignItems: 'center' }}>
-                  <div style={{ fontSize: 28 }}>{c.emoji}</div>
-                  <div style={{ fontWeight: 900, fontSize: 16 }}>{c.q}</div>
+                  <div style={{ fontSize: 28 /* emoji; no token match */ }}>{c.emoji}</div>
+                  <div style={{ fontWeight: F.weight.black, fontSize: F.size.md }}>{c.q}</div>
                 </div>
                 <div style={{ color: T.dim, marginTop: S.xs2, lineHeight: 1.5 }}>{c.desc}</div>
               </div>
@@ -547,7 +547,7 @@ function SwipeStack({
                 borderRadius: R.sm,
                 border: `3px solid ${T.red}`,
                 color: T.red,
-                fontWeight: 1000,
+                fontWeight: F.weight.ultra /* closest to 1000 */,
                 letterSpacing: 1,
                 transform: 'rotate(-14deg)',
                 opacity: badgeNoOpacity,
@@ -565,7 +565,7 @@ function SwipeStack({
                 borderRadius: R.sm,
                 border: `3px solid ${T.green}`,
                 color: T.green,
-                fontWeight: 1000,
+                fontWeight: F.weight.ultra /* closest to 1000 */,
                 letterSpacing: 1,
                 transform: 'rotate(14deg)',
                 opacity: badgeYesOpacity,
@@ -576,8 +576,8 @@ function SwipeStack({
             </div>
 
             <div style={{ display: 'flex', gap: S.sm, alignItems: 'center' }}>
-              <div style={{ fontSize: 28 }}>{top.emoji}</div>
-              <div style={{ fontWeight: 900, fontSize: 16 }}>{top.q}</div>
+              <div style={{ fontSize: 28 /* emoji; no token match */ }}>{top.emoji}</div>
+              <div style={{ fontWeight: F.weight.black, fontSize: F.size.md }}>{top.q}</div>
             </div>
             <div style={{ color: T.dim, marginTop: S.xs2, lineHeight: 1.5 }}>{top.desc}</div>
 
@@ -585,18 +585,18 @@ function SwipeStack({
               <button
                 onClick={() => commitSwipe(-1)}
                 disabled={animating}
-                style={{ padding: `${S.sm}px ${S.sm2}px`, borderRadius: R.md, border: `1px solid ${T.border}`, background: 'transparent', color: T.red, cursor: animating ? 'not-allowed' : 'pointer', fontWeight: 900 }}
+                style={{ padding: `${S.sm}px ${S.sm2}px`, borderRadius: R.md, border: `1px solid ${T.border}`, background: 'transparent', color: T.red, cursor: animating ? 'not-allowed' : 'pointer', fontWeight: F.weight.black }}
               >
                 {UI.no[lang]}
               </button>
               <button
                 onClick={() => commitSwipe(1)}
                 disabled={animating}
-                style={{ padding: `${S.sm}px ${S.sm2}px`, borderRadius: R.md, border: `1px solid ${T.border}`, background: 'transparent', color: T.green, cursor: animating ? 'not-allowed' : 'pointer', fontWeight: 900 }}
+                style={{ padding: `${S.sm}px ${S.sm2}px`, borderRadius: R.md, border: `1px solid ${T.border}`, background: 'transparent', color: T.green, cursor: animating ? 'not-allowed' : 'pointer', fontWeight: F.weight.black }}
               >
                 {UI.yes[lang]}
               </button>
-              <div style={{ marginLeft: 'auto', color: T.dim, fontSize: 12 }}>
+              <div style={{ marginLeft: 'auto', color: T.dim, fontSize: F.size.sm }}>
                 {lang === 'no' ? 'Dra ←/→' : lang === 'sv' ? 'Dra ←/→' : 'Drag ←/→'}
               </div>
             </div>
@@ -650,7 +650,7 @@ export default function App() {
   const seenNames = useRef<string[]>([]);
 
   // If the browser shows a cached build after a deploy, we want a simple
-  // “new version available” banner that can force a reload.
+  // "new version available" banner that can force a reload.
   const [updateAvailable, setUpdateAvailable] = useState<string | null>(null);
   useEffect(() => {
     const base = String((import.meta as any).env?.BASE_URL || '/');
@@ -860,8 +860,8 @@ export default function App() {
   return (
     <div style={{ minHeight: '100vh', background: T.bg, color: T.txt, fontFamily: F.system }}>
       <style>{globalCss}</style>
-      <div style={{ padding: '14px 18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: `1px solid ${T.borderSoft}` }}>
-        <div style={{ fontWeight: 900, color: T.gold, letterSpacing: 0.2 }}>Travel‑Swish</div>
+      <div style={{ padding: `${S.md}px ${S.lg}px`, display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: `1px solid ${T.borderSoft}` }}>
+        <div style={{ fontWeight: F.weight.black, color: T.gold, letterSpacing: 0.2 }}>Travel‑Swish</div>
         <div className="row">
           <select
             value={lang}
@@ -883,17 +883,17 @@ export default function App() {
       {updateAvailable && (
         <div
           style={{
-            padding: '10px 18px',
+            padding: `${S.sm}px ${S.lg}px`,
             borderBottom: `1px solid ${T.borderSoft}`,
             background: 'rgba(212,165,116,0.10)',
             display: 'flex',
-            gap: 12,
+            gap: S.sm2,
             justifyContent: 'space-between',
             alignItems: 'center',
             flexWrap: 'wrap',
           }}
         >
-          <div style={{ fontWeight: 900, color: T.gold }}>
+          <div style={{ fontWeight: F.weight.black, color: T.gold }}>
             Update available: {updateAvailable} (you are {APP_VERSION})
           </div>
           <button
@@ -908,21 +908,21 @@ export default function App() {
 
       {page === 'landing' && (
         <div className="container fadeUp">
-          <div className="card" style={{ padding: 22 }}>
+          <div className="card" style={{ padding: S.xl }}>
             <div className="row wrap" style={{ justifyContent: 'space-between' }}>
               <div>
-                <div className="muted" style={{ fontWeight: 800, letterSpacing: 0.4 }}>TRAVEL‑SWISH</div>
-                <h1 style={{ margin: '8px 0 6px 0', fontSize: 34 }}>{UI.landingTitle[lang]}</h1>
+                <div className="muted" style={{ fontWeight: F.weight.bold, letterSpacing: 0.4 }}>TRAVEL‑SWISH</div>
+                <h1 style={{ margin: `${S.xs2}px 0 ${S.xs}px 0`, fontSize: F.size.hero }}>{UI.landingTitle[lang]}</h1>
                 <p className="muted" style={{ lineHeight: 1.6, marginTop: 0 }}>{UI.landingDesc[lang]}</p>
               </div>
               <div className="pill muted" style={{ alignSelf: 'flex-start' }}>Build {APP_VERSION}</div>
             </div>
 
-            <div style={{ marginTop: 16 }}>
+            <div style={{ marginTop: S.md2 }}>
               <button className="btn btnPrimary" onClick={() => setPage('home')}>{UI.getStarted[lang]}</button>
             </div>
 
-            <div style={{ marginTop: 16 }} className="muted">
+            <div style={{ marginTop: S.md2 }} className="muted">
               {lang === 'no'
                 ? 'Tips: Velg modus, skriv sted, legg inn nøkkel, swipe 10 kort og få forslag.'
                 : lang === 'sv'
@@ -934,21 +934,21 @@ export default function App() {
       )}
 
       {page === 'home' && (
-        <div style={{ padding: 24, maxWidth: 760, margin: '0 auto' }}>
+        <div style={{ padding: S.page, maxWidth: 760, margin: '0 auto' }}>
           <h2 style={{ marginTop: 0 }}>{UI.chooseMode[lang]}</h2>
-          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: S.sm, flexWrap: 'wrap' }}>
             {(['experiences', 'restaurants'] as Mode[]).map(m => (
               <button
                 key={m}
                 onClick={() => setMode(m)}
                 style={{
-                  padding: '10px 14px',
+                  padding: `${S.sm}px ${S.md}px`,
                   borderRadius: R.pill,
                   border: `1px solid ${T.border}`,
                   cursor: 'pointer',
                   background: mode === m ? `linear-gradient(135deg, ${T.gold}, ${T.teal})` : T.card,
                   color: mode === m ? T.bg : T.txt,
-                  fontWeight: 800,
+                  fontWeight: F.weight.bold,
                 }}
               >
                 {MODE_LABELS[m][lang]}
@@ -956,66 +956,66 @@ export default function App() {
             ))}
           </div>
 
-          <div style={{ marginTop: 18 }}>
-            <label style={{ display: 'block', marginBottom: 6, color: T.dim }}>{UI.destination[lang]}</label>
+          <div style={{ marginTop: S.lg }}>
+            <label style={{ display: 'block', marginBottom: S.xs, color: T.dim }}>{UI.destination[lang]}</label>
             <input
               value={destination}
               onChange={e => setDestination(e.target.value)}
               placeholder={lang === 'no' ? 'Barcelona, Oslo, Tokyo…' : lang === 'sv' ? 'Barcelona, Stockholm, Tokyo…' : 'Barcelona, Oslo, Tokyo…'}
-              style={{ width: '100%', padding: 12, borderRadius: 12, border: `1px solid ${T.border}`, background: T.card, color: T.txt }}
+              style={{ width: '100%', padding: S.sm2, borderRadius: R.md, border: `1px solid ${T.border}`, background: T.card, color: T.txt }}
             />
           </div>
 
 
-          <div style={{ marginTop: 16, display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+          <div style={{ marginTop: S.md2, display: 'flex', gap: S.sm, flexWrap: 'wrap' }}>
             <button
               onClick={() => {
                 if (!destination.trim()) { setError(UI.destinationMissing[lang]); return; }
                 setPage('swipe');
               }}
-              style={{ padding: '12px 16px', borderRadius: 12, border: 'none', cursor: 'pointer', background: `linear-gradient(135deg, ${T.gold}, ${T.teal})`, color: T.bg, fontWeight: 800 }}
+              style={{ padding: `${S.sm2}px ${S.md2}px`, borderRadius: R.md, border: 'none', cursor: 'pointer', background: `linear-gradient(135deg, ${T.gold}, ${T.teal})`, color: T.bg, fontWeight: F.weight.bold }}
             >
               {UI.startMode[lang](labels)}
             </button>
-            <button onClick={() => setPage('landing')} style={{ padding: '12px 16px', borderRadius: 12, border: `1px solid ${T.border}`, cursor: 'pointer', background: 'transparent', color: T.txt }}>
+            <button onClick={() => setPage('landing')} style={{ padding: `${S.sm2}px ${S.md2}px`, borderRadius: R.md, border: `1px solid ${T.border}`, cursor: 'pointer', background: 'transparent', color: T.txt }}>
               {UI.back[lang]}
             </button>
           </div>
 
-          {error && <div style={{ marginTop: 14, color: T.red }}>{error}</div>}
+          {error && <div style={{ marginTop: S.md, color: T.red }}>{error}</div>}
         </div>
       )}
 
       {page === 'swipe' && (
-        <div style={{ padding: 24, maxWidth: 760, margin: '0 auto' }}>
-          <button onClick={() => setPage('home')} style={{ marginBottom: 10, background: 'transparent', border: `1px solid ${T.border}`, color: T.txt, padding: '8px 10px', borderRadius: 10, cursor: 'pointer' }}>
+        <div style={{ padding: S.page, maxWidth: 760, margin: '0 auto' }}>
+          <button onClick={() => setPage('home')} style={{ marginBottom: S.sm, background: 'transparent', border: `1px solid ${T.border}`, color: T.txt, padding: `${S.xs2}px ${S.sm}px`, borderRadius: R.sm, cursor: 'pointer' }}>
             {UI.back[lang]}
           </button>
 
           <h2 style={{ marginTop: 0 }}>{labels}: {destination}</h2>
-          <div style={{ color: T.dim, marginBottom: 10 }}>{UI.swipeHint[lang]}</div>
-          <div style={{ color: T.dim, fontSize: 12, marginBottom: 16 }}>{UI.total[lang]}: {totalSwipes}</div>
+          <div style={{ color: T.dim, marginBottom: S.sm }}>{UI.swipeHint[lang]}</div>
+          <div style={{ color: T.dim, fontSize: F.size.sm, marginBottom: S.md2 }}>{UI.total[lang]}: {totalSwipes}</div>
 
           {/* Swipe deck (stacked, Tinder-like) */}
           <div style={{ position: 'relative', minHeight: 360 }}>
             {deckIndex >= deck.length ? (
-              <div style={{ color: T.dim, paddingTop: 28 }}>
-                <div style={{ fontWeight: 900, color: T.txt, marginBottom: 6 }}>
+              <div style={{ color: T.dim, paddingTop: 28 /* no exact token; closest S.page=24 */ }}>
+                <div style={{ fontWeight: F.weight.black, color: T.txt, marginBottom: S.xs }}>
                   {lang === 'no' ? 'Ingen flere kort' : lang === 'sv' ? 'Inga fler kort' : 'No more cards'}
                 </div>
                 <div style={{ lineHeight: 1.5 }}>
                   {UI.resetDeckHelp[lang]}
                 </div>
-                <div style={{ marginTop: 14, display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                <div style={{ marginTop: S.md, display: 'flex', gap: S.sm, flexWrap: 'wrap' }}>
                   <button
                     onClick={resetDeck}
                     style={{
-                      padding: '10px 14px',
+                      padding: `${S.sm}px ${S.md}px`,
                       borderRadius: R.pill,
                       border: `1px solid ${T.borderSoft}`,
                       background: 'transparent',
                       color: T.txt,
-                      fontWeight: 900,
+                      fontWeight: F.weight.black,
                       cursor: 'pointer',
                     }}
                   >
@@ -1024,12 +1024,12 @@ export default function App() {
                   <button
                     onClick={() => setPage('home')}
                     style={{
-                      padding: '10px 14px',
+                      padding: `${S.sm}px ${S.md}px`,
                       borderRadius: R.pill,
                       border: `1px solid ${T.borderSoft}`,
                       background: 'transparent',
                       color: T.dim,
-                      fontWeight: 800,
+                      fontWeight: F.weight.bold,
                       cursor: 'pointer',
                     }}
                   >
@@ -1046,18 +1046,18 @@ export default function App() {
             )}
           </div>
 
-          <div style={{ marginTop: 16, display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+          <div style={{ marginTop: S.md2, display: 'flex', gap: S.sm, flexWrap: 'wrap' }}>
             <button
               onClick={findItems}
               disabled={!canSearch || loading}
               style={{
-                padding: '12px 16px',
-                borderRadius: 12,
+                padding: `${S.sm2}px ${S.md2}px`,
+                borderRadius: R.md,
                 border: 'none',
                 cursor: !canSearch || loading ? 'not-allowed' : 'pointer',
                 background: !canSearch || loading ? T.card : `linear-gradient(135deg, ${T.gold}, ${T.teal})`,
                 color: !canSearch || loading ? T.dim : T.bg,
-                fontWeight: 800,
+                fontWeight: F.weight.bold,
               }}
             >
               {loading ? UI.loading[lang] : UI.fetch[lang]}
@@ -1065,23 +1065,23 @@ export default function App() {
             {!canSearch && <div style={{ color: T.dim, alignSelf: 'center' }}>{UI.swipeAtLeast[lang]}</div>}
           </div>
 
-          {error && <div style={{ marginTop: 14, color: T.red }}>{error}</div>}
+          {error && <div style={{ marginTop: S.md, color: T.red }}>{error}</div>}
         </div>
       )}
 
       {page === 'results' && (
-        <div style={{ padding: 24, maxWidth: 760, margin: '0 auto' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+        <div style={{ padding: S.page, maxWidth: 760, margin: '0 auto' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: S.sm2, flexWrap: 'wrap' }}>
             <button
               onClick={() => setPage('swipe')}
-              style={{ background: 'transparent', border: `1px solid ${T.border}`, color: T.txt, padding: '8px 10px', borderRadius: R.pill, cursor: 'pointer' }}
+              style={{ background: 'transparent', border: `1px solid ${T.border}`, color: T.txt, padding: `${S.xs2}px ${S.sm}px`, borderRadius: R.pill, cursor: 'pointer' }}
             >
               {UI.back[lang]}
             </button>
 
-            <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', gap: S.sm, alignItems: 'center', flexWrap: 'wrap' }}>
               {cooldownUntil && cooldownUntil > Date.now() && (
-                <div style={{ color: T.dim, fontSize: 12 }}>
+                <div style={{ color: T.dim, fontSize: F.size.sm }}>
                   {lang === 'no' ? `Cooldown: ${cooldownLeft}s` : lang === 'sv' ? `Cooldown: ${cooldownLeft}s` : `Cooldown: ${cooldownLeft}s`}
                 </div>
               )}
@@ -1089,13 +1089,13 @@ export default function App() {
                 onClick={findItems}
                 disabled={loading || (cooldownUntil && cooldownUntil > Date.now())}
                 style={{
-                  padding: '10px 14px',
+                  padding: `${S.sm}px ${S.md}px`,
                   borderRadius: R.pill,
                   border: 'none',
                   cursor: loading ? 'not-allowed' : 'pointer',
                   background: loading ? T.card : `linear-gradient(135deg, ${T.gold}, ${T.teal})`,
                   color: loading ? T.dim : T.bg,
-                  fontWeight: 900,
+                  fontWeight: F.weight.black,
                 }}
                 title={lang === 'no' ? 'Hent flere forslag basert på profilen din' : 'Fetch more suggestions based on your profile'}
               >
@@ -1104,10 +1104,10 @@ export default function App() {
             </div>
           </div>
 
-          <h2 style={{ margin: '14px 0 0 0', letterSpacing: 0.2 }}>{labels}: {destination}</h2>
-          <div style={{ color: T.dim, marginTop: 6, fontSize: 12 }}>{lang === 'no' ? 'Tinder clean: store kort, lite støy. Klikk for «hvorfor».' : 'Big cards, low noise. Tap for “why”.'}</div>
+          <h2 style={{ margin: `${S.md}px 0 0 0`, letterSpacing: 0.2 }}>{labels}: {destination}</h2>
+          <div style={{ color: T.dim, marginTop: S.xs, fontSize: F.size.sm }}>{lang === 'no' ? 'Tinder clean: store kort, lite støy. Klikk for «hvorfor».' : 'Big cards, low noise. Tap for "why".'}</div>
 
-          <div style={{ display: 'grid', gap: 12, marginTop: 16 }}>
+          <div style={{ display: 'grid', gap: S.sm2, marginTop: S.md2 }}>
             {items.map((it, idx) => {
               const pct = Math.round(it.match || 0);
               return (
@@ -1116,19 +1116,19 @@ export default function App() {
                   style={{
                     background: `linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02))`,
                     border: `1px solid ${T.border}`,
-                    borderRadius: 18,
-                    padding: 16,
+                    borderRadius: R.lg,
+                    padding: S.md2,
                     boxShadow: '0 10px 30px rgba(0,0,0,0.25)',
                   }}
                 >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'flex-start' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: S.sm2, alignItems: 'flex-start' }}>
                     <div style={{ minWidth: 0 }}>
-                      <div style={{ fontWeight: 950, fontSize: 16, lineHeight: 1.2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      <div style={{ fontWeight: F.weight.ultra, fontSize: F.size.md, lineHeight: 1.2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                         {it.name}
                       </div>
-                      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 8, alignItems: 'center' }}>
+                      <div style={{ display: 'flex', gap: S.xs2, flexWrap: 'wrap', marginTop: S.xs2, alignItems: 'center' }}>
                         {it.cat && (
-                          <span style={{ fontSize: 12, color: T.dim, border: `1px solid ${T.borderSoft}`, padding: '4px 10px', borderRadius: R.pill, background: 'rgba(255,255,255,0.02)' }}>
+                          <span style={{ fontSize: F.size.sm, color: T.dim, border: `1px solid ${T.borderSoft}`, padding: `4px ${S.sm}px` /* 4px: no token below S.xs=6 */, borderRadius: R.pill, background: 'rgba(255,255,255,0.02)' }}>
                             {it.cat}
                           </span>
                         )}
@@ -1137,7 +1137,7 @@ export default function App() {
                             href={it.url}
                             target="_blank"
                             rel="noreferrer"
-                            style={{ fontSize: 12, color: T.teal, textDecoration: 'none', border: `1px solid ${T.borderSoft}`, padding: '4px 10px', borderRadius: R.pill }}
+                            style={{ fontSize: F.size.sm, color: T.teal, textDecoration: 'none', border: `1px solid ${T.borderSoft}`, padding: `4px ${S.sm}px` /* 4px: no token below S.xs=6 */, borderRadius: R.pill }}
                           >
                             {UI.openLink[lang]}
                           </a>
@@ -1147,24 +1147,24 @@ export default function App() {
 
                     <div style={{
                       flexShrink: 0,
-                      padding: '6px 10px',
+                      padding: `${S.xs}px ${S.sm}px`,
                       borderRadius: R.pill,
                       background: 'rgba(212,165,116,0.14)',
                       border: '1px solid rgba(212,165,116,0.28)',
                       color: T.gold,
-                      fontWeight: 950,
-                      fontSize: 12,
+                      fontWeight: F.weight.ultra,
+                      fontSize: F.size.sm,
                     }}>
                       {pct}%
                     </div>
                   </div>
 
                   {it.why && (
-                    <details style={{ marginTop: 12 }}>
-                      <summary style={{ cursor: 'pointer', color: T.dim, fontWeight: 800 }}>
+                    <details style={{ marginTop: S.sm2 }}>
+                      <summary style={{ cursor: 'pointer', color: T.dim, fontWeight: F.weight.bold }}>
                         {UI.why[lang]}
                       </summary>
-                      <div style={{ color: T.dim, marginTop: 8, lineHeight: 1.55, whiteSpace: 'pre-wrap' }}>{it.why}</div>
+                      <div style={{ color: T.dim, marginTop: S.xs2, lineHeight: 1.55, whiteSpace: 'pre-wrap' }}>{it.why}</div>
                     </details>
                   )}
                 </div>
@@ -1174,7 +1174,7 @@ export default function App() {
         </div>
       )}
 
-      <div style={{ padding: '18px 18px', color: T.dim, fontSize: 12, borderTop: `1px solid ${T.border}` }}>
+      <div style={{ padding: `${S.lg}px ${S.lg}px`, color: T.dim, fontSize: F.size.sm, borderTop: `1px solid ${T.border}` }}>
         {APP_VERSION} • {mode} • {lang}
       </div>
     </div>
