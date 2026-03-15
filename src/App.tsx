@@ -9,9 +9,44 @@ const APP_VERSION = BUILD_META.version;
 // Backend API (local dev default). On GitHub Pages we intentionally keep this empty.
 const DEFAULT_BACKEND_URL =
   (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'))
-    ? 'http://127.0.0.1:8787'
+    ? 'http://127.0.0.1:8000'
     : '';
 const BACKEND_URL = (String((import.meta as any).env?.VITE_BACKEND_URL || '').trim()) || DEFAULT_BACKEND_URL;
+
+const nowS = () => Math.floor(Date.now() / 1000);
+
+async function fetchJson(
+  url: string,
+  init: (RequestInit & { timeoutMs?: number }) = {},
+): Promise<any> {
+  const { timeoutMs = 8000, ...opts } = init as any;
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), timeoutMs);
+
+  try {
+    const res = await fetch(url, { ...(opts as any), signal: ctrl.signal });
+    const ct = (res.headers.get('content-type') || '').toLowerCase();
+    const isJson = ct.includes('application/json');
+    const body = isJson
+      ? await res.json().catch(() => null)
+      : await res.text().catch(() => '');
+
+    if (!res.ok) {
+      const detail = body && typeof body === 'object' ? (body as any).detail : '';
+      const msg = typeof detail === 'string' && detail
+        ? detail
+        : (typeof body === 'string' && body.trim() ? body.trim().slice(0, 180) : `HTTP ${res.status}`);
+      throw new Error(msg);
+    }
+
+    return body;
+  } catch (e: any) {
+    if (e?.name === 'AbortError') throw new Error('Timeout');
+    throw e;
+  } finally {
+    clearTimeout(t);
+  }
+}
 
 // --- Strings
 const UI = {
@@ -110,7 +145,34 @@ function keysFor(mode: Mode) {
     swipes: `ts_swipes${suffix}`,
     totalSwipes: `ts_totalSwipes${suffix}`,
     seen: `ts_seen${suffix}`,
+    catFilter: `ts_catFilter${suffix}`,
   };
+}
+
+function normalizeSeenKey(x: string) {
+  if (x.startsWith('id:') || x.startsWith('name:')) return x;
+  return `name:${x}`;
+}
+
+function itemSeenKey(it: Pick<Item, 'id' | 'name'>) {
+  return it.id ? `id:${it.id}` : `name:${it.name}`;
+}
+
+function loadCatFilter(mode: Mode) {
+  const K = keysFor(mode);
+  try {
+    return localStorage.getItem(K.catFilter) || '';
+  } catch {
+    return '';
+  }
+}
+
+function saveCatFilter(mode: Mode, v: string) {
+  const K = keysFor(mode);
+  try {
+    if (v) localStorage.setItem(K.catFilter, v);
+    else localStorage.removeItem(K.catFilter);
+  } catch {}
 }
 
 function loadMemory(mode: Mode) {
@@ -118,7 +180,10 @@ function loadMemory(mode: Mode) {
   try {
     const swipes = JSON.parse(localStorage.getItem(K.swipes) || '{}') as Record<string, number>;
     const totalSwipes = parseInt(localStorage.getItem(K.totalSwipes) || '0', 10);
-    const seen = JSON.parse(localStorage.getItem(K.seen) || '[]') as string[];
+    const seenRaw = JSON.parse(localStorage.getItem(K.seen) || '[]') as any;
+    const seen = Array.isArray(seenRaw)
+      ? [...new Set(seenRaw.map((x) => normalizeSeenKey(String(x || ''))).filter(Boolean))]
+      : [];
     return { swipes, totalSwipes: Number.isFinite(totalSwipes) ? totalSwipes : 0, seen };
   } catch {
     return { swipes: {}, totalSwipes: 0, seen: [] as string[] };
@@ -136,7 +201,8 @@ function saveSwipes(mode: Mode, swipes: Record<string, number>, totalSwipes: num
 function saveSeen(mode: Mode, seen: string[]) {
   const K = keysFor(mode);
   try {
-    localStorage.setItem(K.seen, JSON.stringify(seen));
+    const cleaned = [...new Set(seen.map((x) => normalizeSeenKey(String(x || ''))).filter(Boolean))];
+    localStorage.setItem(K.seen, JSON.stringify(cleaned));
   } catch {}
 }
 
@@ -281,6 +347,7 @@ function shuffleArray<T>(arr: T[]) {
 }
 
 type Item = {
+  id?: string;
   name: string;
   why?: string;
   quote?: string;
@@ -694,11 +761,13 @@ export default function App() {
   const apiKey = '';
   const [userId] = useState(() => getOrCreateId('ts_user_id'));
   const [error, setError] = useState('');
+  const [info, setInfo] = useState('');
   const [loading, setLoading] = useState(false);
   const [cooldownUntil, setCooldownUntil] = useState(0);
   const [cooldownLeft, setCooldownLeft] = useState(0);
   const [items, setItems] = useState<Item[]>([]);
-  const seenNames = useRef<string[]>([]);
+  const [catFilter, setCatFilter] = useState(() => loadCatFilter(mode));
+  const seenKeys = useRef<string[]>([]);
 
   // If the browser shows a cached build after a deploy, we want a simple
   // "new version available" banner that can force a reload.
@@ -715,10 +784,12 @@ export default function App() {
       .catch(() => {});
   }, []);
 
-  // keep seen cache per mode
+  // keep seen + filters cache per mode
   useEffect(() => {
     const mem = loadMemory(mode);
-    seenNames.current = mem.seen;
+    seenKeys.current = mem.seen;
+    setCatFilter(loadCatFilter(mode));
+    setInfo('');
   }, [mode]);
 
   useEffect(() => {
@@ -785,6 +856,7 @@ export default function App() {
 
     setLoading(true);
     setError('');
+    setInfo('');
 
     try {
       const profile = calcProfile(swipes, cards);
@@ -794,28 +866,30 @@ export default function App() {
         Object.entries(profile).map(([k, v]) => [k, Math.round((v / 100) * 1000) / 1000])
       );
 
+      const dest = destination.trim();
+
       if (BACKEND_URL) {
         try {
           // Persist prefs so /recs can use them.
-          await fetch(`${BACKEND_URL}/prefs`, {
+          await fetchJson(`${BACKEND_URL}/prefs`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ user_id: userId, mode, prefs, updated_ts: Date.now() }),
+            body: JSON.stringify({ user_id: userId, mode, prefs, updated_ts: nowS() }),
+            timeoutMs: 8000,
           });
 
-          const r = await fetch(`${BACKEND_URL}/recs`, {
+          const j = await fetchJson(`${BACKEND_URL}/recs`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ user_id: userId, mode, destination, limit: 20 }),
+            body: JSON.stringify({ user_id: userId, mode, destination: dest, limit: 20 }),
+            timeoutMs: 12000,
           });
-
-          if (!r.ok) throw new Error(`Backend /recs failed (${r.status})`);
-          const j = await r.json();
 
           const raw = Array.isArray(j?.items) ? j.items : [];
           if (raw.length) {
             let newItems: Item[] = raw
               .map((x: any) => ({
+                id: String(x?.id || ''),
                 name: String(x?.name || ''),
                 cat: String(x?.cat || ''),
                 why: String(x?.why || ''),
@@ -824,22 +898,45 @@ export default function App() {
               }))
               .filter(i => i.name);
 
-            const seen = new Set(seenNames.current);
-            const filtered = newItems.filter(i => !seen.has(i.name));
+            const seen = new Set(seenKeys.current);
+            const filtered = newItems.filter(i => !seen.has(itemSeenKey(i)));
             newItems = filtered.length ? filtered : newItems;
 
-            const newNames = newItems.map(i => i.name).filter(Boolean);
-            seenNames.current = [...seenNames.current, ...newNames];
-            saveSeen(mode, seenNames.current);
+            const newKeys = newItems.map(itemSeenKey).filter(Boolean);
+            seenKeys.current = [...seenKeys.current, ...newKeys];
+            saveSeen(mode, seenKeys.current);
 
             setItems(newItems);
             setPage('results');
             return;
           }
+
+          setInfo(
+            lang === 'no'
+              ? 'Ingen treff fra backend ennå — viser demo-forslag.'
+              : lang === 'sv'
+                ? 'Inga träffar från backend ännu — visar demo-förslag.'
+                : 'No backend hits yet — showing demo suggestions.'
+          );
         } catch (e) {
           // Keep app usable even if backend is down.
           console.warn('Backend recs unavailable; falling back to local suggestions.', e);
+          setInfo(
+            lang === 'no'
+              ? 'Backend utilgjengelig — viser demo-forslag.'
+              : lang === 'sv'
+                ? 'Backend otillgänglig — visar demo-förslag.'
+                : 'Backend unavailable — showing demo suggestions.'
+          );
         }
+      } else {
+        setInfo(
+          lang === 'no'
+            ? 'Backend ikke konfigurert — viser demo-forslag.'
+            : lang === 'sv'
+              ? 'Backend är inte konfigurerad — visar demo-förslag.'
+              : 'Backend not configured — showing demo suggestions.'
+        );
       }
 
       // Minimal local suggestions (placeholder) based on strongest dims.
@@ -851,17 +948,24 @@ export default function App() {
 
       const newItems: Item[] = [
         {
-          name: lang === 'no' ? `Forslag (lokal) for ${destination}` : lang === 'sv' ? `Förslag (lokalt) för ${destination}` : `Local suggestions for ${destination}`,
-          cat: mode === 'restaurants' ? (lang === 'no' ? 'Restauranter' : 'Restaurants') : (lang === 'no' ? 'Opplevelser' : 'Experiences'),
+          id: `local_demo_${mode}_${dest.toLowerCase()}`,
+          name: lang === 'no'
+            ? `Forslag (lokal) for ${dest}`
+            : lang === 'sv'
+              ? `Förslag (lokalt) för ${dest}`
+              : `Local suggestions for ${dest}`,
+          cat: mode === 'restaurants'
+            ? (lang === 'no' ? 'Restauranter' : 'Restaurants')
+            : (lang === 'no' ? 'Opplevelser' : 'Experiences'),
           why: lang === 'no' ? `Basert på profilen din (${top}).` : `Based on your profile (${top}).`,
           match: 70,
           url: '',
         },
       ];
 
-      const newNames = newItems.map(i => i.name).filter(Boolean);
-      seenNames.current = [...seenNames.current, ...newNames];
-      saveSeen(mode, seenNames.current);
+      const newKeys = newItems.map(itemSeenKey).filter(Boolean);
+      seenKeys.current = [...seenKeys.current, ...newKeys];
+      saveSeen(mode, seenKeys.current);
 
       setItems(newItems);
       setPage('results');
@@ -894,9 +998,11 @@ export default function App() {
     // reset state
     setSwipes({});
     setTotalSwipes(0);
-    seenNames.current = [];
+    seenKeys.current = [];
+    setItems([]);
     setDeckIndex(0);
     setError('');
+    setInfo('');
   }
 
   // Guard: never allow swipe/results without destination
@@ -1116,6 +1222,7 @@ export default function App() {
           </div>
 
           {error && <div style={{ marginTop: S.md, color: T.red }}>{error}</div>}
+          {info && <div style={{ marginTop: S.sm, color: T.dim }}>{info}</div>}
         </div>
       )}
 
@@ -1162,75 +1269,129 @@ export default function App() {
 
           <h2 style={{ margin: `${S.md}px 0 0 0`, letterSpacing: 0.2 }}>{labels}: {destination}</h2>
           <div style={{ color: T.dim, marginTop: S.xs, fontSize: F.size.sm }}>{UI.resultsHint[lang]}</div>
+          {error && <div style={{ marginTop: S.md, color: T.red }}>{error}</div>}
+          {info && <div style={{ color: T.dim, marginTop: S.xs2, fontSize: F.size.sm }}>{info}</div>}
 
-          <div style={{ display: 'grid', gap: S.sm2, marginTop: S.md2 }}>
-            {items.length === 0 ? (
-              <div className="muted" style={{ padding: S.md2 }}>
-                {UI.noResults[lang]}
-              </div>
-            ) : items.map((it, idx) => {
-              const pct = Math.round(it.match || 0);
-              return (
-                <div
-                  key={idx}
-                  style={{
-                    background: `linear-gradient(180deg, ${T.glassHi}, ${T.glassLo})`,
-                    border: `1px solid ${T.border}`,
-                    borderRadius: R.lg,
-                    padding: S.md2,
-                    boxShadow: T.shadowMd,
-                  }}
-                >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: S.sm2, alignItems: 'flex-start' }}>
-                    <div style={{ minWidth: 0 }}>
-                      <div style={{ fontWeight: F.weight.ultra, fontSize: F.size.md, lineHeight: 1.2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                        {it.name}
-                      </div>
-                      <div style={{ display: 'flex', gap: S.xs2, flexWrap: 'wrap', marginTop: S.xs2, alignItems: 'center' }}>
-                        {it.cat && (
-                          <span style={{ fontSize: F.size.sm, color: T.dim, border: `1px solid ${T.borderSoft}`, padding: `${S.xxs}px ${S.sm}px`, borderRadius: R.pill, background: T.glassLo }}>
-                            {it.cat}
-                          </span>
-                        )}
-                        {it.url && (
-                          <a
-                            href={it.url}
-                            target="_blank"
-                            rel="noreferrer"
-                            style={{ fontSize: F.size.sm, color: T.teal, textDecoration: 'none', border: `1px solid ${T.borderSoft}`, padding: `${S.xxs}px ${S.sm}px`, borderRadius: R.pill }}
-                          >
-                            {UI.openLink[lang]}
-                          </a>
-                        )}
-                      </div>
-                    </div>
+          {(() => {
+            const cats = [...new Set(items.map(i => String(i.cat || '').trim()).filter(Boolean))];
+            const active = cats.includes(catFilter) ? catFilter : '';
+            const shown = active ? items.filter(i => i.cat === active) : items;
+            const allLabel = lang === 'no' ? 'Alle' : lang === 'sv' ? 'Alla' : 'All';
 
-                    <div style={{
-                      flexShrink: 0,
-                      padding: `${S.xs}px ${S.sm}px`,
-                      borderRadius: R.pill,
-                      background: T.goldWashHi,
-                      border: `1px solid ${T.goldBorder}`,
-                      color: T.gold,
-                      fontWeight: F.weight.ultra,
-                      fontSize: F.size.sm,
-                    }}>
-                      {pct}%
-                    </div>
+            const pick = (v: string) => {
+              setCatFilter(v);
+              saveCatFilter(mode, v);
+            };
+
+            return (
+              <>
+                {cats.length > 1 && (
+                  <div style={{ display: 'flex', gap: S.xs2, flexWrap: 'wrap', marginTop: S.md }}>
+                    <button
+                      onClick={() => pick('')}
+                      style={{
+                        padding: `${S.xs2}px ${S.sm2}px`,
+                        borderRadius: R.pill,
+                        border: `1px solid ${T.borderSoft}`,
+                        cursor: 'pointer',
+                        background: active === '' ? `linear-gradient(135deg, ${T.gold}, ${T.teal})` : T.card,
+                        color: active === '' ? T.bg : T.txt,
+                        fontWeight: F.weight.bold,
+                      }}
+                    >
+                      {allLabel}
+                    </button>
+                    {cats.map((cat) => (
+                      <button
+                        key={cat}
+                        onClick={() => pick(cat)}
+                        style={{
+                          padding: `${S.xs2}px ${S.sm2}px`,
+                          borderRadius: R.pill,
+                          border: `1px solid ${T.borderSoft}`,
+                          cursor: 'pointer',
+                          background: active === cat ? `linear-gradient(135deg, ${T.gold}, ${T.teal})` : T.card,
+                          color: active === cat ? T.bg : T.txt,
+                          fontWeight: F.weight.bold,
+                        }}
+                      >
+                        {cat}
+                      </button>
+                    ))}
                   </div>
+                )}
 
-                  {it.why && (
-                    <details style={{ marginTop: S.sm2 }}>
-                      <summary style={{ cursor: 'pointer', color: T.dim, fontWeight: F.weight.bold }}>
-                        {UI.why[lang]}
-                      </summary>
-                      <div style={{ color: T.dim, marginTop: S.xs2, lineHeight: 1.55, whiteSpace: 'pre-wrap' }}>{it.why}</div>
-                    </details>
-                  )}
+                <div style={{ display: 'grid', gap: S.sm2, marginTop: S.md2 }}>
+                  {shown.length === 0 ? (
+                    <div className="muted" style={{ padding: S.md2 }}>
+                      {UI.noResults[lang]}
+                    </div>
+                  ) : shown.map((it, idx) => {
+                    const pct = Math.round(it.match || 0);
+                    return (
+                      <div
+                        key={it.id || it.name || idx}
+                        style={{
+                          background: `linear-gradient(180deg, ${T.glassHi}, ${T.glassLo})`,
+                          border: `1px solid ${T.border}`,
+                          borderRadius: R.lg,
+                          padding: S.md2,
+                          boxShadow: T.shadowMd,
+                        }}
+                      >
+                        <div style={{ display: 'flex', justifyContent: 'space-between', gap: S.sm2, alignItems: 'flex-start' }}>
+                          <div style={{ minWidth: 0 }}>
+                            <div style={{ fontWeight: F.weight.ultra, fontSize: F.size.md, lineHeight: 1.2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                              {it.name}
+                            </div>
+                            <div style={{ display: 'flex', gap: S.xs2, flexWrap: 'wrap', marginTop: S.xs2, alignItems: 'center' }}>
+                              {it.cat && (
+                                <span style={{ fontSize: F.size.sm, color: T.dim, border: `1px solid ${T.borderSoft}`, padding: `${S.xxs}px ${S.sm}px`, borderRadius: R.pill, background: T.glassLo }}>
+                                  {it.cat}
+                                </span>
+                              )}
+                              {it.url && (
+                                <a
+                                  href={it.url}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  style={{ fontSize: F.size.sm, color: T.teal, textDecoration: 'none', border: `1px solid ${T.borderSoft}`, padding: `${S.xxs}px ${S.sm}px`, borderRadius: R.pill }}
+                                >
+                                  {UI.openLink[lang]}
+                                </a>
+                              )}
+                            </div>
+                          </div>
+
+                          <div style={{
+                            flexShrink: 0,
+                            padding: `${S.xs}px ${S.sm}px`,
+                            borderRadius: R.pill,
+                            background: T.goldWashHi,
+                            border: `1px solid ${T.goldBorder}`,
+                            color: T.gold,
+                            fontWeight: F.weight.ultra,
+                            fontSize: F.size.sm,
+                          }}>
+                            {pct}%
+                          </div>
+                        </div>
+
+                        {it.why && (
+                          <details style={{ marginTop: S.sm2 }}>
+                            <summary style={{ cursor: 'pointer', color: T.dim, fontWeight: F.weight.bold }}>
+                              {UI.why[lang]}
+                            </summary>
+                            <div style={{ color: T.dim, marginTop: S.xs2, lineHeight: 1.55, whiteSpace: 'pre-wrap' }}>{it.why}</div>
+                          </details>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
-              );
-            })}
-          </div>
+              </>
+            );
+          })()}
         </div>
       )}
 
