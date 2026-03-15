@@ -51,6 +51,23 @@ class TaxonomyResponse(BaseModel):
     updated_ts: int
 
 
+class EventOut(BaseModel):
+    id: str
+    user_id: str
+    session_id: str
+    ts: int
+    name: str
+    mode: str
+    destination: str
+    card_id: Optional[str] = None
+    payload: Dict[str, Any] = Field(default_factory=dict)
+
+
+class EventsResponse(BaseModel):
+    ok: bool = True
+    items: List[EventOut]
+
+
 class RecsRequest(BaseModel):
     user_id: str
     mode: str

@@ -78,6 +78,12 @@ def init_db() -> None:
               tags_json TEXT NOT NULL,
               updated_ts INTEGER NOT NULL
             );
+
+            -- Indexes for common query patterns
+            CREATE INDEX IF NOT EXISTS idx_events_user_ts ON events(user_id, ts);
+            CREATE INDEX IF NOT EXISTS idx_events_session_ts ON events(session_id, ts);
+            CREATE INDEX IF NOT EXISTS idx_cards_mode_id ON cards(mode, id);
+            CREATE INDEX IF NOT EXISTS idx_pois_mode_dest ON pois(mode, lower(destination));
             """
         )
         con.commit()

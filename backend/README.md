@@ -24,6 +24,19 @@ Open:
 - http://127.0.0.1:8787/health
 - http://127.0.0.1:8787/docs
 
+## Endpoints
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/health` | Health check |
+| POST | `/events` | Ingest a single event |
+| GET | `/events` | List recent events (filters: `user_id`, `session_id`, `mode`, `destination`, `limit` 1‑200) |
+| GET | `/prefs` | Get user prefs for a mode |
+| POST | `/prefs` | Upsert user prefs |
+| GET | `/cards` | List cards by mode |
+| GET | `/taxonomy` | Get taxonomy |
+| POST | `/recs` | Get ranked recommendations |
+
 ## Notes
 - This is **local-only** initially.
 - No real auth yet. Before any public deployment we add auth + rate limits.

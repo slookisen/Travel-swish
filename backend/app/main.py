@@ -12,6 +12,8 @@ from .seed import seed_if_empty
 from .schemas import (
     CardsResponse,
     EventIn,
+    EventOut,
+    EventsResponse,
     Health,
     PrefsUpsert,
     RecsRequest,
@@ -76,6 +78,55 @@ def ingest_event(ev: EventIn) -> dict:
         )
         con.commit()
         return {"ok": True, "id": eid}
+    finally:
+        con.close()
+
+
+@app.get("/events", response_model=EventsResponse)
+def list_events(
+    user_id: str | None = None,
+    session_id: str | None = None,
+    mode: str | None = None,
+    destination: str | None = None,
+    limit: int = 50,
+) -> EventsResponse:
+    """List recent events with optional filters."""
+    limit = max(1, min(200, limit))
+    clauses: list[str] = []
+    params: list[object] = []
+    if user_id is not None:
+        clauses.append("user_id = ?")
+        params.append(user_id)
+    if session_id is not None:
+        clauses.append("session_id = ?")
+        params.append(session_id)
+    if mode is not None:
+        clauses.append("mode = ?")
+        params.append(mode)
+    if destination is not None:
+        clauses.append("lower(destination) = lower(?)")
+        params.append(destination)
+    where = (" WHERE " + " AND ".join(clauses)) if clauses else ""
+    sql = f"SELECT * FROM events{where} ORDER BY ts DESC LIMIT ?"
+    params.append(limit)
+    con = connect()
+    try:
+        rows = con.execute(sql, params).fetchall()
+        items = [
+            EventOut(
+                id=r["id"],
+                user_id=r["user_id"],
+                session_id=r["session_id"],
+                ts=int(r["ts"]),
+                name=r["name"],
+                mode=r["mode"],
+                destination=r["destination"],
+                card_id=r["card_id"],
+                payload=json.loads(r["payload_json"]) if r["payload_json"] else {},
+            )
+            for r in rows
+        ]
+        return EventsResponse(items=items)
     finally:
         con.close()
 
