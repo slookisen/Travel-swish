@@ -342,7 +342,7 @@ function SwipeDeckCard({
           padding: S.md2,
           transform: `translateX(${dx}px) rotate(${dx / 18}deg)`,
           transition: dragging ? 'none' : 'transform 180ms ease',
-          boxShadow: '0 18px 50px rgba(0,0,0,0.35)',
+          boxShadow: T.shadow,
           userSelect: 'none',
         }}
       >
@@ -551,7 +551,7 @@ function SwipeStack({
                 letterSpacing: 1,
                 transform: 'rotate(-14deg)',
                 opacity: badgeNoOpacity,
-                background: 'rgba(0,0,0,0.15)',
+                background: T.overlay,
               }}
             >
               {UI.no[lang]}
@@ -569,7 +569,7 @@ function SwipeStack({
                 letterSpacing: 1,
                 transform: 'rotate(14deg)',
                 opacity: badgeYesOpacity,
-                background: 'rgba(0,0,0,0.15)',
+                background: T.overlay,
               }}
             >
               {UI.yes[lang]}
@@ -885,7 +885,7 @@ export default function App() {
           style={{
             padding: `${S.sm}px ${S.lg}px`,
             borderBottom: `1px solid ${T.borderSoft}`,
-            background: 'rgba(212,165,116,0.10)',
+            background: T.goldWash,
             display: 'flex',
             gap: S.sm2,
             justifyContent: 'space-between',
@@ -1114,11 +1114,11 @@ export default function App() {
                 <div
                   key={idx}
                   style={{
-                    background: `linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02))`,
+                    background: `linear-gradient(180deg, ${T.glassHi}, ${T.glassLo})`,
                     border: `1px solid ${T.border}`,
                     borderRadius: R.lg,
                     padding: S.md2,
-                    boxShadow: '0 10px 30px rgba(0,0,0,0.25)',
+                    boxShadow: T.shadowMd,
                   }}
                 >
                   <div style={{ display: 'flex', justifyContent: 'space-between', gap: S.sm2, alignItems: 'flex-start' }}>
@@ -1128,7 +1128,7 @@ export default function App() {
                       </div>
                       <div style={{ display: 'flex', gap: S.xs2, flexWrap: 'wrap', marginTop: S.xs2, alignItems: 'center' }}>
                         {it.cat && (
-                          <span style={{ fontSize: F.size.sm, color: T.dim, border: `1px solid ${T.borderSoft}`, padding: `4px ${S.sm}px` /* 4px: no token below S.xs=6 */, borderRadius: R.pill, background: 'rgba(255,255,255,0.02)' }}>
+                          <span style={{ fontSize: F.size.sm, color: T.dim, border: `1px solid ${T.borderSoft}`, padding: `${S.xxs}px ${S.sm}px`, borderRadius: R.pill, background: T.glassLo }}>
                             {it.cat}
                           </span>
                         )}
@@ -1137,7 +1137,7 @@ export default function App() {
                             href={it.url}
                             target="_blank"
                             rel="noreferrer"
-                            style={{ fontSize: F.size.sm, color: T.teal, textDecoration: 'none', border: `1px solid ${T.borderSoft}`, padding: `4px ${S.sm}px` /* 4px: no token below S.xs=6 */, borderRadius: R.pill }}
+                            style={{ fontSize: F.size.sm, color: T.teal, textDecoration: 'none', border: `1px solid ${T.borderSoft}`, padding: `${S.xxs}px ${S.sm}px`, borderRadius: R.pill }}
                           >
                             {UI.openLink[lang]}
                           </a>
@@ -1149,8 +1149,8 @@ export default function App() {
                       flexShrink: 0,
                       padding: `${S.xs}px ${S.sm}px`,
                       borderRadius: R.pill,
-                      background: 'rgba(212,165,116,0.14)',
-                      border: '1px solid rgba(212,165,116,0.28)',
+                      background: T.goldWashHi,
+                      border: `1px solid ${T.goldBorder}`,
                       color: T.gold,
                       fontWeight: F.weight.ultra,
                       fontSize: F.size.sm,

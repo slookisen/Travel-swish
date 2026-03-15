@@ -9,7 +9,18 @@ export const T = {
   green: '#34d399',
   border: 'rgba(255,255,255,0.10)',
   borderSoft: 'rgba(255,255,255,0.06)',
+
+  // overlay / glass
+  overlay: 'rgba(0,0,0,0.15)',
+  glassHi: 'rgba(255,255,255,0.04)',
+  glassLo: 'rgba(255,255,255,0.02)',
+  goldWash: 'rgba(212,165,116,0.10)',
+  goldWashHi: 'rgba(212,165,116,0.14)',
+  goldBorder: 'rgba(212,165,116,0.28)',
+
+  // shadows
   shadow: '0 18px 60px rgba(0,0,0,0.45)',
+  shadowMd: '0 10px 30px rgba(0,0,0,0.25)',
 } as const;
 
 // Lightweight tokens (used by inline styles + globalCss)
@@ -22,6 +33,7 @@ export const TOKENS = {
     pill: 999,
   },
   space: {
+    xxs: 4,
     xs: 6,
     xs2: 8,
     sm: 10,
@@ -72,6 +84,7 @@ export const globalCss = `
     --r-xl: ${R.xl}px;
     --r-pill: ${R.pill}px;
 
+    --s-xxs: ${S.xxs}px;
     --s-xs: ${S.xs}px;
     --s-xs2: ${S.xs2}px;
     --s-sm: ${S.sm}px;
