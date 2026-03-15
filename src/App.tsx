@@ -1050,13 +1050,21 @@ export default function App() {
             flexWrap: 'wrap',
           }}
         >
-          <div style={{ fontWeight: F.weight.black, color: T.gold }}>
+          <div
+            style={{
+              fontWeight: F.weight.black,
+              color: T.gold,
+              flex: '1 1 240px',
+              lineHeight: 1.25,
+              fontSize: F.size.base,
+            }}
+          >
             {UI.updateBanner[lang](updateAvailable, APP_VERSION)}
           </div>
           <button
             className="pill"
             onClick={() => window.location.reload()}
-            style={{ background: 'transparent', color: T.txt, border: `1px solid ${T.border}` }}
+            style={{ background: 'transparent', color: T.txt, border: `1px solid ${T.border}`, whiteSpace: 'nowrap' }}
           >
             {UI.refresh[lang]}
           </button>

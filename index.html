@@ -27,6 +27,73 @@
         }
       })();
     </script>
+
+    <!-- Cache-bust guard (must run before the main module script). -->
+    <script>
+      (function () {
+        // GitHub Pages caches index.html (often ~10 minutes). If a user has an old
+        // cached index.html that points at deleted hashed assets, the main module
+        // can 404 => blank screen. We listen for resource load failures and force
+        // a cache-busted reload (?v=...).
+
+        var bootKey = 'ts_boot_reload_once';
+
+        function reloadCacheBusted() {
+          try {
+            var u = new URL(window.location.href);
+            if (!u.searchParams.has('v')) {
+              u.searchParams.set('v', String(Date.now()));
+              window.location.replace(u.toString());
+              return;
+            }
+          } catch (e) {}
+
+          // If we already tried with ?v=, reload only once more (avoid loops offline).
+          try {
+            if (!sessionStorage.getItem(bootKey)) {
+              sessionStorage.setItem(bootKey, '1');
+              window.location.reload();
+            }
+          } catch (e) {
+            window.location.reload();
+          }
+        }
+
+        // Capture resource errors (script/link). Resource errors don't bubble.
+        window.addEventListener(
+          'error',
+          function (ev) {
+            try {
+              var t = ev && ev.target;
+              if (t && t.tagName === 'SCRIPT' && t.src && String(t.src).indexOf('/assets/') !== -1) {
+                reloadCacheBusted();
+              }
+            } catch (e) {}
+          },
+          true,
+        );
+
+        // Catch failed dynamic imports (chunks) after initial boot.
+        window.addEventListener(
+          'unhandledrejection',
+          function (ev) {
+            try {
+              var r = ev && ev.reason;
+              var msg = String((r && r.message) || r || '');
+              if (
+                msg.indexOf('Failed to fetch dynamically imported module') !== -1 ||
+                msg.indexOf('Importing a module script failed') !== -1
+              ) {
+                reloadCacheBusted();
+              }
+            } catch (e) {}
+          },
+          true,
+        );
+      })();
+    </script>
+
+    <script type="module" src="/src/main.tsx"></script>
   </head>
   <body>
     <div id="root"></div>
@@ -35,10 +102,5 @@
       If a user has an old cached index.html that points at now-deleted hashed assets,
       the main module can 404 => blank screen. We force a cache-busted reload.
     -->
-    <script
-      type="module"
-      src="/src/main.tsx"
-      onerror="(function(){try{var u=new URL(window.location.href);u.searchParams.set('v',String(Date.now()));window.location.replace(u.toString());}catch(e){window.location.reload();}})();"
-    ></script>
   </body>
 </html>
