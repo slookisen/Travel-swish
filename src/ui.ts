@@ -52,6 +52,7 @@ export const TOKENS = {
       md: 16,
       lg: 20,
       hero: 34,
+      emoji: 28,
     },
     weight: {
       medium: 600,
@@ -60,11 +61,19 @@ export const TOKENS = {
       ultra: 950,
     },
   },
+  motion: {
+    // Keep motion short + snappy. Always provide a reduced-motion fallback.
+    fadeUp: 200,
+    snap: 180,
+    commit: 220,
+    ease: 'ease',
+  },
 } as const;
 
 export const R = TOKENS.radius;
 export const S = TOKENS.space;
 export const F = TOKENS.font;
+export const M = TOKENS.motion;
 
 export const globalCss = `
   :root{
@@ -95,6 +104,11 @@ export const globalCss = `
     --s-xl: ${S.xl}px;
     --s-page: ${S.page}px;
 
+    --m-fadeUp: ${M.fadeUp}ms;
+    --m-snap: ${M.snap}ms;
+    --m-commit: ${M.commit}ms;
+    --m-ease: ${M.ease};
+
     --font: ${F.system};
   }
 
@@ -117,6 +131,11 @@ export const globalCss = `
   .row{ display:flex; gap: var(--s-sm); align-items:center; }
   .wrap{ flex-wrap: wrap; }
   .spacer{ flex:1; }
-  .fadeUp{ animation: fadeUp 200ms ease both; }
+  .fadeUp{ animation: fadeUp var(--m-fadeUp) var(--m-ease) both; }
   .pill{ border-radius: var(--r-pill); padding: 8px 12px; border: 1px solid var(--border-soft); }
+
+  @media (prefers-reduced-motion: reduce){
+    *,*::before,*::after{ animation: none !important; transition: none !important; }
+    html:focus-within{ scroll-behavior: auto; }
+  }
 `;

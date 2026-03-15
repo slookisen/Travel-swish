@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { T, globalCss, F, R, S } from './ui';
+import { T, globalCss, F, R, S, M } from './ui';
 import { DIMS, getDeckCards, t as tData, type Card, type Lang, type Mode } from './dataset';
 import { BUILD_META } from './buildMeta';
 
@@ -25,6 +25,11 @@ const UI = {
     en: 'Build a taste profile in seconds. Get suggestions that actually fit you.',
     sv: 'Bygg en smakprofil på sekunder. Få förslag som faktiskt passar dig.',
   },
+  landingTip: {
+    no: 'Tips: Velg modus, skriv inn sted, swipe 10 kort og få forslag.',
+    en: 'Tip: Pick a mode, enter a destination, swipe 10 cards, get suggestions.',
+    sv: 'Tips: Välj läge, skriv in plats, svajpa 10 kort och få förslag.',
+  },
   getStarted: { no: 'Kom i gang', en: 'Get started', sv: 'Kom igång' },
   chooseMode: { no: 'Velg modus', en: 'Choose mode', sv: 'Välj läge' },
   destination: { no: 'Destinasjon', en: 'Destination', sv: 'Destination' },
@@ -33,6 +38,27 @@ const UI = {
     no: 'API-nøkkel er ikke lenger nødvendig i appen.',
     en: 'API key is no longer required in the app.',
     sv: 'API-nyckel behövs inte längre i appen.',
+  },
+  updateAvailable: {
+    no: 'Oppdatering tilgjengelig',
+    en: 'Update available',
+    sv: 'Uppdatering finns',
+  },
+  updateBanner: {
+    no: (remote: string, current: string) => `Oppdatering tilgjengelig: ${remote} (du har ${current})`,
+    en: (remote: string, current: string) => `Update available: ${remote} (you are ${current})`,
+    sv: (remote: string, current: string) => `Uppdatering finns: ${remote} (du har ${current})`,
+  },
+  refresh: { no: 'Oppdater', en: 'Refresh', sv: 'Uppdatera' },
+  resultsHint: {
+    no: 'Store kort, lite støy. Trykk på «Hvorfor» for forklaring.',
+    en: 'Big cards, low noise. Tap “Why” for an explanation.',
+    sv: 'Stora kort, lite brus. Tryck på “Varför” för förklaring.',
+  },
+  noResults: {
+    no: 'Ingen forslag ennå. Prøv «Finn flere» eller swipe noen flere kort.',
+    en: 'No suggestions yet. Try “Find more” or swipe a few more cards.',
+    sv: 'Inga förslag än. Prova ”Hitta fler” eller svajpa några fler kort.',
   },
   // kept for backwards compatibility (not used)
   apiKeyMissing: { no: 'API-nøkkel mangler', en: 'API key required', sv: 'API-nyckel krävs' },
@@ -56,6 +82,16 @@ const UI = {
     sv: 'Du har använt upp kortleken i detta läge. Börja om för att få kort igen.',
   },
   loading: { no: 'Henter…', en: 'Loading…', sv: 'Laddar…' },
+  cooldown: {
+    no: (s: number) => `Cooldown: ${s}s`,
+    en: (s: number) => `Cooldown: ${s}s`,
+    sv: (s: number) => `Cooldown: ${s}s`,
+  },
+  cooldownError: {
+    no: (s: number) => `For mange forespørsler. Vent ${s}s og prøv igjen.`,
+    en: (s: number) => `Too many requests. Wait ${s}s and try again.`,
+    sv: (s: number) => `För många förfrågningar. Vänta ${s}s och försök igen.`,
+  },
   swipeAtLeast: { no: 'Sveip minst 10 kort først.', en: 'Swipe at least 10 cards first.', sv: 'Svajpa minst 10 kort först.' },
   openLink: { no: 'Åpne lenke', en: 'Open link', sv: 'Öppna länk' },
 };
@@ -341,13 +377,13 @@ function SwipeDeckCard({
           borderRadius: R.lg,
           padding: S.md2,
           transform: `translateX(${dx}px) rotate(${dx / 18}deg)`,
-          transition: dragging ? 'none' : 'transform 180ms ease',
+          transition: dragging ? 'none' : `transform ${M.snap}ms ${M.ease}`, 
           boxShadow: T.shadow,
           userSelect: 'none',
         }}
       >
         <div style={{ display: 'flex', gap: S.sm, alignItems: 'center' }}>
-          <div style={{ fontSize: 28 /* emoji; no token match */ }}>{card.emoji}</div>
+          <div style={{ fontSize: F.size.emoji }}>{card.emoji}</div>
           <div style={{ fontWeight: F.weight.black, fontSize: F.size.md }}>{card.q}</div>
         </div>
         <div style={{ color: T.dim, marginTop: S.xs2, lineHeight: 1.5 }}>{card.desc}</div>
@@ -376,6 +412,17 @@ function SwipeDeckCard({
 
 function clamp(n: number, min: number, max: number) {
   return Math.max(min, Math.min(max, n));
+}
+
+function motionMs(ms: number) {
+  try {
+    const reduce = typeof window !== 'undefined'
+      && typeof window.matchMedia === 'function'
+      && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    return reduce ? 0 : ms;
+  } catch {
+    return ms;
+  }
 }
 
 function SwipeStack({
@@ -420,7 +467,7 @@ function SwipeStack({
       onSwipe(top, val);
       setAnimating(false);
       reset();
-    }, 220);
+    }, motionMs(M.commit));
   }
 
   function endGesture(finalDx: number) {
@@ -490,7 +537,7 @@ function SwipeStack({
                 }}
               >
                 <div style={{ display: 'flex', gap: S.sm, alignItems: 'center' }}>
-                  <div style={{ fontSize: 28 /* emoji; no token match */ }}>{c.emoji}</div>
+                  <div style={{ fontSize: F.size.emoji }}>{c.emoji}</div>
                   <div style={{ fontWeight: F.weight.black, fontSize: F.size.md }}>{c.q}</div>
                 </div>
                 <div style={{ color: T.dim, marginTop: S.xs2, lineHeight: 1.5 }}>{c.desc}</div>
@@ -531,7 +578,11 @@ function SwipeStack({
               borderRadius: R.xl,
               padding: S.md2,
               transform: `translate(${dx}px, ${dy}px) rotate(${dx / 18}deg)`,
-              transition: dragging ? 'none' : animating ? 'transform 220ms ease' : 'transform 180ms ease',
+              transition: dragging
+                ? 'none'
+                : animating
+                  ? `transform ${M.commit}ms ${M.ease}`
+                  : `transform ${M.snap}ms ${M.ease}`,
               boxShadow: T.shadow,
               userSelect: 'none',
               position: 'relative',
@@ -576,7 +627,7 @@ function SwipeStack({
             </div>
 
             <div style={{ display: 'flex', gap: S.sm, alignItems: 'center' }}>
-              <div style={{ fontSize: 28 /* emoji; no token match */ }}>{top.emoji}</div>
+              <div style={{ fontSize: F.size.emoji }}>{top.emoji}</div>
               <div style={{ fontWeight: F.weight.black, fontSize: F.size.md }}>{top.q}</div>
             </div>
             <div style={{ color: T.dim, marginTop: S.xs2, lineHeight: 1.5 }}>{top.desc}</div>
@@ -728,7 +779,7 @@ export default function App() {
 
   async function findItems() {
     if (cooldownUntil && cooldownUntil > Date.now()) {
-      setError(`For mange forespørsler. Vent ${cooldownLeft}s og prøv igjen.`);
+      setError(UI.cooldownError[lang](cooldownLeft));
       return;
     }
 
@@ -894,14 +945,14 @@ export default function App() {
           }}
         >
           <div style={{ fontWeight: F.weight.black, color: T.gold }}>
-            Update available: {updateAvailable} (you are {APP_VERSION})
+            {UI.updateBanner[lang](updateAvailable, APP_VERSION)}
           </div>
           <button
             className="pill"
             onClick={() => window.location.reload()}
             style={{ background: 'transparent', color: T.txt, border: `1px solid ${T.border}` }}
           >
-            Refresh
+            {UI.refresh[lang]}
           </button>
         </div>
       )}
@@ -923,11 +974,7 @@ export default function App() {
             </div>
 
             <div style={{ marginTop: S.md2 }} className="muted">
-              {lang === 'no'
-                ? 'Tips: Velg modus, skriv sted, legg inn nøkkel, swipe 10 kort og få forslag.'
-                : lang === 'sv'
-                  ? 'Tips: Välj läge, skriv plats, lägg in nyckel, svajpa 10 kort och få förslag.'
-                  : 'Tip: Pick mode, enter destination, paste key, swipe 10 cards, get suggestions.'}
+              {UI.landingTip[lang]}
             </div>
           </div>
         </div>
@@ -966,6 +1013,9 @@ export default function App() {
             />
           </div>
 
+          <div className="muted" style={{ marginTop: S.xs2, fontSize: F.size.sm }}>
+            {UI.apiKeyNote[lang]}
+          </div>
 
           <div style={{ marginTop: S.md2, display: 'flex', gap: S.sm, flexWrap: 'wrap' }}>
             <button
@@ -999,7 +1049,7 @@ export default function App() {
           {/* Swipe deck (stacked, Tinder-like) */}
           <div style={{ position: 'relative', minHeight: 360 }}>
             {deckIndex >= deck.length ? (
-              <div style={{ color: T.dim, paddingTop: 28 /* no exact token; closest S.page=24 */ }}>
+              <div style={{ color: T.dim, paddingTop: S.page + S.xxs }}>
                 <div style={{ fontWeight: F.weight.black, color: T.txt, marginBottom: S.xs }}>
                   {lang === 'no' ? 'Ingen flere kort' : lang === 'sv' ? 'Inga fler kort' : 'No more cards'}
                 </div>
@@ -1082,7 +1132,7 @@ export default function App() {
             <div style={{ display: 'flex', gap: S.sm, alignItems: 'center', flexWrap: 'wrap' }}>
               {cooldownUntil && cooldownUntil > Date.now() && (
                 <div style={{ color: T.dim, fontSize: F.size.sm }}>
-                  {lang === 'no' ? `Cooldown: ${cooldownLeft}s` : lang === 'sv' ? `Cooldown: ${cooldownLeft}s` : `Cooldown: ${cooldownLeft}s`}
+                  {UI.cooldown[lang](cooldownLeft)}
                 </div>
               )}
               <button
@@ -1097,7 +1147,13 @@ export default function App() {
                   color: loading ? T.dim : T.bg,
                   fontWeight: F.weight.black,
                 }}
-                title={lang === 'no' ? 'Hent flere forslag basert på profilen din' : 'Fetch more suggestions based on your profile'}
+                title={
+                  lang === 'no'
+                    ? 'Hent flere forslag basert på profilen din'
+                    : lang === 'sv'
+                      ? 'Hämta fler förslag baserat på din profil'
+                      : 'Fetch more suggestions based on your profile'
+                }
               >
                 {loading ? UI.loading[lang] : UI.findMore[lang]}
               </button>
@@ -1105,10 +1161,14 @@ export default function App() {
           </div>
 
           <h2 style={{ margin: `${S.md}px 0 0 0`, letterSpacing: 0.2 }}>{labels}: {destination}</h2>
-          <div style={{ color: T.dim, marginTop: S.xs, fontSize: F.size.sm }}>{lang === 'no' ? 'Tinder clean: store kort, lite støy. Klikk for «hvorfor».' : 'Big cards, low noise. Tap for "why".'}</div>
+          <div style={{ color: T.dim, marginTop: S.xs, fontSize: F.size.sm }}>{UI.resultsHint[lang]}</div>
 
           <div style={{ display: 'grid', gap: S.sm2, marginTop: S.md2 }}>
-            {items.map((it, idx) => {
+            {items.length === 0 ? (
+              <div className="muted" style={{ padding: S.md2 }}>
+                {UI.noResults[lang]}
+              </div>
+            ) : items.map((it, idx) => {
               const pct = Math.round(it.match || 0);
               return (
                 <div
