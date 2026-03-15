@@ -5,6 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#0a0d1a" />
     <meta name="robots" content="noindex, nofollow" />
+
+    <!-- Best-effort caching hints (GitHub Pages may ignore/override these). -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+
     <title>Travel-Swish</title>
     <style>
       html, body, #root { margin: 0; padding: 0; height: 100%; background: #0a0d1a; }
@@ -13,6 +19,15 @@
   </head>
   <body>
     <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
+
+    <!--
+      If a user has an old cached index.html that points at now-deleted hashed assets,
+      the main module can 404 => blank screen. We force a cache-busted reload.
+    -->
+    <script
+      type="module"
+      src="/src/main.tsx"
+      onerror="(function(){try{var u=new URL(window.location.href);u.searchParams.set('v',String(Date.now()));window.location.replace(u.toString());}catch(e){window.location.reload();}})();"
+    ></script>
   </body>
 </html>

@@ -41,5 +41,6 @@ git push -u origin main
 
 ## Notes
 - We added `<meta name="robots" content="noindex, nofollow">` and `robots.txt` to reduce search indexing.
+- GitHub Pages can serve a cached `index.html` that points at deleted hashed assets after a deploy (=> blank screen). Our `index.html` includes an `onerror` fallback on the main module script that forces a cache-busted reload (`?v=<ts>`).
 - The app persists user preference learning in `localStorage` (browser). That still works on Pages.
 - Current version asks each user for an Anthropic API key (stored locally in browser). For a real product, we’ll move the API calls to a backend.
