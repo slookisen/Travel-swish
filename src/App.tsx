@@ -1207,7 +1207,7 @@ export default function App() {
             </div>
 
             <div style={{ marginTop: S.md2 }}>
-              <button className="btn btnPrimary" onClick={() => setPage('home')}>{UI.getStarted[lang]}</button>
+              <button className="btn btnPrimary btnFull" onClick={() => setPage('home')}>{UI.getStarted[lang]}</button>
             </div>
 
             <div style={{ marginTop: S.md2 }} className="muted">
@@ -1268,11 +1268,16 @@ export default function App() {
                 setPage('swipe');
               }}
               disabled={!destination.trim()}
-              style={{ padding: `${S.sm2}px ${S.md2}px`, borderRadius: R.md, border: 'none', cursor: destination.trim() ? 'pointer' : 'not-allowed', opacity: destination.trim() ? 1 : 0.6, background: `linear-gradient(135deg, ${T.gold}, ${T.teal})`, color: T.bg, fontWeight: F.weight.bold }}
+              className="btnPill btnPillPrimary btnFull"
+              style={{ cursor: destination.trim() ? 'pointer' : 'not-allowed', opacity: destination.trim() ? 1 : 0.6 }}
             >
               {UI.startMode[lang](labels)}
             </button>
-            <button onClick={() => setPage('landing')} style={{ padding: `${S.sm2}px ${S.md2}px`, borderRadius: R.md, border: `1px solid ${T.border}`, cursor: 'pointer', background: 'transparent', color: T.txt }}>
+            <button
+              onClick={() => setPage('landing')}
+              className="btnPill"
+              style={{ background: 'transparent', color: T.txt, border: `1px solid ${T.border}` }}
+            >
               {UI.back[lang]}
             </button>
           </div>
@@ -1289,7 +1294,11 @@ export default function App() {
 
       {page === 'swipe' && (
         <div style={{ padding: S.page, maxWidth: 760, margin: '0 auto' }}>
-          <button onClick={() => setPage('home')} style={{ marginBottom: S.sm, background: 'transparent', border: `1px solid ${T.border}`, color: T.txt, padding: `${S.xs2}px ${S.sm}px`, borderRadius: R.sm, cursor: 'pointer' }}>
+          <button
+            onClick={() => setPage('home')}
+            className="btnPill"
+            style={{ marginBottom: S.sm, background: 'transparent', border: `1px solid ${T.border}`, color: T.txt }}
+          >
             {UI.back[lang]}
           </button>
 
@@ -1300,39 +1309,21 @@ export default function App() {
           {/* Swipe deck (stacked, Tinder-like) */}
           <div style={{ position: 'relative', minHeight: 360 }}>
             {deckIndex >= deck.length ? (
-              <div style={{ color: T.dim, paddingTop: S.page + S.xxs }}>
+              <div className="emptyState" style={{ marginTop: S.page }}>
                 <div style={{ fontWeight: F.weight.black, color: T.txt, marginBottom: S.xs }}>
                   {lang === 'no' ? 'Ingen flere kort' : lang === 'sv' ? 'Inga fler kort' : 'No more cards'}
                 </div>
-                <div style={{ lineHeight: 1.5 }}>
+                <div className="muted" style={{ lineHeight: 1.55 }}>
                   {UI.resetDeckHelp[lang]}
                 </div>
-                <div style={{ marginTop: S.md, display: 'flex', gap: S.sm, flexWrap: 'wrap' }}>
-                  <button
-                    onClick={resetDeck}
-                    style={{
-                      padding: `${S.sm}px ${S.md}px`,
-                      borderRadius: R.pill,
-                      border: `1px solid ${T.borderSoft}`,
-                      background: 'transparent',
-                      color: T.txt,
-                      fontWeight: F.weight.black,
-                      cursor: 'pointer',
-                    }}
-                  >
+                <div className="emptyActions">
+                  <button onClick={resetDeck} className="btnPill btnPillPrimary btnFull">
                     {UI.resetDeck[lang]}
                   </button>
                   <button
                     onClick={() => setPage('home')}
-                    style={{
-                      padding: `${S.sm}px ${S.md}px`,
-                      borderRadius: R.pill,
-                      border: `1px solid ${T.borderSoft}`,
-                      background: 'transparent',
-                      color: T.dim,
-                      fontWeight: F.weight.bold,
-                      cursor: 'pointer',
-                    }}
+                    className="btnPill"
+                    style={{ background: 'transparent', color: T.txt, border: `1px solid ${T.border}` }}
                   >
                     {UI.back[lang]}
                   </button>
@@ -1351,14 +1342,12 @@ export default function App() {
             <button
               onClick={findItems}
               disabled={!canSearch || loading}
+              className="btnPill btnPillPrimary btnFull"
               style={{
-                padding: `${S.sm2}px ${S.md2}px`,
-                borderRadius: R.md,
-                border: 'none',
                 cursor: !canSearch || loading ? 'not-allowed' : 'pointer',
-                background: !canSearch || loading ? T.card : `linear-gradient(135deg, ${T.gold}, ${T.teal})`,
-                color: !canSearch || loading ? T.dim : T.bg,
-                fontWeight: F.weight.bold,
+                opacity: !canSearch || loading ? 0.55 : 1,
+                background: !canSearch || loading ? T.card : undefined,
+                color: !canSearch || loading ? T.dim : undefined,
               }}
             >
               {loading ? UI.loading[lang] : UI.fetch[lang]}

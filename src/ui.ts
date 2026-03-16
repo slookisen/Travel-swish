@@ -121,7 +121,7 @@ export const globalCss = `
   .container{ max-width: 860px; margin: 0 auto; padding: var(--s-xl); }
   .card{ background:var(--card); border:1px solid var(--border-soft); border-radius: var(--r-lg); box-shadow:var(--shadow); }
 
-  .btn{ border-radius: var(--r-md); padding: 12px 16px; font-weight: ${F.weight.bold}; cursor:pointer; border:1px solid var(--border-soft); background: transparent; color:var(--txt); }
+  .btn{ display:inline-flex; align-items:center; justify-content:center; gap: 8px; border-radius: var(--r-md); padding: 12px 16px; font-weight: ${F.weight.bold}; cursor:pointer; border:1px solid var(--border-soft); background: transparent; color:var(--txt); }
   .btnPrimary{ border: none; background: linear-gradient(135deg, ${T.gold}, ${T.teal}); color: var(--bg); }
   .btnGhost{ background: transparent; }
 
@@ -141,7 +141,7 @@ export const globalCss = `
   .noticeWarn{ border-color: rgba(212,165,116,0.28); background: rgba(212,165,116,0.06); }
   .noticeActions{ display:flex; gap: var(--s-sm); flex-wrap:wrap; margin-top: var(--s-sm); }
 
-  .btnPill{ border-radius: var(--r-pill); padding: 10px 14px; font-weight: ${F.weight.black}; cursor:pointer; border:1px solid var(--border-soft); background: transparent; color:var(--txt); }
+  .btnPill{ display:inline-flex; align-items:center; justify-content:center; gap: 8px; border-radius: var(--r-pill); padding: 10px 14px; font-weight: ${F.weight.black}; cursor:pointer; border:1px solid var(--border-soft); background: transparent; color:var(--txt); }
   .btnPillPrimary{ border: none; background: linear-gradient(135deg, ${T.gold}, ${T.teal}); color: var(--bg); }
 
   /* Text clamp helpers */
