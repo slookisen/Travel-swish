@@ -100,6 +100,11 @@ const UI = {
     en: 'No suggestions yet. Try “Find more” or swipe a few more cards.',
     sv: 'Inga förslag än. Prova ”Hitta fler” eller svajpa några fler kort.',
   },
+  noResultsFiltered: {
+    no: (cat: string) => `Ingen forslag i «${cat}». Prøv «Alle» eller «Finn flere».`,
+    en: (cat: string) => `No suggestions in “${cat}”. Try “All” or “Find more”.`,
+    sv: (cat: string) => `Inga förslag i ”${cat}”. Prova ”Alla” eller ”Hitta fler”.`,
+  },
   // kept for backwards compatibility (not used)
   apiKeyMissing: { no: 'API-nøkkel mangler', en: 'API key required', sv: 'API-nyckel krävs' },
   back: { no: 'Tilbake', en: 'Back', sv: 'Tillbaka' },
@@ -1352,8 +1357,39 @@ export default function App() {
 
                 <div style={{ display: 'grid', gap: S.sm2, marginTop: S.md2 }}>
                   {shown.length === 0 ? (
-                    <div className="muted" style={{ padding: S.md2 }}>
-                      {UI.noResults[lang]}
+                    <div className="emptyState">
+                      <div className="muted" style={{ lineHeight: 1.55 }}>
+                        {items.length && active ? UI.noResultsFiltered[lang](active) : UI.noResults[lang]}
+                      </div>
+
+                      <div className="emptyActions">
+                        {active && (
+                          <button
+                            onClick={() => pick('')}
+                            className="btnPill"
+                            title={lang === 'no' ? 'Vis alle kategorier' : lang === 'sv' ? 'Visa alla kategorier' : 'Show all categories'}
+                            style={{ background: T.card }}
+                          >
+                            {allLabel}
+                          </button>
+                        )}
+
+                        <button
+                          onClick={findItems}
+                          disabled={loading || (cooldownUntil && cooldownUntil > Date.now())}
+                          className="btnPill btnPillPrimary"
+                        >
+                          {loading ? UI.loading[lang] : UI.findMore[lang]}
+                        </button>
+
+                        <button
+                          onClick={() => setPage('swipe')}
+                          className="btnPill"
+                          style={{ background: 'transparent', color: T.dim }}
+                        >
+                          {UI.back[lang]}
+                        </button>
+                      </div>
                     </div>
                   ) : shown.map((it, idx) => {
                     const pct = Math.round(it.match || 0);

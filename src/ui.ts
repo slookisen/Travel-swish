@@ -134,6 +134,12 @@ export const globalCss = `
   .fadeUp{ animation: fadeUp var(--m-fadeUp) var(--m-ease) both; }
   .pill{ border-radius: var(--r-pill); padding: 8px 12px; border: 1px solid var(--border-soft); }
 
+  .emptyState{ padding: var(--s-md2); border: 1px dashed var(--border-soft); border-radius: var(--r-lg); background: rgba(255,255,255,0.02); }
+  .emptyActions{ display:flex; gap: var(--s-sm); flex-wrap:wrap; margin-top: var(--s-sm2); }
+
+  .btnPill{ border-radius: var(--r-pill); padding: 10px 14px; font-weight: ${F.weight.black}; cursor:pointer; border:1px solid var(--border-soft); background: transparent; color:var(--txt); }
+  .btnPillPrimary{ border: none; background: linear-gradient(135deg, ${T.gold}, ${T.teal}); color: var(--bg); }
+
   @media (prefers-reduced-motion: reduce){
     *,*::before,*::after{ animation: none !important; transition: none !important; }
     html:focus-within{ scroll-behavior: auto; }
