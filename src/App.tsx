@@ -158,6 +158,17 @@ const UI = {
     en: (s: number) => `Too many requests. Wait ${s}s and try again.`,
     sv: (s: number) => `För många förfrågningar. Vänta ${s}s och försök igen.`,
   },
+  backendColdStart: {
+    no: 'Backend starter opp (cold start) — første kall kan time out. Vent litt og prøv igjen.',
+    en: 'Backend is waking up (cold start) — the first call can time out. Wait a bit and try again.',
+    sv: 'Backend vaknar (cold start) — första anropet kan time out. Vänta lite och försök igen.',
+  },
+  backendDown: {
+    no: 'Backend utilgjengelig akkurat nå. Vi viser demo-forslag, men du kan prøve igjen.',
+    en: 'Backend is unavailable right now. Showing demo suggestions — try again in a moment.',
+    sv: 'Backend är otillgänglig just nu. Visar demo-förslag — försök igen om en stund.',
+  },
+  tryAgain: { no: 'Prøv igjen', en: 'Try again', sv: 'Försök igen' },
   swipeAtLeast: { no: 'Sveip minst 10 kort først.', en: 'Swipe at least 10 cards first.', sv: 'Svajpa minst 10 kort först.' },
   openLink: { no: 'Åpne lenke', en: 'Open link', sv: 'Öppna länk' },
   openMaps: { no: 'Åpne i Maps', en: 'Open in Maps', sv: 'Öppna i Maps' },
@@ -805,6 +816,8 @@ export default function App() {
   const [userId] = useState(() => getOrCreateId('ts_user_id'));
   const [error, setError] = useState('');
   const [info, setInfo] = useState('');
+  const [backendNotice, setBackendNotice] = useState<null | { kind: 'cold' | 'down'; msg: string }>(null);
+  const backendRetryCount = useRef(0);
   const [loading, setLoading] = useState(false);
   const [cooldownUntil, setCooldownUntil] = useState(0);
   const [cooldownLeft, setCooldownLeft] = useState(0);
@@ -841,6 +854,8 @@ export default function App() {
     seenKeys.current = mem.seen;
     setCatFilter(loadCatFilter(mode));
     setInfo('');
+    setBackendNotice(null);
+    backendRetryCount.current = 0;
   }, [mode]);
 
   useEffect(() => {
@@ -908,6 +923,7 @@ export default function App() {
     setLoading(true);
     setError('');
     setInfo('');
+    setBackendNotice(null);
 
     try {
       const profile = calcProfile(swipes, cards);
@@ -957,23 +973,30 @@ export default function App() {
 
       if (BACKEND_URL) {
         try {
+          const warm = backendRetryCount.current > 0;
+          const prefsTimeoutMs = warm ? 20000 : 8000;
+          const recsTimeoutMs = warm ? 45000 : 20000;
+
           // Persist prefs so /recs/web can use them.
           await fetchJson(`${BACKEND_URL}/prefs`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ user_id: userId, mode, prefs, updated_ts: nowS() }),
-            timeoutMs: 8000,
+            timeoutMs: prefsTimeoutMs,
           });
 
           const j = await fetchJson(`${BACKEND_URL}/recs/web`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ user_id: userId, mode, destination: dest, limit: 20 }),
-            timeoutMs: 20000,
+            timeoutMs: recsTimeoutMs,
           });
 
           const raw = Array.isArray(j?.items) ? j.items : [];
           if (raw.length) {
+            backendRetryCount.current = 0;
+            setBackendNotice(null);
+
             let newItems: RecItem[] = raw
               .map((x: any) => ({
                 id: String(x?.id || ''),
@@ -1002,6 +1025,9 @@ export default function App() {
             return;
           }
 
+          backendRetryCount.current = 0;
+          setBackendNotice(null);
+
           setInfo(
             lang === 'no'
               ? 'Ingen treff fra backend ennå — viser demo-forslag.'
@@ -1009,9 +1035,15 @@ export default function App() {
                 ? 'Inga träffar från backend ännu — visar demo-förslag.'
                 : 'No backend hits yet — showing demo suggestions.'
           );
-        } catch (e) {
+        } catch (e: any) {
           // Keep app usable even if backend is down.
           console.warn('Backend recs unavailable; falling back to local suggestions.', e);
+
+          const emsg = String(e?.message || '');
+          const isTimeout = /timeout/i.test(emsg);
+          if (isTimeout) backendRetryCount.current = Math.min(3, backendRetryCount.current + 1);
+          setBackendNotice({ kind: isTimeout ? 'cold' : 'down', msg: isTimeout ? UI.backendColdStart[lang] : UI.backendDown[lang] });
+
           setInfo(
             lang === 'no'
               ? 'Backend utilgjengelig — viser demo-forslag.'
@@ -1385,6 +1417,26 @@ export default function App() {
           {error && <div style={{ marginTop: S.md, color: T.red }}>{error}</div>}
           {info && <div style={{ color: T.dim, marginTop: S.xs2, fontSize: F.size.sm }}>{info}</div>}
 
+          {backendNotice && (
+            <div
+              className={`notice ${backendNotice.kind === 'cold' ? 'noticeWarn' : ''}`}
+              style={{ marginTop: S.md }}
+            >
+              <div className="muted" style={{ lineHeight: 1.55 }}>
+                {backendNotice.msg}
+              </div>
+              <div className="noticeActions">
+                <button
+                  onClick={findItems}
+                  disabled={loading || (cooldownUntil && cooldownUntil > Date.now())}
+                  className="btnPill btnPillPrimary btnFull"
+                >
+                  {loading ? UI.loading[lang] : UI.tryAgain[lang]}
+                </button>
+              </div>
+            </div>
+          )}
+
           {(() => {
             const cats = [...new Set(items.map(i => String(i.cat || '').trim()).filter(Boolean))];
             const active = cats.includes(catFilter) ? catFilter : '';
@@ -1456,7 +1508,7 @@ export default function App() {
                         <button
                           onClick={findItems}
                           disabled={loading || (cooldownUntil && cooldownUntil > Date.now())}
-                          className="btnPill btnPillPrimary"
+                          className="btnPill btnPillPrimary btnFull"
                         >
                           {loading ? UI.loading[lang] : UI.findMore[lang]}
                         </button>
@@ -1490,7 +1542,7 @@ export default function App() {
                             </div>
 
                             {it.snippet && (
-                              <div style={{ color: T.dim, marginTop: S.xs2, lineHeight: 1.55, fontSize: F.size.base }}>
+                              <div className="clamp3" style={{ color: T.dim, marginTop: S.xs2, lineHeight: 1.55, fontSize: F.size.base }}>
                                 {it.snippet}
                               </div>
                             )}
