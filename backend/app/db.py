@@ -89,11 +89,23 @@ def init_db() -> None:
               updated_ts INTEGER NOT NULL
             );
 
+            -- Simple KV cache for demo cost control (Brave/web recs)
+            CREATE TABLE IF NOT EXISTS kv_cache (
+              namespace TEXT NOT NULL,
+              key TEXT NOT NULL,
+              payload_json TEXT NOT NULL,
+              expires_ts INTEGER NOT NULL,
+              created_ts INTEGER NOT NULL,
+              PRIMARY KEY(namespace, key)
+            );
+
             -- Indexes for common query patterns
             CREATE INDEX IF NOT EXISTS idx_events_user_ts ON events(user_id, ts);
             CREATE INDEX IF NOT EXISTS idx_events_session_ts ON events(session_id, ts);
             CREATE INDEX IF NOT EXISTS idx_cards_mode_id ON cards(mode, id);
             CREATE INDEX IF NOT EXISTS idx_pois_mode_dest ON pois(mode, lower(destination));
+            CREATE INDEX IF NOT EXISTS idx_kv_cache_expires ON kv_cache(expires_ts);
+            CREATE INDEX IF NOT EXISTS idx_kv_cache_ns_created ON kv_cache(namespace, created_ts);
             """
         )
         con.commit()

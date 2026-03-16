@@ -60,6 +60,19 @@ Env (first one found wins):
 - `OPENCLAW_BRAVE_API_KEY`
 - `TS_BRAVE_API_KEY` (Travel‑Swish fallback)
 
+Cost control:
+- **Rate limit** (process-local, fixed-window):
+  - `TS_BRAVE_RL_WINDOW_S` (default 60)
+  - `TS_BRAVE_RL_MAX_CALLS` (default 25)
+- **Caching**
+  - In-memory TTL caches (fast, reset on reload)
+  - SQLite-backed KV cache (`kv_cache` table) so results can survive reloads:
+    - `TS_BRAVE_CACHE_TTL_S` (default 300)
+    - `TS_WEB_RECS_CACHE_TTL_S` (default 120)
+    - `TS_BRAVE_CACHE_MAX_ROWS` (default 1500)
+    - `TS_WEB_RECS_CACHE_MAX_ROWS` (default 800)
+    - `TS_CACHE_MAX_ROWS` (global cap, default 2000)
+
 Quick smoke (after starting uvicorn):
 
 ```powershell

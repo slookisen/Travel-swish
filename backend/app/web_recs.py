@@ -18,6 +18,7 @@ This is a pragmatic first cut for the Brave demo MVP. It aims to be:
 
 import hashlib
 import json
+import os
 import re
 import time
 from collections import OrderedDict
@@ -27,6 +28,7 @@ from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
 from .algo import format_why
 from .brave_search import brave_web_search
+from .db_cache import cache_get, cache_set
 from .query_gen import GeneratedQuery, generate_queries, to_search_string
 
 
@@ -41,6 +43,13 @@ _WEB_RECS_CACHE: Dict[str, WebRecsCacheEntry] = {}
 
 def _sha1(s: str) -> str:
     return hashlib.sha1(s.encode("utf-8")).hexdigest()
+
+
+def _env_int(name: str, default: int) -> int:
+    try:
+        return int(str(os.getenv(name) or "").strip() or default)
+    except Exception:
+        return int(default)
 
 
 def _prefs_hash(prefs: Mapping[str, Any]) -> str:
@@ -340,6 +349,9 @@ def rank_web_recs(
     max_queries = max(1, min(10, int(max_queries)))
     per_query = max(1, min(20, int(per_query)))
 
+    # Allow env override for caching in deployed demos.
+    cache_ttl_s = _env_int("TS_WEB_RECS_CACHE_TTL_S", int(cache_ttl_s))
+
     ck = _cache_key(
         user_id,
         mode,
@@ -359,6 +371,15 @@ def rank_web_recs(
     if ent and ent.expires_at > now:
         payload = dict(ent.payload)
         payload["cached"] = True
+        return payload
+
+    # Optional persistence layer (SQLite) to survive reloads.
+    db_hit = cache_get(namespace="web_recs", key=ck, now=int(now))
+    if db_hit:
+        payload0, expires_ts = db_hit
+        payload = dict(payload0 or {})
+        payload["cached"] = True
+        _WEB_RECS_CACHE[ck] = WebRecsCacheEntry(expires_at=float(expires_ts), payload=payload)
         return payload
 
     gqs: List[GeneratedQuery] = generate_queries(
@@ -497,5 +518,14 @@ def rank_web_recs(
         ],
     }
 
-    _WEB_RECS_CACHE[ck] = WebRecsCacheEntry(expires_at=now + max(1, int(cache_ttl_s)), payload=payload)
+    ttl = max(1, int(cache_ttl_s))
+    _WEB_RECS_CACHE[ck] = WebRecsCacheEntry(expires_at=now + ttl, payload=payload)
+    cache_set(
+        namespace="web_recs",
+        key=ck,
+        payload=payload,
+        ttl_s=ttl,
+        now=int(now),
+        max_rows=_env_int("TS_WEB_RECS_CACHE_MAX_ROWS", 800),
+    )
     return payload

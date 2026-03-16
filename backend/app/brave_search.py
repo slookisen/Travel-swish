@@ -10,12 +10,20 @@ from typing import Any, Dict, List, Tuple
 
 import httpx
 
+from .db_cache import cache_get, cache_set
 from .ratelimit import brave_consume_or_raise
 
 # Brave Search API docs: https://api.search.brave.com/app/documentation/web-search/get-started
 _BRAVE_WEB_URL = "https://api.search.brave.com/res/v1/web/search"
 
 log = logging.getLogger(__name__)
+
+
+def _env_int(name: str, default: int) -> int:
+    try:
+        return int(str(os.getenv(name) or "").strip() or default)
+    except Exception:
+        return int(default)
 
 
 def _get_brave_api_key() -> str | None:
@@ -78,13 +86,29 @@ def brave_web_search(
 
     count = max(1, min(20, int(count)))
 
+    # Allow env override for TTL in deployed demos.
+    cache_ttl_s = _env_int("TS_BRAVE_CACHE_TTL_S", int(cache_ttl_s))
+
     ck = _cache_key(q, count, country, search_lang, safesearch, freshness)
     qh = hashlib.sha1(q.encode("utf-8")).hexdigest()[:10]
     now = time.time()
     ent = _CACHE.get(ck)
     if ent and ent.expires_at > now:
-        log.debug("brave_web_search cache_hit qh=%s", qh)
+        log.debug("brave_web_search mem_cache_hit qh=%s", qh)
         return (ent.payload, True)
+
+    # Optional persistence layer (SQLite) to survive reloads.
+    # Falls back to in-memory cache when DB cache misses.
+    db_hit = cache_get(namespace="brave_web", key=ck, now=int(now))
+    if db_hit:
+        payload, expires_ts = db_hit
+        try:
+            payload2 = list(payload or [])
+        except Exception:
+            payload2 = []
+        _CACHE[ck] = CacheEntry(expires_at=float(expires_ts), payload=payload2)
+        log.debug("brave_web_search db_cache_hit qh=%s", qh)
+        return (payload2, True)
 
     api_key = _get_brave_api_key()
     if not api_key:
@@ -161,7 +185,16 @@ def brave_web_search(
                 )
 
             # cache (even empty) to avoid hammering
-            _CACHE[ck] = CacheEntry(expires_at=now + max(1, cache_ttl_s), payload=items)
+            ttl = max(1, int(cache_ttl_s))
+            _CACHE[ck] = CacheEntry(expires_at=now + ttl, payload=items)
+            cache_set(
+                namespace="brave_web",
+                key=ck,
+                payload=items,
+                ttl_s=ttl,
+                now=int(now),
+                max_rows=_env_int("TS_BRAVE_CACHE_MAX_ROWS", 1500),
+            )
             return (items, False)
 
         except Exception as e:  # noqa: BLE001 - boundary layer
