@@ -345,6 +345,101 @@ Server-side **Brave Web Search** proxy. Uses a server-side API key (no key is ex
 
 ---
 
+### `POST /recs/web`
+
+Get **live** recommendations from the web (Brave Search) and rank them using learned prefs.
+
+**Pipeline (v2-web-ranker):**
+1. Load prefs for `user_id + mode`
+2. Generate 3–5 diverse, destination-aware queries from prefs (`queryGen`-style)
+3. For each query: call Brave Web Search (server-side key), normalize results
+4. Merge + de-duplicate by canonical URL
+5. Score each result by **keyword/facet matching** against prefs → normalize to 0–100
+6. Apply diversity:
+   - round-robin across categories (`cat` = query facet / heuristic)
+   - cap repeated domains (avoid 10 results from the same site)
+7. Explainability: `why` includes top contributing facets
+
+> **Caching:** a small in-process TTL cache is applied to the aggregated `/recs/web` response, and Brave calls are also cached per query.
+
+**Request body** (`WebRecsRequest`)
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `user_id` | `string` | ✅ | User identifier |
+| `mode` | `string` | ✅ | `restaurants` or `experiences` |
+| `destination` | `string` | ✅ | Destination name |
+| `limit` | `int` | ❌ | Max results, 1–200 (default: `20`) |
+| `max_queries` | `int` | ❌ | Max generated queries (default: `5`) |
+| `per_query` | `int` | ❌ | Brave results per query, 1–20 (default: `7`) |
+| `seed` | `int` | ❌ | Deterministic query ordering seed (default: `42`) |
+| `country` | `string \| null` | ❌ | Brave `country` param |
+| `search_lang` | `string \| null` | ❌ | Brave `search_lang` param |
+| `safesearch` | `string` | ❌ | `moderate` (default), `strict`, `off` |
+| `freshness` | `string \| null` | ❌ | Brave `freshness` param |
+
+**Example request:**
+
+```json
+{
+  "user_id": "u-abc123",
+  "mode": "restaurants",
+  "destination": "Oslo",
+  "limit": 12,
+  "max_queries": 5,
+  "per_query": 7
+}
+```
+
+**Response** `200 OK` (`WebRecsResponse`)
+
+```json
+{
+  "ok": true,
+  "cached": false,
+  "model_version": "v2-web-ranker",
+  "queries": [
+    {
+      "query": "best spicy food in Oslo -\"fast food chain\" ...",
+      "weight": 0.93,
+      "source": "spicy",
+      "negatives": ["fast food chain", "McDonald's"]
+    }
+  ],
+  "items": [
+    {
+      "id": "brave:...",
+      "name": "10 Best Spicy Restaurants in Oslo",
+      "url": "https://example.com/oslo-spicy",
+      "cat": "spicy",
+      "match": 84.2,
+      "why": "Top factors: facet.food.spicy (+0.98), facet.vibe (+0.21)",
+      "source": "brave",
+      "snippet": "A roundup of...",
+      "domain": "example.com",
+      "query_source": "spicy"
+    }
+  ]
+}
+```
+
+**Item schema:** `WebRecItem` (RecItem-like + extras)
+
+| Field | Type | Description |
+|---|---|---|
+| `id` | `string` | Stable ID derived from URL |
+| `name` | `string` | Result title |
+| `url` | `string` | Link |
+| `cat` | `string` | Category/facet bucket (used for diversity) |
+| `match` | `float` | Match score 0–100 |
+| `why` | `string` | Explainability string referencing facets |
+| `source` | `string` | Provider (`brave`) |
+| `snippet` | `string` | Result snippet/description |
+| `domain` | `string` | Normalized domain (for diversity) |
+| `query_source` | `string` | Which query facet/source drove this hit |
+
+---
+
 ### `POST /recs`
 
 Get personalized recommendations for a destination. Uses dot-product scoring with category diversity and facet-level explainability.
