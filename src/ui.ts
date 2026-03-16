@@ -154,7 +154,7 @@ export const globalCss = `
     .noticeActions .btnPill{ width:100%; }
   }
 
-  @media (prefers-reduced-motion: reduce){"}
+  @media (prefers-reduced-motion: reduce){
     *,*::before,*::after{ animation: none !important; transition: none !important; }
     html:focus-within{ scroll-behavior: auto; }
   }
