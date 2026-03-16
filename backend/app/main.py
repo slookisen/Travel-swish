@@ -6,7 +6,7 @@ import sqlite3
 import time
 import uuid
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 
 from .config import cors_config
@@ -21,6 +21,7 @@ from .algo import (
     score_match,
 )
 from .brave_search import brave_web_search
+from .ratelimit import RateLimitError, brave_rate_limit_key
 from .web_recs import rank_web_recs
 
 log = logging.getLogger(__name__)
@@ -310,6 +311,7 @@ def get_taxonomy() -> TaxonomyResponse:
 
 @app.get("/search/brave", response_model=WebSearchResponse)
 def brave_search(
+    request: Request,
     q: str,
     count: int = 10,
     country: str | None = None,
@@ -328,6 +330,8 @@ def brave_search(
     if not q:
         raise HTTPException(status_code=400, detail="q required")
 
+    rl_key = brave_rate_limit_key(request=request)
+
     try:
         items, cached = brave_web_search(
             q=q,
@@ -336,8 +340,12 @@ def brave_search(
             search_lang=search_lang,
             safesearch=safesearch,
             freshness=freshness,
+            rate_limit_key=rl_key,
         )
         return WebSearchResponse(q=q, provider="brave", cached=cached, items=items)
+    except RateLimitError as e:
+        log.warning("brave_search rate_limited key=%s retry_after_s=%s", e.key, e.retry_after_s)
+        raise HTTPException(status_code=429, detail="rate_limited", headers={"Retry-After": str(e.retry_after_s)})
     except RuntimeError as e:
         # config / missing key
         raise HTTPException(status_code=500, detail=str(e))
@@ -347,7 +355,7 @@ def brave_search(
 
 
 @app.post("/recs/web", response_model=WebRecsResponse)
-def recs_web(req: WebRecsRequest) -> WebRecsResponse:
+def recs_web(req: WebRecsRequest, request: Request) -> WebRecsResponse:
     """Live web recommendations (Brave -> normalize -> rank -> diversify).
 
     This endpoint is intended for the Brave demo MVP. It:
@@ -368,20 +376,28 @@ def recs_web(req: WebRecsRequest) -> WebRecsResponse:
         ).fetchone()
         prefs = json.loads(prow["prefs_json"]) if prow and prow["prefs_json"] else {}
 
-        payload = rank_web_recs(
-            user_id=req.user_id,
-            mode=req.mode,
-            destination=req.destination,
-            prefs=prefs,
-            limit=req.limit,
-            max_queries=req.max_queries,
-            per_query=req.per_query,
-            seed=req.seed,
-            country=req.country,
-            search_lang=req.search_lang,
-            safesearch=req.safesearch,
-            freshness=req.freshness,
-        )
+        rl_key = brave_rate_limit_key(request=request, user_id=req.user_id)
+
+        try:
+            payload = rank_web_recs(
+                user_id=req.user_id,
+                mode=req.mode,
+                destination=req.destination,
+                prefs=prefs,
+                limit=req.limit,
+                max_queries=req.max_queries,
+                per_query=req.per_query,
+                seed=req.seed,
+                country=req.country,
+                search_lang=req.search_lang,
+                safesearch=req.safesearch,
+                freshness=req.freshness,
+                rate_limit_key=rl_key,
+            )
+        except RateLimitError as e:
+            log.warning("recs_web rate_limited key=%s retry_after_s=%s", e.key, e.retry_after_s)
+            raise HTTPException(status_code=429, detail="rate_limited", headers={"Retry-After": str(e.retry_after_s)})
+
         return WebRecsResponse(**payload)
     finally:
         con.close()

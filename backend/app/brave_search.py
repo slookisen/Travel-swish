@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import logging
 import os
 import random
 import time
@@ -9,8 +10,12 @@ from typing import Any, Dict, List, Tuple
 
 import httpx
 
+from .ratelimit import brave_consume_or_raise
+
 # Brave Search API docs: https://api.search.brave.com/app/documentation/web-search/get-started
 _BRAVE_WEB_URL = "https://api.search.brave.com/res/v1/web/search"
+
+log = logging.getLogger(__name__)
 
 
 def _get_brave_api_key() -> str | None:
@@ -57,6 +62,7 @@ def brave_web_search(
     timeout_s: float = 10.0,
     max_retries: int = 3,
     cache_ttl_s: int = 300,
+    rate_limit_key: str | None = None,
 ) -> Tuple[List[Dict[str, Any]], bool]:
     """Call Brave Web Search API.
 
@@ -73,9 +79,11 @@ def brave_web_search(
     count = max(1, min(20, int(count)))
 
     ck = _cache_key(q, count, country, search_lang, safesearch, freshness)
+    qh = hashlib.sha1(q.encode("utf-8")).hexdigest()[:10]
     now = time.time()
     ent = _CACHE.get(ck)
     if ent and ent.expires_at > now:
+        log.debug("brave_web_search cache_hit qh=%s", qh)
         return (ent.payload, True)
 
     api_key = _get_brave_api_key()
@@ -83,6 +91,11 @@ def brave_web_search(
         raise RuntimeError(
             "Brave API key missing. Set one of BRAVE_SEARCH_API_KEY / BRAVE_API_KEY / OPENCLAW_BRAVE_API_KEY / TS_BRAVE_API_KEY"
         )
+
+    if rate_limit_key:
+        brave_consume_or_raise(key=rate_limit_key, cost=1)
+
+    log.info("brave_web_search api_call qh=%s count=%s cached=false", qh, count)
 
     headers = {
         "Accept": "application/json",

@@ -328,6 +328,7 @@ def rank_web_recs(
     cache_ttl_s: int = 120,
     search_timeout_s: float = 8.0,
     search_max_retries: int = 2,
+    rate_limit_key: str | None = None,
     search_fn: SearchFn = brave_web_search,
 ) -> Dict[str, Any]:
     """Return ranked web recs payload.
@@ -382,6 +383,7 @@ def rank_web_recs(
             timeout_s=search_timeout_s,
             max_retries=search_max_retries,
             cache_ttl_s=300,
+            rate_limit_key=rate_limit_key,
         )
         for i, it in enumerate(items):
             it2 = dict(it)
