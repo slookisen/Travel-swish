@@ -119,6 +119,7 @@ export const globalCss = `
   @keyframes pop { 0%{ transform: scale(0.98);} 100%{ transform: scale(1);} }
 
   .container{ max-width: 860px; margin: 0 auto; padding: var(--s-xl); }
+  .page{ max-width: 760px; margin: 0 auto; padding: var(--s-page); }
   .card{ background:var(--card); border:1px solid var(--border-soft); border-radius: var(--r-lg); box-shadow:var(--shadow); }
 
   .btn{ display:inline-flex; align-items:center; justify-content:center; gap: 8px; border-radius: var(--r-md); padding: 12px 16px; font-weight: ${F.weight.bold}; cursor:pointer; border:1px solid var(--border-soft); background: transparent; color:var(--txt); }
@@ -150,8 +151,14 @@ export const globalCss = `
 
   /* Mobile polish */
   @media (max-width: 520px){
+    .container{ padding: var(--s-md2); }
+    .page{ padding: var(--s-md2); }
+
     .btnFull{ width:100%; justify-content:center; }
     .noticeActions .btnPill{ width:100%; }
+
+    /* Slightly tighter empty-state buttons on tiny screens */
+    .emptyActions .btnPill{ width:100%; }
   }
 
   @media (prefers-reduced-motion: reduce){
