@@ -129,3 +129,49 @@ def brave_consume_or_raise(*, key: str, cost: int = 1, now: float | None = None)
     res = rl.consume(key=key, cost=cost, now=now)
     if not res.allowed:
         raise RateLimitError(key=key, retry_after_s=res.retry_after_s, limit=rl.max_cost, window_s=rl.window_s)
+
+
+# --- Generic API request limiter (abuse-speedbump) ---
+
+def api_rl_config() -> tuple[int, int]:
+    """Return (window_s, max_cost) for API requests.
+
+    Defaults are intentionally permissive. Tune down for public deploys.
+
+    Env:
+    - TS_API_RL_WINDOW_S (default 60)
+    - TS_API_RL_MAX_COST (default 120)
+    """
+
+    window_s = _env_int('TS_API_RL_WINDOW_S', 60)
+    max_cost = _env_int('TS_API_RL_MAX_COST', 120)
+    return max(1, window_s), max(1, max_cost)
+
+
+_API_LIMITER: FixedWindowRateLimiter | None = None
+_API_CFG: tuple[int, int] | None = None
+
+
+def api_limiter() -> FixedWindowRateLimiter:
+    global _API_LIMITER, _API_CFG
+    cfg = api_rl_config()
+    if _API_LIMITER is None or _API_CFG != cfg:
+        window_s, max_cost = cfg
+        _API_LIMITER = FixedWindowRateLimiter(window_s=window_s, max_cost=max_cost)
+        _API_CFG = cfg
+    return _API_LIMITER
+
+
+def api_rate_limit_key(*, request: 'Request', user_id: str | None = None) -> str:
+    ip = _client_ip_from_request(request)
+    uid = (user_id or '').strip()
+    if uid:
+        return f"api:{ip}:u={uid}"
+    return f"api:{ip}"
+
+
+def api_consume_or_raise(*, key: str, cost: int = 1, now: float | None = None) -> None:
+    rl = api_limiter()
+    res = rl.consume(key=key, cost=cost, now=now)
+    if not res.allowed:
+        raise RateLimitError(key=key, retry_after_s=res.retry_after_s, limit=rl.max_cost, window_s=rl.window_s)

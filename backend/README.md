@@ -127,6 +127,30 @@ py -3.12 -m scripts.reset_db --force
 
 > **Safety:** without `--force` or `--reseed`, the script only prints info and exits.
 
-## Notes
-- This is **local-only** initially.
-- No real auth yet. Before any public deployment we add auth + rate limits.
+## Auth-lite + rate limiting (public demo)
+This backend is used by a public GitHub Pages frontend, so we add a pragmatic abuse guard:
+
+- Protected endpoints require **either**:
+  - an allowed **Origin** header (same allowlist as CORS), **or**
+  - an API key header (for scripts)
+- Protected endpoints also get a basic **process-local fixed-window rate limit**.
+
+This is **not real authentication**. It’s just a speedbump to reduce random abuse.
+
+Env:
+- `TS_AUTH_MODE` (default `origin_or_key`, set to `off` to disable)
+- `TS_API_KEY` (optional; if set, allow header access for non-browser clients)
+- `TS_AUTH_HEADER` (default `X-TS-API-Key`)
+- `TS_API_RL_WINDOW_S` (default 60)
+- `TS_API_RL_MAX_COST` (default 120)
+
+Protected endpoints:
+- `POST /events` (cost 1)
+- `POST /prefs` (cost 2)
+- `POST /recs` (cost 2)
+- `POST /recs/web` (cost 8)
+- `GET /search/brave` (cost 4)
+
+Notes:
+- If your CORS origins include `*`, origin checks are meaningless; set `TS_API_KEY`.
+- Rate limits are in-process only; multi-worker deploys need shared storage (Redis/etc.).

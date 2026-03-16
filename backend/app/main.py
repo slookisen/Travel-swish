@@ -21,7 +21,13 @@ from .algo import (
     score_match,
 )
 from .brave_search import brave_web_search
-from .ratelimit import RateLimitError, brave_rate_limit_key
+from .auth_lite import require_demo_auth
+from .ratelimit import (
+    RateLimitError,
+    api_consume_or_raise,
+    api_rate_limit_key,
+    brave_rate_limit_key,
+)
 from .web_recs import rank_web_recs
 
 log = logging.getLogger(__name__)
@@ -141,7 +147,16 @@ def _update_prefs_from_swipe(
 
 
 @app.post("/events")
-def ingest_event(ev: EventIn) -> dict:
+def ingest_event(ev: EventIn, request: Request) -> dict:
+    # Abuse guard: only allow known Origins or an API key.
+    require_demo_auth(request)
+
+    # Basic per-IP (and per-user when possible) rate limiting.
+    try:
+        api_consume_or_raise(key=api_rate_limit_key(request=request, user_id=ev.user_id), cost=1)
+    except RateLimitError as e:
+        raise HTTPException(status_code=429, detail="rate_limited", headers={"Retry-After": str(e.retry_after_s)})
+
     con = connect()
     try:
         # upsert user
@@ -252,7 +267,13 @@ def get_prefs(user_id: str, mode: str) -> dict:
 
 
 @app.post("/prefs")
-def upsert_prefs(p: PrefsUpsert) -> dict:
+def upsert_prefs(p: PrefsUpsert, request: Request) -> dict:
+    require_demo_auth(request)
+    try:
+        api_consume_or_raise(key=api_rate_limit_key(request=request, user_id=p.user_id), cost=2)
+    except RateLimitError as e:
+        raise HTTPException(status_code=429, detail="rate_limited", headers={"Retry-After": str(e.retry_after_s)})
+
     con = connect()
     try:
         con.execute(
@@ -330,6 +351,12 @@ def brave_search(
     if not q:
         raise HTTPException(status_code=400, detail="q required")
 
+    require_demo_auth(request)
+    try:
+        api_consume_or_raise(key=api_rate_limit_key(request=request), cost=4)
+    except RateLimitError as e:
+        raise HTTPException(status_code=429, detail="rate_limited", headers={"Retry-After": str(e.retry_after_s)})
+
     rl_key = brave_rate_limit_key(request=request)
 
     try:
@@ -368,6 +395,12 @@ def recs_web(req: WebRecsRequest, request: Request) -> WebRecsResponse:
     if not req.destination.strip():
         raise HTTPException(status_code=400, detail="destination required")
 
+    require_demo_auth(request)
+    try:
+        api_consume_or_raise(key=api_rate_limit_key(request=request, user_id=req.user_id), cost=8)
+    except RateLimitError as e:
+        raise HTTPException(status_code=429, detail="rate_limited", headers={"Retry-After": str(e.retry_after_s)})
+
     con = connect()
     try:
         prow = con.execute(
@@ -404,7 +437,7 @@ def recs_web(req: WebRecsRequest, request: Request) -> WebRecsResponse:
 
 
 @app.post("/recs", response_model=RecsResponse)
-def recs(req: RecsRequest) -> RecsResponse:
+def recs(req: RecsRequest, request: Request) -> RecsResponse:
     """v1 ranking with category diversity and facet-level explainability.
 
     Scoring: dot-product of user pref weights × POI tag values → normalized to 0-100.
@@ -413,6 +446,12 @@ def recs(req: RecsRequest) -> RecsResponse:
     """
     if not req.destination.strip():
         raise HTTPException(status_code=400, detail="destination required")
+
+    require_demo_auth(request)
+    try:
+        api_consume_or_raise(key=api_rate_limit_key(request=request, user_id=req.user_id), cost=2)
+    except RateLimitError as e:
+        raise HTTPException(status_code=429, detail="rate_limited", headers={"Retry-After": str(e.retry_after_s)})
 
     con = connect()
     try:
