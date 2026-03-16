@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: travel-swish-backend
+    env: python
+    rootDir: backend
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      # Required for live web recs via Brave
+      - key: BRAVE_SEARCH_API_KEY
+        sync: false
+      # CORS: allow your GitHub Pages origin(s). Comma-separated.
+      - key: TS_CORS_ORIGINS
+        value: https://slookisen.github.io

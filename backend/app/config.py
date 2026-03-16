@@ -9,6 +9,8 @@ DEFAULT_CORS_ORIGINS: list[str] = [
     # Local dashboard / Pages preview (team-dashboard)
     "http://127.0.0.1:8090",
     "http://localhost:8090",
+    # GitHub Pages (production)
+    "https://slookisen.github.io",
 ]
 
 
@@ -25,7 +27,9 @@ def cors_config() -> tuple[list[str], bool]:
 
     raw = (
         os.getenv("TS_CORS_ORIGINS")
+        or os.getenv("ALLOWED_ORIGINS")
         or os.getenv("CORS_ALLOW_ORIGINS")
+        or os.getenv("CORS_ORIGINS")
         or ""
     ).strip()
 
