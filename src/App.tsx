@@ -13,6 +13,18 @@ const DEFAULT_BACKEND_URL =
     : '';
 const BACKEND_URL = (String((import.meta as any).env?.VITE_BACKEND_URL || '').trim()) || DEFAULT_BACKEND_URL;
 
+// E2E/CI helper: enable deterministic mock results with ?mock=1
+const MOCK_MODE =
+  (typeof window !== 'undefined') &&
+  (() => {
+    try {
+      const v = new URLSearchParams(window.location.search).get('mock');
+      return v === '1' || v === 'true' || v === 'yes';
+    } catch {
+      return false;
+    }
+  })();
+
 const nowS = () => Math.floor(Date.now() / 1000);
 
 function googleMapsSearchUrl(placeName: string, destination: string) {
@@ -889,6 +901,42 @@ export default function App() {
       );
 
       const dest = destination.trim();
+
+      if (MOCK_MODE) {
+        const mockItems: RecItem[] = [
+          {
+            id: `mock_${mode}_1`,
+            name: mode === 'restaurants' ? 'Mock: Sjømatbistro' : 'Mock: Street food tour',
+            url: 'https://example.com',
+            cat: mode === 'restaurants' ? 'Restaurant' : 'Experience',
+            match: 86,
+            why: 'Mock mode: deterministic suggestion for QA/Playwright.',
+            source: 'mock',
+            snippet: 'Dette er et mock-resultat (ingen backend-kall).',
+            domain: 'example.com',
+          },
+          {
+            id: `mock_${mode}_2`,
+            name: mode === 'restaurants' ? 'Mock: Ramen' : 'Mock: Museum crawl',
+            url: 'https://example.com',
+            cat: mode === 'restaurants' ? 'Restaurant' : 'Experience',
+            match: 78,
+            why: 'Mock mode: verifies results rendering + why panel.',
+            source: 'mock',
+            snippet: 'Mock-resultat #2.',
+            domain: 'example.com',
+          },
+        ];
+
+        const newKeys = mockItems.map(itemSeenKey).filter(Boolean);
+        seenKeys.current = [...seenKeys.current, ...newKeys];
+        saveSeen(mode, seenKeys.current);
+
+        setItems(mockItems);
+        setPage('results');
+        setInfo(lang === 'no' ? 'Mock mode aktiv (ingen backend-kall).' : 'Mock mode active (no backend calls).');
+        return;
+      }
 
       if (BACKEND_URL) {
         try {
