@@ -13,6 +13,7 @@ from .db import connect, init_db
 from .seed import seed_if_empty
 from .algo import DISLIKE_WEIGHT, LIKE_WEIGHT, detect_direction, diversify
 from .brave_search import brave_web_search
+from .web_recs import rank_web_recs
 
 log = logging.getLogger(__name__)
 from .schemas import (
@@ -26,6 +27,8 @@ from .schemas import (
     RecsResponse,
     TaxonomyResponse,
     WebSearchResponse,
+    WebRecsRequest,
+    WebRecsResponse,
 )
 
 app = FastAPI(title="Travel-Swish API", version="0.1.0")
@@ -337,6 +340,47 @@ def brave_search(
     except Exception:
         log.exception("brave_search failed")
         raise HTTPException(status_code=502, detail="brave_search_failed")
+
+
+@app.post("/recs/web", response_model=WebRecsResponse)
+def recs_web(req: WebRecsRequest) -> WebRecsResponse:
+    """Live web recommendations (Brave -> normalize -> rank -> diversify).
+
+    This endpoint is intended for the Brave demo MVP. It:
+    - generates multiple destination-aware queries from learned prefs
+    - calls Brave Web Search server-side (API key never reaches client)
+    - scores results against prefs (keyword/facet matching)
+    - de-dups, adds domain/category diversity, and returns explainable why
+    """
+
+    if not req.destination.strip():
+        raise HTTPException(status_code=400, detail="destination required")
+
+    con = connect()
+    try:
+        prow = con.execute(
+            "SELECT prefs_json FROM prefs WHERE user_id=? AND mode=?",
+            (req.user_id, req.mode),
+        ).fetchone()
+        prefs = json.loads(prow["prefs_json"]) if prow and prow["prefs_json"] else {}
+
+        payload = rank_web_recs(
+            user_id=req.user_id,
+            mode=req.mode,
+            destination=req.destination,
+            prefs=prefs,
+            limit=req.limit,
+            max_queries=req.max_queries,
+            per_query=req.per_query,
+            seed=req.seed,
+            country=req.country,
+            search_lang=req.search_lang,
+            safesearch=req.safesearch,
+            freshness=req.freshness,
+        )
+        return WebRecsResponse(**payload)
+    finally:
+        con.close()
 
 
 @app.post("/recs", response_model=RecsResponse)

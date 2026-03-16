@@ -112,3 +112,55 @@ class WebSearchResponse(BaseModel):
     provider: str = "brave"
     cached: bool = False
     items: List[WebSearchItem]
+
+
+# --- Web recs (Brave -> ranker) ---
+
+
+class WebRecsRequest(BaseModel):
+    user_id: str
+    mode: str
+    destination: str
+    limit: int = 20
+
+    # query generation / provider controls
+    max_queries: int = 5
+    per_query: int = 7
+    seed: int = 42
+
+    # Brave params (optional)
+    country: Optional[str] = None
+    search_lang: Optional[str] = None
+    safesearch: str = "moderate"
+    freshness: Optional[str] = None
+
+
+class WebRecsQuery(BaseModel):
+    query: str
+    weight: float = 0
+    source: str = ""
+    negatives: List[str] = Field(default_factory=list)
+
+
+class WebRecItem(BaseModel):
+    """Ranked RecItem-like web result (adds snippet/source/domain)."""
+
+    id: str
+    name: str
+    match: float = 0
+    why: str = ""
+    url: str = ""
+    cat: str = ""
+
+    source: str = "brave"
+    snippet: str = ""
+    domain: str = ""
+    query_source: str = ""
+
+
+class WebRecsResponse(BaseModel):
+    ok: bool = True
+    cached: bool = False
+    model_version: str = "v2-web-ranker"
+    queries: List[WebRecsQuery] = Field(default_factory=list)
+    items: List[WebRecItem]

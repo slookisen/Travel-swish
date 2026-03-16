@@ -35,7 +35,8 @@ Open:
 | POST | `/prefs` | Upsert user prefs |
 | GET | `/cards` | List cards by mode |
 | GET | `/taxonomy` | Get taxonomy |
-| POST | `/recs` | Get ranked recommendations |
+| POST | `/recs` | Get ranked recommendations (local POIs DB) |
+| POST | `/recs/web` | Live web recs (Brave -> ranker) |
 | GET | `/search/brave` | Brave web search proxy (server-side key) |
 
 ## Brave Search (server-side)
