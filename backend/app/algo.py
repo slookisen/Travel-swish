@@ -114,15 +114,23 @@ def score_match(prefs: dict | None, tags: dict | None) -> tuple[float, list[tupl
 
 
 def format_why(contributions: list[tuple[str, float]] | None, top_n: int = 5) -> str:
-    # Explainability string (top factors by |contribution|)
+    """Explainability string (top factors by |contribution|).
+
+    Deterministic ordering: ties are broken by facet name so output is stable even
+    when abs(contribution) matches.
+    """
     contributions = contributions or []
     if not contributions:
         return "Bootstrap match (no prefs yet)"
 
-    contribs = sorted(contributions, key=lambda x: abs(x[1]), reverse=True)[:top_n]
+    contribs = sorted(
+        ((str(f), float(c)) for f, c in contributions),
+        key=lambda x: (-abs(x[1]), x[0]),
+    )[:top_n]
+
     parts: list[str] = []
     for facet, c in contribs:
-        sign = "+" if c > 0 else MINUS_SIGN
+        sign = "+" if c >= 0 else MINUS_SIGN
         parts.append(f"{facet} ({sign}{abs(c):.2f})")
     return "Top factors: " + ", ".join(parts)
 

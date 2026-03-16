@@ -12,7 +12,14 @@ from fastapi.middleware.cors import CORSMiddleware
 from .config import cors_config
 from .db import connect, init_db
 from .seed import seed_if_empty
-from .algo import DISLIKE_WEIGHT, LIKE_WEIGHT, detect_direction, diversify
+from .algo import (
+    DISLIKE_WEIGHT,
+    LIKE_WEIGHT,
+    detect_direction,
+    diversify,
+    format_why,
+    score_match,
+)
 from .brave_search import brave_web_search
 from .web_recs import rank_web_recs
 
@@ -412,36 +419,11 @@ def recs(req: RecsRequest) -> RecsResponse:
         items = []
         for r in rows:
             tags = json.loads(r["tags_json"] or "{}")
-            score = 0.0
-            # collect (facet_name, contribution) for explainability
-            contributions: list[tuple[str, float]] = []
-            for k, w in (prefs or {}).items():
-                try:
-                    w = float(w)
-                except Exception:
-                    continue
-                tv = float(tags.get(k) or 0.0)
-                if tv == 0.0:
-                    continue
-                contrib = w * tv
-                score += contrib
-                contributions.append((k, contrib))
 
-            # normalize-ish into 0-100
-            match = max(0.0, min(100.0, 50.0 + score * 50.0))
-
-            # build explainable why string with top facet contributions
-            if contributions:
-                # sort by absolute contribution descending
-                contributions.sort(key=lambda x: abs(x[1]), reverse=True)
-                top = contributions[:5]
-                parts = []
-                for facet, c in top:
-                    sign = "+" if c > 0 else "−"
-                    parts.append(f"{facet} ({sign}{abs(c):.2f})")
-                why = "Top factors: " + ", ".join(parts)
-            else:
-                why = "Bootstrap match (no prefs yet)"
+            # Robust scoring + explainability are implemented in app/algo.py
+            # so they can be tested independently from FastAPI/SQLite.
+            match, contributions = score_match(prefs=prefs, tags=tags)
+            why = format_why(contributions)
 
             items.append(
                 {

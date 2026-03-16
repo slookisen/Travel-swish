@@ -15,7 +15,14 @@ without importing FastAPI/SQLite.
 
 import pytest
 
-from app.algo import DISLIKE_WEIGHT, LIKE_WEIGHT, detect_direction, diversify
+from app.algo import (
+    DISLIKE_WEIGHT,
+    LIKE_WEIGHT,
+    detect_direction,
+    diversify,
+    format_why,
+    score_match,
+)
 
 
 class TestDirectionDetection:
@@ -183,15 +190,35 @@ class TestScoringIntegration:
         assert match == 50.0
 
 
+class TestScoreMatchHelper:
+    """Direct tests for app.algo.score_match helper."""
+
+    def test_robust_parsing_ignores_invalid_numbers(self):
+        match, contribs = score_match(
+            prefs={"adv": "nope", "lux": 0.5},
+            tags={"adv": 0.9, "lux": "0.2"},
+        )
+        assert match == pytest.approx(55.0)  # 50 + (0.5*0.2)*50
+        assert len(contribs) == 1
+        assert contribs[0][0] == "lux"
+        assert contribs[0][1] == pytest.approx(0.1)
+
+    def test_invalid_tag_value_does_not_crash(self):
+        match, contribs = score_match(prefs={"adv": 1.0}, tags={"adv": "wat"})
+        assert match == 50.0
+        assert contribs == []
+
+    def test_clamps_match_to_0_100(self):
+        match, _ = score_match(prefs={"x": 10.0}, tags={"x": 10.0})
+        assert match == 100.0
+
+
 class TestWhyTextGeneration:
     """Test explainability 'why' field generation."""
 
     def test_no_contributions_bootstrap(self):
-        """Empty prefs produces bootstrap message."""
-        contributions = []
-        if not contributions:
-            why = "Bootstrap match (no prefs yet)"
-        assert why == "Bootstrap match (no prefs yet)"
+        """Empty contributions produces bootstrap message."""
+        assert format_why([]) == "Bootstrap match (no prefs yet)"
 
     def test_top_five_contributions(self):
         """Why text shows top 5 factors sorted by magnitude."""
@@ -203,14 +230,9 @@ class TestWhyTextGeneration:
             ("crowded", -0.15),
             ("noisy", 0.05),  # 6th, should be excluded
         ]
-        contributions.sort(key=lambda x: abs(x[1]), reverse=True)
-        top = contributions[:5]
-        parts = []
-        for facet, c in top:
-            sign = "+" if c > 0 else "−"
-            parts.append(f"{facet} ({sign}{abs(c):.2f})")
-        why = "Top factors: " + ", ".join(parts)
+        why = format_why(contributions, top_n=5)
 
+        assert why.startswith("Top factors: ")
         assert "spicy" in why
         assert "street_food" in why
         assert "local" in why
@@ -218,13 +240,11 @@ class TestWhyTextGeneration:
         assert "cheap" in why
         assert "noisy" not in why
 
-    def test_minus_sign_unicode(self):
-        """Negative contributions use unicode minus sign (−)."""
-        c = -0.42
-        sign = "+" if c > 0 else "−"
-        formatted = f"{sign}{abs(c):.2f}"
-        assert formatted == "−0.42"
-        assert formatted[0] != "-"  # Not ASCII hyphen
+    def test_minus_sign_unicode_and_tie_break(self):
+        """Negatives use unicode minus sign, and ties are deterministic."""
+        why = format_why([("b", 0.10), ("a", -0.10)], top_n=2)
+        assert why == "Top factors: a (−0.10), b (+0.10)"
+        assert "-0.10" not in why  # not ASCII hyphen
 
 
 class TestPrefStatsAccumulation:
