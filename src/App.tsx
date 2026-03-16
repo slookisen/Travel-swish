@@ -90,6 +90,11 @@ const UI = {
   chooseMode: { no: 'Velg modus', en: 'Choose mode', sv: 'Välj läge' },
   destination: { no: 'Destinasjon', en: 'Destination', sv: 'Destination' },
   destinationMissing: { no: 'Destinasjon mangler', en: 'Destination required', sv: 'Destination krävs' },
+  destinationHelp: {
+    no: 'Skriv inn et reisemål for å starte.',
+    en: 'Enter a destination to get started.',
+    sv: 'Skriv in en destination för att börja.',
+  },
   apiKeyNote: {
     no: 'API-nøkkel er ikke lenger nødvendig i appen.',
     en: 'API key is no longer required in the app.',
@@ -806,6 +811,14 @@ export default function App() {
   const [items, setItems] = useState<RecItem[]>([]);
   const [catFilter, setCatFilter] = useState(() => loadCatFilter(mode));
   const seenKeys = useRef<string[]>([]);
+  const destinationInputRef = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    if (page !== 'home') return;
+    setError('');
+    const t = setTimeout(() => destinationInputRef.current?.focus(), 0);
+    return () => clearTimeout(t);
+  }, [page]);
 
   // If the browser shows a cached build after a deploy, we want a simple
   // "new version available" banner that can force a reload.
@@ -1198,8 +1211,15 @@ export default function App() {
           <div style={{ marginTop: S.lg }}>
             <label style={{ display: 'block', marginBottom: S.xs, color: T.dim }}>{UI.destination[lang]}</label>
             <input
+              ref={destinationInputRef}
               value={destination}
-              onChange={e => setDestination(e.target.value)}
+              onChange={e => { setDestination(e.target.value); if (error) setError(''); }}
+              onKeyDown={(e) => {
+                if (e.key !== 'Enter') return;
+                e.preventDefault();
+                if (!destination.trim()) { setError(UI.destinationMissing[lang]); destinationInputRef.current?.focus(); return; }
+                setPage('swipe');
+              }}
               placeholder={lang === 'no' ? 'Barcelona, Oslo, Tokyo…' : lang === 'sv' ? 'Barcelona, Stockholm, Tokyo…' : 'Barcelona, Oslo, Tokyo…'}
               style={{ width: '100%', padding: S.sm2, borderRadius: R.md, border: `1px solid ${T.border}`, background: T.card, color: T.txt }}
             />
@@ -1212,10 +1232,11 @@ export default function App() {
           <div style={{ marginTop: S.md2, display: 'flex', gap: S.sm, flexWrap: 'wrap' }}>
             <button
               onClick={() => {
-                if (!destination.trim()) { setError(UI.destinationMissing[lang]); return; }
+                if (!destination.trim()) { setError(UI.destinationMissing[lang]); destinationInputRef.current?.focus(); return; }
                 setPage('swipe');
               }}
-              style={{ padding: `${S.sm2}px ${S.md2}px`, borderRadius: R.md, border: 'none', cursor: 'pointer', background: `linear-gradient(135deg, ${T.gold}, ${T.teal})`, color: T.bg, fontWeight: F.weight.bold }}
+              disabled={!destination.trim()}
+              style={{ padding: `${S.sm2}px ${S.md2}px`, borderRadius: R.md, border: 'none', cursor: destination.trim() ? 'pointer' : 'not-allowed', opacity: destination.trim() ? 1 : 0.6, background: `linear-gradient(135deg, ${T.gold}, ${T.teal})`, color: T.bg, fontWeight: F.weight.bold }}
             >
               {UI.startMode[lang](labels)}
             </button>
@@ -1223,6 +1244,12 @@ export default function App() {
               {UI.back[lang]}
             </button>
           </div>
+
+          {!destination.trim() && (
+            <div className="muted" style={{ marginTop: S.sm2, fontSize: F.size.sm, lineHeight: 1.5 }}>
+              {UI.destinationHelp[lang]}
+            </div>
+          )}
 
           {error && <div style={{ marginTop: S.md, color: T.red }}>{error}</div>}
         </div>
