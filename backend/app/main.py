@@ -9,6 +9,7 @@ import uuid
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
+from .config import cors_config
 from .db import connect, init_db
 from .seed import seed_if_empty
 from .algo import DISLIKE_WEIGHT, LIKE_WEIGHT, detect_direction, diversify
@@ -33,17 +34,13 @@ from .schemas import (
 
 app = FastAPI(title="Travel-Swish API", version="0.1.0")
 
-# Local dev only: allow Vite dev + localhost pages
+# CORS: local dev defaults; override with TS_CORS_ORIGINS for public deploys.
+_allow_origins, _allow_credentials = cors_config()
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://127.0.0.1:5173",
-        "http://localhost:5173",
-        "http://127.0.0.1:8090",
-        "http://localhost:8090",
-    ],
-    allow_credentials=True,
-    allow_methods=["*"] ,
+    allow_origins=_allow_origins,
+    allow_credentials=_allow_credentials,
+    allow_methods=["*"],
     allow_headers=["*"],
 )
 

@@ -17,12 +17,25 @@ cd C:\Users\dafre\Travel-Swish\backend
 py -3.12 -m venv .venv
 .\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
-uvicorn app.main:app --reload --host 127.0.0.1 --port 8787
+uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 ```
 
 Open:
-- http://127.0.0.1:8787/health
-- http://127.0.0.1:8787/docs
+- http://127.0.0.1:8000/health
+- http://127.0.0.1:8000/docs
+
+## CORS (GitHub Pages / public frontend)
+By default the API only allows local dev origins (Vite dev server + the local dashboard).
+
+To allow a GitHub Pages frontend, set a comma-separated allowlist:
+
+```powershell
+$env:TS_CORS_ORIGINS = "https://<your-user>.github.io"
+```
+
+Notes:
+- Origin is **scheme + host + port** (no path). For Pages it’s typically `https://<user>.github.io`.
+- If you include `*`, the backend will automatically set `allow_credentials=False` (required by CORS rules).
 
 ## Endpoints
 
@@ -54,7 +67,7 @@ Quick smoke (after starting uvicorn):
 py -3.12 -m compileall -q .\app
 
 # 2) Brave search endpoint
-curl "http://127.0.0.1:8787/search/brave?q=best%20coffee%20oslo&count=3"
+curl "http://127.0.0.1:8000/search/brave?q=best%20coffee%20oslo&count=3"
 ```
 
 ## Swipe → prefs (automatic)
