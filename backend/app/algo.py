@@ -77,3 +77,52 @@ def diversify(items: list[dict], limit: int) -> list[dict]:
             break
 
     return result
+
+MINUS_SIGN = "\u2212"  # Unicode minus (not ASCII hyphen)
+
+
+def score_match(prefs: dict | None, tags: dict | None) -> tuple[float, list[tuple[str, float]]]:
+    # Dot-product scoring -> normalized match in [0,100]
+    prefs = prefs or {}
+    tags = tags or {}
+
+    score = 0.0
+    contributions: list[tuple[str, float]] = []
+
+    for k, w in prefs.items():
+        try:
+            w = float(w)
+        except (TypeError, ValueError):
+            continue
+        if w == 0.0:
+            continue
+
+        try:
+            tv = float(tags.get(k) or 0.0)
+        except (TypeError, ValueError):
+            tv = 0.0
+        if tv == 0.0:
+            continue
+
+        contrib = w * tv
+        score += contrib
+        contributions.append((str(k), contrib))
+
+    match = 50.0 + score * 50.0
+    match = max(0.0, min(100.0, match))
+    return match, contributions
+
+
+def format_why(contributions: list[tuple[str, float]] | None, top_n: int = 5) -> str:
+    # Explainability string (top factors by |contribution|)
+    contributions = contributions or []
+    if not contributions:
+        return "Bootstrap match (no prefs yet)"
+
+    contribs = sorted(contributions, key=lambda x: abs(x[1]), reverse=True)[:top_n]
+    parts: list[str] = []
+    for facet, c in contribs:
+        sign = "+" if c > 0 else MINUS_SIGN
+        parts.append(f"{facet} ({sign}{abs(c):.2f})")
+    return "Top factors: " + ", ".join(parts)
+
