@@ -12,6 +12,10 @@ const DEFAULT_BACKEND_URL =
     ? 'http://127.0.0.1:8787'
     : '';
 const BACKEND_URL = (String((import.meta as any).env?.VITE_BACKEND_URL || '').trim()) || DEFAULT_BACKEND_URL;
+const BACKEND_DISPLAY = (() => {
+  if (!BACKEND_URL) return '';
+  try { return new URL(BACKEND_URL).origin; } catch { return BACKEND_URL; }
+})();
 
 // E2E/CI helper: enable deterministic mock results with ?mock=1
 const MOCK_MODE =
@@ -1555,7 +1559,7 @@ export default function App() {
       )}
 
       <div style={{ padding: `${S.lg}px ${S.lg}px`, color: T.dim, fontSize: F.size.sm, borderTop: `1px solid ${T.border}` }}>
-        {APP_VERSION} • {mode} • {lang}
+        {APP_VERSION} • {mode} • {lang} • backend: {BACKEND_DISPLAY || 'off'}
       </div>
     </div>
   );
