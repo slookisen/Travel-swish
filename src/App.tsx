@@ -15,6 +15,11 @@ const BACKEND_URL = (String((import.meta as any).env?.VITE_BACKEND_URL || '').tr
 
 const nowS = () => Math.floor(Date.now() / 1000);
 
+function googleMapsSearchUrl(placeName: string, destination: string) {
+  const q = `${String(placeName || '').trim()} ${String(destination || '').trim()}`.trim();
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(q)}`;
+}
+
 async function fetchJson(
   url: string,
   init: (RequestInit & { timeoutMs?: number }) = {},
@@ -129,6 +134,7 @@ const UI = {
   },
   swipeAtLeast: { no: 'Sveip minst 10 kort først.', en: 'Swipe at least 10 cards first.', sv: 'Svajpa minst 10 kort först.' },
   openLink: { no: 'Åpne lenke', en: 'Open link', sv: 'Öppna länk' },
+  openMaps: { no: 'Åpne i Maps', en: 'Open in Maps', sv: 'Öppna i Maps' },
 };
 
 // --- Modes
@@ -154,7 +160,7 @@ function normalizeSeenKey(x: string) {
   return `name:${x}`;
 }
 
-function itemSeenKey(it: Pick<Item, 'id' | 'name'>) {
+function itemSeenKey(it: Pick<RecItem, 'id' | 'name'>) {
   return it.id ? `id:${it.id}` : `name:${it.name}`;
 }
 
@@ -346,21 +352,32 @@ function shuffleArray<T>(arr: T[]) {
   return result;
 }
 
-type Item = {
+type RecItem = {
+  // id may be missing for local/demo items
   id?: string;
   name: string;
-  why?: string;
-  quote?: string;
+
+  // common rec fields
   cat?: string;
+  match?: number; // 0–100
+  why?: string;
   url?: string;
+
+  // web rec extras
+  source?: string; // e.g. "brave"
+  snippet?: string;
+  domain?: string;
+  query_source?: string;
+
+  // legacy/demo fields (kept for backwards compat)
+  quote?: string;
   price?: string;
   duration?: string;
-  match?: number;
   lat?: number;
   lng?: number;
 };
 
-function parseItems(result: string, lang: Lang): Item[] {
+function parseItems(result: string, lang: Lang): RecItem[] {
   const jsonMatch = result.match(/\[[\s\S]*?\]/);
   if (jsonMatch) {
     try {
@@ -765,7 +782,7 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [cooldownUntil, setCooldownUntil] = useState(0);
   const [cooldownLeft, setCooldownLeft] = useState(0);
-  const [items, setItems] = useState<Item[]>([]);
+  const [items, setItems] = useState<RecItem[]>([]);
   const [catFilter, setCatFilter] = useState(() => loadCatFilter(mode));
   const seenKeys = useRef<string[]>([]);
 
@@ -870,7 +887,7 @@ export default function App() {
 
       if (BACKEND_URL) {
         try {
-          // Persist prefs so /recs can use them.
+          // Persist prefs so /recs/web can use them.
           await fetchJson(`${BACKEND_URL}/prefs`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -878,23 +895,27 @@ export default function App() {
             timeoutMs: 8000,
           });
 
-          const j = await fetchJson(`${BACKEND_URL}/recs`, {
+          const j = await fetchJson(`${BACKEND_URL}/recs/web`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ user_id: userId, mode, destination: dest, limit: 20 }),
-            timeoutMs: 12000,
+            timeoutMs: 20000,
           });
 
           const raw = Array.isArray(j?.items) ? j.items : [];
           if (raw.length) {
-            let newItems: Item[] = raw
+            let newItems: RecItem[] = raw
               .map((x: any) => ({
                 id: String(x?.id || ''),
                 name: String(x?.name || ''),
-                cat: String(x?.cat || ''),
-                why: String(x?.why || ''),
                 url: String(x?.url || ''),
-                match: typeof x?.match === 'number' ? Math.round(x.match) : undefined,
+                cat: String(x?.cat || ''),
+                match: typeof x?.match === 'number' ? x.match : undefined,
+                why: typeof x?.why === 'string' ? x.why : '',
+                source: String(x?.source || ''),
+                snippet: typeof x?.snippet === 'string' ? x.snippet : '',
+                domain: String(x?.domain || ''),
+                query_source: String(x?.query_source || ''),
               }))
               .filter(i => i.name);
 
@@ -946,7 +967,7 @@ export default function App() {
         .map(([k, v]) => `${k}:${Math.round(v)}`)
         .join(', ');
 
-      const newItems: Item[] = [
+      const newItems: RecItem[] = [
         {
           id: `local_demo_${mode}_${dest.toLowerCase()}`,
           name: lang === 'no'
@@ -1348,25 +1369,32 @@ export default function App() {
                         }}
                       >
                         <div style={{ display: 'flex', justifyContent: 'space-between', gap: S.sm2, alignItems: 'flex-start' }}>
-                          <div style={{ minWidth: 0 }}>
-                            <div style={{ fontWeight: F.weight.ultra, fontSize: F.size.md, lineHeight: 1.2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          <div style={{ minWidth: 0, flex: '1 1 auto' }}>
+                            <div style={{ fontWeight: F.weight.ultra, fontSize: F.size.lg, lineHeight: 1.2, wordBreak: 'break-word' }}>
                               {it.name}
                             </div>
-                            <div style={{ display: 'flex', gap: S.xs2, flexWrap: 'wrap', marginTop: S.xs2, alignItems: 'center' }}>
+
+                            {it.snippet && (
+                              <div style={{ color: T.dim, marginTop: S.xs2, lineHeight: 1.55, fontSize: F.size.base }}>
+                                {it.snippet}
+                              </div>
+                            )}
+
+                            <div style={{ display: 'flex', gap: S.xs2, flexWrap: 'wrap', marginTop: S.sm, alignItems: 'center' }}>
                               {it.cat && (
-                                <span style={{ fontSize: F.size.sm, color: T.dim, border: `1px solid ${T.borderSoft}`, padding: `${S.xxs}px ${S.sm}px`, borderRadius: R.pill, background: T.glassLo }}>
+                                <span style={{ fontSize: F.size.sm, color: T.txt, border: `1px solid ${T.borderSoft}`, padding: `${S.xxs}px ${S.sm}px`, borderRadius: R.pill, background: T.glassLo }}>
                                   {it.cat}
                                 </span>
                               )}
-                              {it.url && (
-                                <a
-                                  href={it.url}
-                                  target="_blank"
-                                  rel="noreferrer"
-                                  style={{ fontSize: F.size.sm, color: T.teal, textDecoration: 'none', border: `1px solid ${T.borderSoft}`, padding: `${S.xxs}px ${S.sm}px`, borderRadius: R.pill }}
-                                >
-                                  {UI.openLink[lang]}
-                                </a>
+                              {it.source && (
+                                <span style={{ fontSize: F.size.sm, color: T.teal, border: `1px solid ${T.borderSoft}`, padding: `${S.xxs}px ${S.sm}px`, borderRadius: R.pill, background: 'transparent' }}>
+                                  {it.source.toLowerCase() === 'brave' ? 'Brave' : it.source}
+                                </span>
+                              )}
+                              {it.domain && (
+                                <span style={{ fontSize: F.size.sm, color: T.dim, border: `1px solid ${T.borderSoft}`, padding: `${S.xxs}px ${S.sm}px`, borderRadius: R.pill, background: 'transparent' }}>
+                                  {it.domain}
+                                </span>
                               )}
                             </div>
                           </div>
@@ -1383,6 +1411,45 @@ export default function App() {
                           }}>
                             {pct}%
                           </div>
+                        </div>
+
+                        <div style={{ display: 'flex', gap: S.sm, flexWrap: 'wrap', marginTop: S.sm2 }}>
+                          {it.url && (
+                            <a
+                              href={it.url}
+                              target="_blank"
+                              rel="noreferrer"
+                              style={{
+                                textDecoration: 'none',
+                                padding: `${S.xs2}px ${S.sm2}px`,
+                                borderRadius: R.pill,
+                                border: `1px solid ${T.borderSoft}`,
+                                background: `linear-gradient(135deg, ${T.gold}, ${T.teal})`,
+                                color: T.bg,
+                                fontWeight: F.weight.black,
+                                fontSize: F.size.base,
+                              }}
+                            >
+                              {UI.openLink[lang]}
+                            </a>
+                          )}
+                          <a
+                            href={googleMapsSearchUrl(it.name, destination)}
+                            target="_blank"
+                            rel="noreferrer"
+                            style={{
+                              textDecoration: 'none',
+                              padding: `${S.xs2}px ${S.sm2}px`,
+                              borderRadius: R.pill,
+                              border: `1px solid ${T.borderSoft}`,
+                              background: 'transparent',
+                              color: T.txt,
+                              fontWeight: F.weight.bold,
+                              fontSize: F.size.base,
+                            }}
+                          >
+                            {UI.openMaps[lang]}
+                          </a>
                         </div>
 
                         {it.why && (
