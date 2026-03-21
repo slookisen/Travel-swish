@@ -12,7 +12,24 @@ const DEFAULT_BACKEND_URL =
     ? 'http://127.0.0.1:8787'
     : '';
 const BACKEND_URL = (String((import.meta as any).env?.VITE_BACKEND_URL || '').trim()) || DEFAULT_BACKEND_URL;
+const BACKEND_DISPLAY = (() => {
+  if (!BACKEND_URL) return '';
+  try { return new URL(BACKEND_URL).origin; } catch { return BACKEND_URL; }
+})();
 
+// E2E/CI helper: enable deterministic mock results with ?mock=1
+const MOCK_MODE =
+  (typeof window !== 'undefined') &&
+  (() => {
+    try {
+      const v = new URLSearchParams(window.location.search).get('mock');
+      return v === '1' || v === 'true' || v === 'yes';
+    } catch {
+      return false;
+    }
+  })();
+
+const MIN_SWIPES = 10;
 const nowS = () => Math.floor(Date.now() / 1000);
 
 function googleMapsSearchUrl(placeName: string, destination: string) {
@@ -66,14 +83,39 @@ const UI = {
     sv: 'Bygg en smakprofil på sekunder. Få förslag som faktiskt passar dig.',
   },
   landingTip: {
-    no: 'Tips: Velg modus, skriv inn sted, swipe 10 kort og få forslag.',
+    no: 'Tips: Velg modus, skriv inn sted, sveip 10 kort og få forslag.',
     en: 'Tip: Pick a mode, enter a destination, swipe 10 cards, get suggestions.',
     sv: 'Tips: Välj läge, skriv in plats, svajpa 10 kort och få förslag.',
+  },
+  howItWorksTitle: {
+    no: 'Slik fungerer det',
+    en: 'How it works',
+    sv: 'Så funkar det',
+  },
+  howItWorks1: {
+    no: 'Velg modus (opplevelser eller restauranter).',
+    en: 'Choose a mode (experiences or restaurants).',
+    sv: 'Välj läge (upplevelser eller restauranger).',
+  },
+  howItWorks2: {
+    no: 'Skriv inn destinasjon og sveip kort for å lære profilen din.',
+    en: 'Enter a destination and swipe to teach your taste profile.',
+    sv: 'Skriv in en destination och svajpa för att lära din profil.',
+  },
+  howItWorks3: {
+    no: 'Trykk «Finn forslag» for treff + forklaring.',
+    en: 'Tap "Find suggestions" for matches + explanations.',
+    sv: 'Tryck "Hitta förslag" för träffar + förklaring.',
   },
   getStarted: { no: 'Kom i gang', en: 'Get started', sv: 'Kom igång' },
   chooseMode: { no: 'Velg modus', en: 'Choose mode', sv: 'Välj läge' },
   destination: { no: 'Destinasjon', en: 'Destination', sv: 'Destination' },
   destinationMissing: { no: 'Destinasjon mangler', en: 'Destination required', sv: 'Destination krävs' },
+  destinationHelp: {
+    no: 'Skriv inn et reisemål for å starte.',
+    en: 'Enter a destination to get started.',
+    sv: 'Skriv in en destination för att börja.',
+  },
   apiKeyNote: {
     no: 'API-nøkkel er ikke lenger nødvendig i appen.',
     en: 'API key is no longer required in the app.',
@@ -92,13 +134,23 @@ const UI = {
   refresh: { no: 'Oppdater', en: 'Refresh', sv: 'Uppdatera' },
   resultsHint: {
     no: 'Store kort, lite støy. Trykk på «Hvorfor» for forklaring.',
-    en: 'Big cards, low noise. Tap “Why” for an explanation.',
-    sv: 'Stora kort, lite brus. Tryck på “Varför” för förklaring.',
+    en: 'Big cards, low noise. Tap "Why" for an explanation.',
+    sv: 'Stora kort, lite brus. Tryck på "Varför" för förklaring.',
+  },
+  noResultsTitle: {
+    no: 'Ingen treff ennå',
+    en: 'No matches yet',
+    sv: 'Inga träffar än',
   },
   noResults: {
-    no: 'Ingen forslag ennå. Prøv «Finn flere» eller swipe noen flere kort.',
+    no: 'Ingen forslag ennå. Prøv «Finn flere» eller sveip noen flere kort.',
     en: 'No suggestions yet. Try “Find more” or swipe a few more cards.',
-    sv: 'Inga förslag än. Prova ”Hitta fler” eller svajpa några fler kort.',
+    sv: 'Inga förslag än. Prova “Hitta fler” eller svajpa några fler kort.',
+  },
+  noResultsFiltered: {
+    no: (cat: string) => `Ingen forslag i «${cat}». Prøv «Alle» eller «Finn flere».`,
+    en: (cat: string) => `No suggestions in "${cat}". Try "All" or "Find more".`,
+    sv: (cat: string) => `Inga förslag i "${cat}". Prova "Alla" eller "Hitta fler".`,
   },
   // kept for backwards compatibility (not used)
   apiKeyMissing: { no: 'API-nøkkel mangler', en: 'API key required', sv: 'API-nyckel krävs' },
@@ -108,7 +160,11 @@ const UI = {
     en: (modeLabel: string) => `Start ${modeLabel}`,
     sv: (modeLabel: string) => `Starta ${modeLabel}`,
   },
-  swipeHint: { no: 'Sveip/velg kort for å lære profilen din.', en: 'Swipe/choose cards to learn your profile.', sv: 'Svajpa/välj kort för att lära din profil.' },
+  swipeHint: {
+    no: 'Sveip høyre = JA, venstre = NEI. Vi lærer profilen din.',
+    en: 'Swipe right = YES, left = NO. We learn your taste profile.',
+    sv: 'Svajpa höger = JA, vänster = NEJ. Vi lär oss din profil.',
+  },
   total: { no: 'Totalt', en: 'Total', sv: 'Totalt' },
   yes: { no: 'JA', en: 'YES', sv: 'JA' },
   no: { no: 'NEI', en: 'NO', sv: 'NEJ' },
@@ -117,9 +173,9 @@ const UI = {
   why: { no: 'Hvorfor', en: 'Why', sv: 'Varför' },
   resetDeck: { no: 'Start på nytt', en: 'Start over', sv: 'Börja om' },
   resetDeckHelp: {
-    no: 'Du har brukt opp kortstokken i denne modusen. Start på nytt for å få kort igjen.',
-    en: 'You have used up the deck in this mode. Start over to get cards again.',
-    sv: 'Du har använt upp kortleken i detta läge. Börja om för att få kort igen.',
+    no: 'Du har sveipet gjennom alle kortene i denne modusen. Start på nytt for å få kort igjen.',
+    en: 'You have swiped through all cards in this mode. Start over to get cards again.',
+    sv: 'Du har svajpat igenom alla kort i detta läge. Börja om för att få kort igen.',
   },
   loading: { no: 'Henter…', en: 'Loading…', sv: 'Laddar…' },
   cooldown: {
@@ -132,7 +188,24 @@ const UI = {
     en: (s: number) => `Too many requests. Wait ${s}s and try again.`,
     sv: (s: number) => `För många förfrågningar. Vänta ${s}s och försök igen.`,
   },
-  swipeAtLeast: { no: 'Sveip minst 10 kort først.', en: 'Swipe at least 10 cards first.', sv: 'Svajpa minst 10 kort först.' },
+  backendColdStart: {
+    no: 'Backend starter opp (cold start) - første kall kan time out. Vent litt og prøv igjen.',
+    en: 'Backend is waking up (cold start) - the first call can time out. Wait a bit and try again.',
+    sv: 'Backend vaknar (cold start) - första anropet kan time out. Vänta lite och försök igen.',
+  },
+  backendDown: {
+    no: 'Backend utilgjengelig akkurat nå. Vi viser demo-forslag, men du kan prøve igjen.',
+    en: 'Backend is unavailable right now. Showing demo suggestions - try again in a moment.',
+    sv: 'Backend är otillgänglig just nu. Visar demo-förslag - försök igen om en stund.',
+  },
+  tryAgain: { no: 'Prøv igjen', en: 'Try again', sv: 'Försök igen' },
+  swipeAtLeast: { no: 'Sveip noen flere kort først.', en: 'Swipe a few more cards first.', sv: 'Svajpa några fler kort först.' },
+  swipeRemaining: {
+    no: (n: number) => `Sveip ${n} til for å låse opp forslag.`,
+    en: (n: number) => `Swipe ${n} more to unlock suggestions.`,
+    sv: (n: number) => `Svajpa ${n} till för att låsa upp förslag.`,
+  },
+  deckEmptyTitle: { no: 'Ingen flere kort', en: 'No more cards', sv: 'Inga fler kort' },
   openLink: { no: 'Åpne lenke', en: 'Open link', sv: 'Öppna länk' },
   openMaps: { no: 'Åpne i Maps', en: 'Open in Maps', sv: 'Öppna i Maps' },
 };
@@ -359,7 +432,7 @@ type RecItem = {
 
   // common rec fields
   cat?: string;
-  match?: number; // 0–100
+  match?: number; // 0-100
   why?: string;
   url?: string;
 
@@ -461,7 +534,7 @@ function SwipeDeckCard({
           borderRadius: R.lg,
           padding: S.md2,
           transform: `translateX(${dx}px) rotate(${dx / 18}deg)`,
-          transition: dragging ? 'none' : `transform ${M.snap}ms ${M.ease}`, 
+          transition: dragging ? 'none' : `transform ${M.snap}ms ${M.ease}`,
           boxShadow: T.shadow,
           userSelect: 'none',
         }}
@@ -779,12 +852,22 @@ export default function App() {
   const [userId] = useState(() => getOrCreateId('ts_user_id'));
   const [error, setError] = useState('');
   const [info, setInfo] = useState('');
+  const [backendNotice, setBackendNotice] = useState<null | { kind: 'cold' | 'down'; msg: string }>(null);
+  const backendRetryCount = useRef(0);
   const [loading, setLoading] = useState(false);
   const [cooldownUntil, setCooldownUntil] = useState(0);
   const [cooldownLeft, setCooldownLeft] = useState(0);
   const [items, setItems] = useState<RecItem[]>([]);
   const [catFilter, setCatFilter] = useState(() => loadCatFilter(mode));
   const seenKeys = useRef<string[]>([]);
+  const destinationInputRef = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    if (page !== 'home') return;
+    setError('');
+    const t = setTimeout(() => destinationInputRef.current?.focus(), 0);
+    return () => clearTimeout(t);
+  }, [page]);
 
   // If the browser shows a cached build after a deploy, we want a simple
   // "new version available" banner that can force a reload.
@@ -807,6 +890,8 @@ export default function App() {
     seenKeys.current = mem.seen;
     setCatFilter(loadCatFilter(mode));
     setInfo('');
+    setBackendNotice(null);
+    backendRetryCount.current = 0;
   }, [mode]);
 
   useEffect(() => {
@@ -863,7 +948,9 @@ export default function App() {
     setDeckIndex(0);
   }, [mode, lang, unswiped.length]);
 
-  const canSearch = totalSwipes >= 10 || Object.keys(swipes).length >= 10;
+  const swipeCount = Math.max(totalSwipes, Object.keys(swipes).length);
+  const canSearch = swipeCount >= MIN_SWIPES;
+  const swipeRemaining = Math.max(0, MIN_SWIPES - swipeCount);
 
   async function findItems() {
     if (cooldownUntil && cooldownUntil > Date.now()) {
@@ -874,6 +961,7 @@ export default function App() {
     setLoading(true);
     setError('');
     setInfo('');
+    setBackendNotice(null);
 
     try {
       const profile = calcProfile(swipes, cards);
@@ -885,25 +973,68 @@ export default function App() {
 
       const dest = destination.trim();
 
+      if (MOCK_MODE) {
+        const mockItems: RecItem[] = [
+          {
+            id: `mock_${mode}_1`,
+            name: mode === 'restaurants' ? 'Mock: Sjømatbistro' : 'Mock: Street food tour',
+            url: 'https://example.com',
+            cat: mode === 'restaurants' ? 'Restaurant' : 'Experience',
+            match: 86,
+            why: 'Mock mode: deterministic suggestion for QA/Playwright.',
+            source: 'mock',
+            snippet: 'Dette er et mock-resultat (ingen backend-kall).',
+            domain: 'example.com',
+          },
+          {
+            id: `mock_${mode}_2`,
+            name: mode === 'restaurants' ? 'Mock: Ramen' : 'Mock: Museum crawl',
+            url: 'https://example.com',
+            cat: mode === 'restaurants' ? 'Restaurant' : 'Experience',
+            match: 78,
+            why: 'Mock mode: verifies results rendering + why panel.',
+            source: 'mock',
+            snippet: 'Mock-resultat #2.',
+            domain: 'example.com',
+          },
+        ];
+
+        const newKeys = mockItems.map(itemSeenKey).filter(Boolean);
+        seenKeys.current = [...seenKeys.current, ...newKeys];
+        saveSeen(mode, seenKeys.current);
+
+        setItems(mockItems);
+        setPage('results');
+        setInfo(lang === 'no' ? 'Mock mode aktiv (ingen backend-kall).' : 'Mock mode active (no backend calls).');
+        return;
+      }
+
       if (BACKEND_URL) {
         try {
+          const warm = backendRetryCount.current > 0;
+          const prefsTimeoutMs = warm ? 20000 : 8000;
+          const recsTimeoutMs = warm ? 45000 : 20000;
+
           // Persist prefs so /recs/web can use them.
           await fetchJson(`${BACKEND_URL}/prefs`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ user_id: userId, mode, prefs, updated_ts: nowS() }),
-            timeoutMs: 8000,
+            timeoutMs: prefsTimeoutMs,
           });
 
           const j = await fetchJson(`${BACKEND_URL}/recs/web`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ user_id: userId, mode, destination: dest, limit: 20 }),
-            timeoutMs: 20000,
+            timeoutMs: recsTimeoutMs,
           });
 
           const raw = Array.isArray(j?.items) ? j.items : [];
           if (raw.length) {
+            backendRetryCount.current = 0;
+            setBackendNotice(null);
+
             let newItems: RecItem[] = raw
               .map((x: any) => ({
                 id: String(x?.id || ''),
@@ -932,31 +1063,40 @@ export default function App() {
             return;
           }
 
+          backendRetryCount.current = 0;
+          setBackendNotice(null);
+
           setInfo(
             lang === 'no'
-              ? 'Ingen treff fra backend ennå — viser demo-forslag.'
+              ? 'Ingen treff fra backend ennå - viser demo-forslag.'
               : lang === 'sv'
-                ? 'Inga träffar från backend ännu — visar demo-förslag.'
-                : 'No backend hits yet — showing demo suggestions.'
+                ? 'Inga träffar från backend ännu - visar demo-förslag.'
+                : 'No backend hits yet - showing demo suggestions.'
           );
-        } catch (e) {
+        } catch (e: any) {
           // Keep app usable even if backend is down.
           console.warn('Backend recs unavailable; falling back to local suggestions.', e);
+
+          const emsg = String(e?.message || '');
+          const isTimeout = /timeout/i.test(emsg);
+          if (isTimeout) backendRetryCount.current = Math.min(3, backendRetryCount.current + 1);
+          setBackendNotice({ kind: isTimeout ? 'cold' : 'down', msg: isTimeout ? UI.backendColdStart[lang] : UI.backendDown[lang] });
+
           setInfo(
             lang === 'no'
-              ? 'Backend utilgjengelig — viser demo-forslag.'
+              ? 'Backend utilgjengelig - viser demo-forslag.'
               : lang === 'sv'
-                ? 'Backend otillgänglig — visar demo-förslag.'
-                : 'Backend unavailable — showing demo suggestions.'
+                ? 'Backend otillgänglig - visar demo-förslag.'
+                : 'Backend unavailable - showing demo suggestions.'
           );
         }
       } else {
         setInfo(
           lang === 'no'
-            ? 'Backend ikke konfigurert — viser demo-forslag.'
+            ? 'Backend ikke konfigurert - viser demo-forslag.'
             : lang === 'sv'
-              ? 'Backend är inte konfigurerad — visar demo-förslag.'
-              : 'Backend not configured — showing demo suggestions.'
+              ? 'Backend är inte konfigurerad - visar demo-förslag.'
+              : 'Backend not configured - showing demo suggestions.'
         );
       }
 
@@ -1039,7 +1179,7 @@ export default function App() {
     <div style={{ minHeight: '100vh', background: T.bg, color: T.txt, fontFamily: F.system }}>
       <style>{globalCss}</style>
       <div style={{ padding: `${S.md}px ${S.lg}px`, display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: `1px solid ${T.borderSoft}` }}>
-        <div style={{ fontWeight: F.weight.black, color: T.gold, letterSpacing: 0.2 }}>Travel‑Swish</div>
+        <div style={{ fontWeight: F.weight.black, color: T.gold, letterSpacing: 0.2 }}>Travel-Swish</div>
         <div className="row">
           <select
             value={lang}
@@ -1097,26 +1237,35 @@ export default function App() {
           <div className="card" style={{ padding: S.xl }}>
             <div className="row wrap" style={{ justifyContent: 'space-between' }}>
               <div>
-                <div className="muted" style={{ fontWeight: F.weight.bold, letterSpacing: 0.4 }}>TRAVEL‑SWISH</div>
-                <h1 style={{ margin: `${S.xs2}px 0 ${S.xs}px 0`, fontSize: F.size.hero }}>{UI.landingTitle[lang]}</h1>
+                <div className="muted" style={{ fontWeight: F.weight.bold, letterSpacing: 0.4 }}>TRAVEL-SWISH</div>
+                <h1 style={{ margin: `${S.xs2}px 0 ${S.xs}px 0`, fontSize: 'clamp(28px, 7vw, 34px)' }}>{UI.landingTitle[lang]}</h1>
                 <p className="muted" style={{ lineHeight: 1.6, marginTop: 0 }}>{UI.landingDesc[lang]}</p>
               </div>
               <div className="pill muted" style={{ alignSelf: 'flex-start' }}>Build {APP_VERSION}</div>
             </div>
 
             <div style={{ marginTop: S.md2 }}>
-              <button className="btn btnPrimary" onClick={() => setPage('home')}>{UI.getStarted[lang]}</button>
+              <button className="btn btnPrimary btnFull" onClick={() => setPage('home')}>{UI.getStarted[lang]}</button>
             </div>
 
             <div style={{ marginTop: S.md2 }} className="muted">
               {UI.landingTip[lang]}
+            </div>
+
+            <div style={{ marginTop: S.lg }}>
+              <div style={{ fontWeight: F.weight.black, marginBottom: S.xs2 }}>{UI.howItWorksTitle[lang]}</div>
+              <div className="muted" style={{ lineHeight: 1.6 }}>
+                <div style={{ marginBottom: S.xs2 }}>1) {UI.howItWorks1[lang]}</div>
+                <div style={{ marginBottom: S.xs2 }}>2) {UI.howItWorks2[lang]}</div>
+                <div>3) {UI.howItWorks3[lang]}</div>
+              </div>
             </div>
           </div>
         </div>
       )}
 
       {page === 'home' && (
-        <div style={{ padding: S.page, maxWidth: 760, margin: '0 auto' }}>
+        <div className="page">
           <h2 style={{ marginTop: 0 }}>{UI.chooseMode[lang]}</h2>
           <div style={{ display: 'flex', gap: S.sm, flexWrap: 'wrap' }}>
             {(['experiences', 'restaurants'] as Mode[]).map(m => (
@@ -1141,8 +1290,15 @@ export default function App() {
           <div style={{ marginTop: S.lg }}>
             <label style={{ display: 'block', marginBottom: S.xs, color: T.dim }}>{UI.destination[lang]}</label>
             <input
+              ref={destinationInputRef}
               value={destination}
-              onChange={e => setDestination(e.target.value)}
+              onChange={e => { setDestination(e.target.value); if (error) setError(''); }}
+              onKeyDown={(e) => {
+                if (e.key !== 'Enter') return;
+                e.preventDefault();
+                if (!destination.trim()) { setError(UI.destinationMissing[lang]); destinationInputRef.current?.focus(); return; }
+                setPage('swipe');
+              }}
               placeholder={lang === 'no' ? 'Barcelona, Oslo, Tokyo…' : lang === 'sv' ? 'Barcelona, Stockholm, Tokyo…' : 'Barcelona, Oslo, Tokyo…'}
               style={{ width: '100%', padding: S.sm2, borderRadius: R.md, border: `1px solid ${T.border}`, background: T.card, color: T.txt }}
             />
@@ -1155,68 +1311,68 @@ export default function App() {
           <div style={{ marginTop: S.md2, display: 'flex', gap: S.sm, flexWrap: 'wrap' }}>
             <button
               onClick={() => {
-                if (!destination.trim()) { setError(UI.destinationMissing[lang]); return; }
+                if (!destination.trim()) { setError(UI.destinationMissing[lang]); destinationInputRef.current?.focus(); return; }
                 setPage('swipe');
               }}
-              style={{ padding: `${S.sm2}px ${S.md2}px`, borderRadius: R.md, border: 'none', cursor: 'pointer', background: `linear-gradient(135deg, ${T.gold}, ${T.teal})`, color: T.bg, fontWeight: F.weight.bold }}
+              disabled={!destination.trim()}
+              className="btnPill btnPillPrimary btnFull"
+              style={{ cursor: destination.trim() ? 'pointer' : 'not-allowed', opacity: destination.trim() ? 1 : 0.6 }}
             >
               {UI.startMode[lang](labels)}
             </button>
-            <button onClick={() => setPage('landing')} style={{ padding: `${S.sm2}px ${S.md2}px`, borderRadius: R.md, border: `1px solid ${T.border}`, cursor: 'pointer', background: 'transparent', color: T.txt }}>
+            <button
+              onClick={() => setPage('landing')}
+              className="btnPill"
+              style={{ background: 'transparent', color: T.txt, border: `1px solid ${T.border}` }}
+            >
               {UI.back[lang]}
             </button>
           </div>
+
+          {!destination.trim() && (
+            <div className="muted" style={{ marginTop: S.sm2, fontSize: F.size.sm, lineHeight: 1.5 }}>
+              {UI.destinationHelp[lang]}
+            </div>
+          )}
 
           {error && <div style={{ marginTop: S.md, color: T.red }}>{error}</div>}
         </div>
       )}
 
       {page === 'swipe' && (
-        <div style={{ padding: S.page, maxWidth: 760, margin: '0 auto' }}>
-          <button onClick={() => setPage('home')} style={{ marginBottom: S.sm, background: 'transparent', border: `1px solid ${T.border}`, color: T.txt, padding: `${S.xs2}px ${S.sm}px`, borderRadius: R.sm, cursor: 'pointer' }}>
+        <div className="page">
+          <button
+            onClick={() => setPage('home')}
+            className="btnPill"
+            style={{ marginBottom: S.sm, background: 'transparent', border: `1px solid ${T.border}`, color: T.txt }}
+          >
             {UI.back[lang]}
           </button>
 
           <h2 style={{ marginTop: 0 }}>{labels}: {destination}</h2>
           <div style={{ color: T.dim, marginBottom: S.sm }}>{UI.swipeHint[lang]}</div>
-          <div style={{ color: T.dim, fontSize: F.size.sm, marginBottom: S.md2 }}>{UI.total[lang]}: {totalSwipes}</div>
+          <div style={{ color: T.dim, fontSize: F.size.sm, marginBottom: S.md2 }}>
+            {UI.total[lang]}: {swipeCount} / {MIN_SWIPES}
+          </div>
 
           {/* Swipe deck (stacked, Tinder-like) */}
           <div style={{ position: 'relative', minHeight: 360 }}>
             {deckIndex >= deck.length ? (
-              <div style={{ color: T.dim, paddingTop: S.page + S.xxs }}>
+              <div className="emptyState" style={{ marginTop: S.page }}>
                 <div style={{ fontWeight: F.weight.black, color: T.txt, marginBottom: S.xs }}>
-                  {lang === 'no' ? 'Ingen flere kort' : lang === 'sv' ? 'Inga fler kort' : 'No more cards'}
+                  {UI.deckEmptyTitle[lang]}
                 </div>
-                <div style={{ lineHeight: 1.5 }}>
+                <div className="muted" style={{ lineHeight: 1.55 }}>
                   {UI.resetDeckHelp[lang]}
                 </div>
-                <div style={{ marginTop: S.md, display: 'flex', gap: S.sm, flexWrap: 'wrap' }}>
-                  <button
-                    onClick={resetDeck}
-                    style={{
-                      padding: `${S.sm}px ${S.md}px`,
-                      borderRadius: R.pill,
-                      border: `1px solid ${T.borderSoft}`,
-                      background: 'transparent',
-                      color: T.txt,
-                      fontWeight: F.weight.black,
-                      cursor: 'pointer',
-                    }}
-                  >
+                <div className="emptyActions">
+                  <button onClick={resetDeck} className="btnPill btnPillPrimary btnFull">
                     {UI.resetDeck[lang]}
                   </button>
                   <button
                     onClick={() => setPage('home')}
-                    style={{
-                      padding: `${S.sm}px ${S.md}px`,
-                      borderRadius: R.pill,
-                      border: `1px solid ${T.borderSoft}`,
-                      background: 'transparent',
-                      color: T.dim,
-                      fontWeight: F.weight.bold,
-                      cursor: 'pointer',
-                    }}
+                    className="btnPill"
+                    style={{ background: 'transparent', color: T.txt, border: `1px solid ${T.border}` }}
                   >
                     {UI.back[lang]}
                   </button>
@@ -1235,19 +1391,21 @@ export default function App() {
             <button
               onClick={findItems}
               disabled={!canSearch || loading}
+              className="btnPill btnPillPrimary btnFull"
               style={{
-                padding: `${S.sm2}px ${S.md2}px`,
-                borderRadius: R.md,
-                border: 'none',
                 cursor: !canSearch || loading ? 'not-allowed' : 'pointer',
-                background: !canSearch || loading ? T.card : `linear-gradient(135deg, ${T.gold}, ${T.teal})`,
-                color: !canSearch || loading ? T.dim : T.bg,
-                fontWeight: F.weight.bold,
+                opacity: !canSearch || loading ? 0.55 : 1,
+                background: !canSearch || loading ? T.card : undefined,
+                color: !canSearch || loading ? T.dim : undefined,
               }}
             >
               {loading ? UI.loading[lang] : UI.fetch[lang]}
             </button>
-            {!canSearch && <div style={{ color: T.dim, alignSelf: 'center' }}>{UI.swipeAtLeast[lang]}</div>}
+            {!canSearch && (
+              <div style={{ color: T.dim, alignSelf: 'center', lineHeight: 1.4 }}>
+                {UI.swipeRemaining[lang](swipeRemaining)}
+              </div>
+            )}
           </div>
 
           {error && <div style={{ marginTop: S.md, color: T.red }}>{error}</div>}
@@ -1256,7 +1414,7 @@ export default function App() {
       )}
 
       {page === 'results' && (
-        <div style={{ padding: S.page, maxWidth: 760, margin: '0 auto' }}>
+        <div className="page">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: S.sm2, flexWrap: 'wrap' }}>
             <button
               onClick={() => setPage('swipe')}
@@ -1300,6 +1458,26 @@ export default function App() {
           <div style={{ color: T.dim, marginTop: S.xs, fontSize: F.size.sm }}>{UI.resultsHint[lang]}</div>
           {error && <div style={{ marginTop: S.md, color: T.red }}>{error}</div>}
           {info && <div style={{ color: T.dim, marginTop: S.xs2, fontSize: F.size.sm }}>{info}</div>}
+
+          {backendNotice && (
+            <div
+              className={`notice ${backendNotice.kind === 'cold' ? 'noticeWarn' : ''}`}
+              style={{ marginTop: S.md }}
+            >
+              <div className="muted" style={{ lineHeight: 1.55 }}>
+                {backendNotice.msg}
+              </div>
+              <div className="noticeActions">
+                <button
+                  onClick={findItems}
+                  disabled={loading || (cooldownUntil && cooldownUntil > Date.now())}
+                  className="btnPill btnPillPrimary btnFull"
+                >
+                  {loading ? UI.loading[lang] : UI.tryAgain[lang]}
+                </button>
+              </div>
+            </div>
+          )}
 
           {(() => {
             const cats = [...new Set(items.map(i => String(i.cat || '').trim()).filter(Boolean))];
@@ -1352,8 +1530,42 @@ export default function App() {
 
                 <div style={{ display: 'grid', gap: S.sm2, marginTop: S.md2 }}>
                   {shown.length === 0 ? (
-                    <div className="muted" style={{ padding: S.md2 }}>
-                      {UI.noResults[lang]}
+                    <div className="emptyState">
+                      <div style={{ fontWeight: F.weight.black, marginBottom: S.xs }}>
+                        {UI.noResultsTitle[lang]}
+                      </div>
+                      <div className="muted" style={{ lineHeight: 1.55 }}>
+                        {items.length && active ? UI.noResultsFiltered[lang](active) : UI.noResults[lang]}
+                      </div>
+
+                      <div className="emptyActions">
+                        {active && (
+                          <button
+                            onClick={() => pick('')}
+                            className="btnPill"
+                            title={lang === 'no' ? 'Vis alle kategorier' : lang === 'sv' ? 'Visa alla kategorier' : 'Show all categories'}
+                            style={{ background: T.card }}
+                          >
+                            {allLabel}
+                          </button>
+                        )}
+
+                        <button
+                          onClick={findItems}
+                          disabled={loading || (cooldownUntil && cooldownUntil > Date.now())}
+                          className="btnPill btnPillPrimary btnFull"
+                        >
+                          {loading ? UI.loading[lang] : UI.findMore[lang]}
+                        </button>
+
+                        <button
+                          onClick={() => setPage('swipe')}
+                          className="btnPill"
+                          style={{ background: 'transparent', color: T.dim }}
+                        >
+                          {UI.back[lang]}
+                        </button>
+                      </div>
                     </div>
                   ) : shown.map((it, idx) => {
                     const pct = Math.round(it.match || 0);
@@ -1375,7 +1587,7 @@ export default function App() {
                             </div>
 
                             {it.snippet && (
-                              <div style={{ color: T.dim, marginTop: S.xs2, lineHeight: 1.55, fontSize: F.size.base }}>
+                              <div className="clamp3" style={{ color: T.dim, marginTop: S.xs2, lineHeight: 1.55, fontSize: F.size.base }}>
                                 {it.snippet}
                               </div>
                             )}
@@ -1471,7 +1683,7 @@ export default function App() {
       )}
 
       <div style={{ padding: `${S.lg}px ${S.lg}px`, color: T.dim, fontSize: F.size.sm, borderTop: `1px solid ${T.border}` }}>
-        {APP_VERSION} • {mode} • {lang}
+        {APP_VERSION} • {mode} • {lang} • backend: {BACKEND_DISPLAY || 'off'}
       </div>
     </div>
   );

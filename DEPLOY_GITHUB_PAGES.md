@@ -37,18 +37,23 @@ git push -u origin main
 - Folder: `/docs`
 
 6) Your URL will be something like:
-`https://<your-username>.github.io/travel-swish/`
+`https://<your-username>.github.io/Travel-swish/`
 
 ## Backend URL (required for a fully working demo)
 GitHub Pages is static, so it cannot call `localhost`. Build with the backend URL embedded:
 
 ```powershell
-# Example (Render URL)
-$env:VITE_BACKEND_URL = "https://<your-render-service>.onrender.com"
+# Render backend (public)
+$env:VITE_BACKEND_URL = "https://travel-swish-backend.onrender.com"
+
+# Sanity
+curl "https://travel-swish-backend.onrender.com/health"
 
 npm ci
 npm run build
 ```
+
+After deploy, the app footer should show `backend: https://travel-swish-backend.onrender.com`.
 
 Vite is configured to build into `docs/`, so `npm run build` updates the Pages content directly.
 

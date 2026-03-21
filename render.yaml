@@ -13,3 +13,13 @@ services:
       # CORS: allow your GitHub Pages origin(s). Comma-separated.
       - key: TS_CORS_ORIGINS
         value: https://slookisen.github.io
+
+      # Auth-lite / abuse guard (optional but recommended for public deploys)
+      - key: TS_API_KEY
+        sync: false
+      - key: TS_AUTH_MODE
+        value: origin_or_key
+      - key: TS_API_RL_WINDOW_S
+        value: "60"
+      - key: TS_API_RL_MAX_COST
+        value: "120"

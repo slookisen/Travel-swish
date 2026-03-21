@@ -119,9 +119,10 @@ export const globalCss = `
   @keyframes pop { 0%{ transform: scale(0.98);} 100%{ transform: scale(1);} }
 
   .container{ max-width: 860px; margin: 0 auto; padding: var(--s-xl); }
+  .page{ max-width: 760px; margin: 0 auto; padding: var(--s-page); }
   .card{ background:var(--card); border:1px solid var(--border-soft); border-radius: var(--r-lg); box-shadow:var(--shadow); }
 
-  .btn{ border-radius: var(--r-md); padding: 12px 16px; font-weight: ${F.weight.bold}; cursor:pointer; border:1px solid var(--border-soft); background: transparent; color:var(--txt); }
+  .btn{ display:inline-flex; align-items:center; justify-content:center; gap: 8px; border-radius: var(--r-md); padding: 12px 16px; font-weight: ${F.weight.bold}; cursor:pointer; border:1px solid var(--border-soft); background: transparent; color:var(--txt); }
   .btnPrimary{ border: none; background: linear-gradient(135deg, ${T.gold}, ${T.teal}); color: var(--bg); }
   .btnGhost{ background: transparent; }
 
@@ -133,6 +134,32 @@ export const globalCss = `
   .spacer{ flex:1; }
   .fadeUp{ animation: fadeUp var(--m-fadeUp) var(--m-ease) both; }
   .pill{ border-radius: var(--r-pill); padding: 8px 12px; border: 1px solid var(--border-soft); }
+
+  .emptyState{ padding: var(--s-md2); border: 1px dashed var(--border-soft); border-radius: var(--r-lg); background: rgba(255,255,255,0.02); }
+  .emptyActions{ display:flex; gap: var(--s-sm); flex-wrap:wrap; margin-top: var(--s-sm2); }
+
+  .notice{ padding: var(--s-sm2); border: 1px solid var(--border-soft); border-radius: var(--r-lg); background: rgba(255,255,255,0.02); }
+  .noticeWarn{ border-color: rgba(212,165,116,0.28); background: rgba(212,165,116,0.06); }
+  .noticeActions{ display:flex; gap: var(--s-sm); flex-wrap:wrap; margin-top: var(--s-sm); }
+
+  .btnPill{ display:inline-flex; align-items:center; justify-content:center; gap: 8px; border-radius: var(--r-pill); padding: 10px 14px; font-weight: ${F.weight.black}; cursor:pointer; border:1px solid var(--border-soft); background: transparent; color:var(--txt); }
+  .btnPillPrimary{ border: none; background: linear-gradient(135deg, ${T.gold}, ${T.teal}); color: var(--bg); }
+
+  /* Text clamp helpers */
+  .clamp2{ display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+  .clamp3{ display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; }
+
+  /* Mobile polish */
+  @media (max-width: 520px){
+    .container{ padding: var(--s-md2); }
+    .page{ padding: var(--s-md2); }
+
+    .btnFull{ width:100%; justify-content:center; }
+    .noticeActions .btnPill{ width:100%; }
+
+    /* Slightly tighter empty-state buttons on tiny screens */
+    .emptyActions .btnPill{ width:100%; }
+  }
 
   @media (prefers-reduced-motion: reduce){
     *,*::before,*::after{ animation: none !important; transition: none !important; }
