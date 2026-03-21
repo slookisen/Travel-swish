@@ -29,7 +29,7 @@ const MOCK_MODE =
     }
   })();
 
-const MIN_SWIPES = 10;
+const MIN_SWIPES = 20;
 const nowS = () => Math.floor(Date.now() / 1000);
 
 function googleMapsSearchUrl(placeName: string, destination: string) {
@@ -83,9 +83,9 @@ const UI = {
     sv: 'Bygg en smakprofil på sekunder. Få förslag som faktiskt passar dig.',
   },
   landingTip: {
-    no: 'Tips: Velg modus, skriv inn sted, sveip 10 kort og få forslag.',
-    en: 'Tip: Pick a mode, enter a destination, swipe 10 cards, get suggestions.',
-    sv: 'Tips: Välj läge, skriv in plats, svajpa 10 kort och få förslag.',
+    no: 'Tips: Velg modus, skriv inn sted, sveip 20 kort og få forslag.',
+    en: 'Tip: Pick a mode, enter a destination, swipe 20 cards, get suggestions.',
+    sv: 'Tips: Välj läge, skriv in plats, svajpa 20 kort och få förslag.',
   },
   howItWorksTitle: {
     no: 'Slik fungerer det',
@@ -847,8 +847,11 @@ export default function App() {
     try { return localStorage.getItem('ts_destination') || ''; } catch { return ''; }
   });
 
-  // API key removed (backend-first). Keep legacy localStorage key untouched.
-  const apiKey = '';
+  // API key: optional, for client-side Claude fallback when backend is unavailable
+  const [apiKey, setApiKey] = useState(() => {
+    try { return localStorage.getItem('ts_apiKey') || ''; } catch { return ''; }
+  });
+  const [showApiKeyInput, setShowApiKeyInput] = useState(false);
   const [userId] = useState(() => getOrCreateId('ts_user_id'));
   const [error, setError] = useState('');
   const [info, setInfo] = useState('');
@@ -917,7 +920,12 @@ export default function App() {
     try { localStorage.setItem('ts_destination', destination); } catch {}
   }, [destination]);
 
-  // (no apiKey persistence)
+  useEffect(() => {
+    try {
+      if (apiKey) localStorage.setItem('ts_apiKey', apiKey);
+      else localStorage.removeItem('ts_apiKey');
+    } catch {}
+  }, [apiKey]);
 
   const cards = useMemo(() => getDeckCards(mode, lang), [mode, lang]);
 
@@ -1048,7 +1056,7 @@ export default function App() {
                 domain: String(x?.domain || ''),
                 query_source: String(x?.query_source || ''),
               }))
-              .filter(i => i.name);
+              .filter((i: RecItem) => i.name);
 
             const seen = new Set(seenKeys.current);
             const filtered = newItems.filter(i => !seen.has(itemSeenKey(i)));
@@ -1074,29 +1082,103 @@ export default function App() {
                 : 'No backend hits yet - showing demo suggestions.'
           );
         } catch (e: any) {
-          // Keep app usable even if backend is down.
-          console.warn('Backend recs unavailable; falling back to local suggestions.', e);
+          console.warn('Backend recs unavailable; trying Claude fallback.', e);
 
           const emsg = String(e?.message || '');
           const isTimeout = /timeout/i.test(emsg);
           if (isTimeout) backendRetryCount.current = Math.min(3, backendRetryCount.current + 1);
-          setBackendNotice({ kind: isTimeout ? 'cold' : 'down', msg: isTimeout ? UI.backendColdStart[lang] : UI.backendDown[lang] });
 
+          // If we have an API key, try client-side Claude
+          if (apiKey) {
+            try {
+              const profileText = describeProfile(profile, lang);
+              const excludeList = seenKeys.current.map(k => k.replace(/^(id:|name:)/, '')).slice(-20);
+              const prompt = buildPrompt(mode, dest, profileText, lang, excludeList);
+              const result = await askClaude(prompt, apiKey);
+              const parsed = parseItems(result, lang);
+              if (parsed.length > 0) {
+                let newItems = parsed.filter((i: RecItem) => i.name);
+                const seen = new Set(seenKeys.current);
+                const filtered = newItems.filter((i: RecItem) => !seen.has(itemSeenKey(i)));
+                newItems = filtered.length ? filtered : newItems;
+
+                const newKeys = newItems.map(itemSeenKey).filter(Boolean);
+                seenKeys.current = [...seenKeys.current, ...newKeys];
+                saveSeen(mode, seenKeys.current);
+
+                setItems(newItems);
+                setPage('results');
+                return;
+              }
+            } catch (claudeErr: any) {
+              const msg = String(claudeErr?.message || '');
+              if (msg.startsWith('RATE_LIMIT:')) {
+                const waitS = parseInt(msg.split(':')[1], 10) || 60;
+                setCooldownUntil(Date.now() + waitS * 1000);
+                setCooldownLeft(waitS);
+                setError(UI.cooldownError[lang](waitS));
+                return;
+              }
+              console.warn('Claude fallback also failed:', claudeErr);
+            }
+          }
+
+          setBackendNotice({ kind: isTimeout ? 'cold' : 'down', msg: isTimeout ? UI.backendColdStart[lang] : UI.backendDown[lang] });
           setInfo(
             lang === 'no'
-              ? 'Backend utilgjengelig - viser demo-forslag.'
+              ? 'Backend utilgjengelig — viser demo-forslag.'
               : lang === 'sv'
-                ? 'Backend otillgänglig - visar demo-förslag.'
-                : 'Backend unavailable - showing demo suggestions.'
+                ? 'Backend otillgänglig — visar demo-förslag.'
+                : 'Backend unavailable — showing demo suggestions.'
+          );
+        }
+      } else if (apiKey) {
+        // No backend — use client-side Claude API with web search
+        try {
+          const profileText = describeProfile(profile, lang);
+          const excludeList = seenKeys.current.map(k => k.replace(/^(id:|name:)/, '')).slice(-20);
+          const prompt = buildPrompt(mode, dest, profileText, lang, excludeList);
+          const result = await askClaude(prompt, apiKey);
+          const parsed = parseItems(result, lang);
+          if (parsed.length > 0) {
+            let newItems = parsed.filter((i: RecItem) => i.name);
+            const seen = new Set(seenKeys.current);
+            const filtered = newItems.filter((i: RecItem) => !seen.has(itemSeenKey(i)));
+            newItems = filtered.length ? filtered : newItems;
+
+            const newKeys = newItems.map(itemSeenKey).filter(Boolean);
+            seenKeys.current = [...seenKeys.current, ...newKeys];
+            saveSeen(mode, seenKeys.current);
+
+            setItems(newItems);
+            setPage('results');
+            return;
+          }
+        } catch (claudeErr: any) {
+          const msg = String(claudeErr?.message || '');
+          if (msg.startsWith('RATE_LIMIT:')) {
+            const waitS = parseInt(msg.split(':')[1], 10) || 60;
+            setCooldownUntil(Date.now() + waitS * 1000);
+            setCooldownLeft(waitS);
+            setError(UI.cooldownError[lang](waitS));
+            return;
+          }
+          console.warn('Claude API call failed:', claudeErr);
+          setInfo(
+            lang === 'no'
+              ? 'AI-forespørsel feilet — viser demo-forslag.'
+              : lang === 'sv'
+                ? 'AI-förfrågan misslyckades — visar demo-förslag.'
+                : 'AI request failed — showing demo suggestions.'
           );
         }
       } else {
         setInfo(
           lang === 'no'
-            ? 'Backend ikke konfigurert - viser demo-forslag.'
+            ? 'Legg til en API-nøkkel for AI-drevne forslag.'
             : lang === 'sv'
-              ? 'Backend är inte konfigurerad - visar demo-förslag.'
-              : 'Backend not configured - showing demo suggestions.'
+              ? 'Lägg till en API-nyckel för AI-drivna förslag.'
+              : 'Add an API key for AI-powered suggestions.'
         );
       }
 
@@ -1234,30 +1316,66 @@ export default function App() {
 
       {page === 'landing' && (
         <div className="container fadeUp">
-          <div className="card" style={{ padding: S.xl }}>
-            <div className="row wrap" style={{ justifyContent: 'space-between' }}>
-              <div>
-                <div className="muted" style={{ fontWeight: F.weight.bold, letterSpacing: 0.4 }}>TRAVEL-SWISH</div>
-                <h1 style={{ margin: `${S.xs2}px 0 ${S.xs}px 0`, fontSize: 'clamp(28px, 7vw, 34px)' }}>{UI.landingTitle[lang]}</h1>
-                <p className="muted" style={{ lineHeight: 1.6, marginTop: 0 }}>{UI.landingDesc[lang]}</p>
+          <div className="card" style={{ padding: `${S.xl + 8}px`, overflow: 'hidden', position: 'relative' }}>
+            {/* Decorative gradient orb */}
+            <div style={{
+              position: 'absolute',
+              top: -80,
+              right: -80,
+              width: 220,
+              height: 220,
+              borderRadius: '50%',
+              background: `radial-gradient(circle, ${T.goldWashHi}, transparent 70%)`,
+              pointerEvents: 'none',
+            }} />
+            <div style={{
+              position: 'absolute',
+              bottom: -60,
+              left: -60,
+              width: 180,
+              height: 180,
+              borderRadius: '50%',
+              background: `radial-gradient(circle, rgba(45,212,191,0.08), transparent 70%)`,
+              pointerEvents: 'none',
+            }} />
+
+            <div style={{ position: 'relative' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: S.sm }}>
+                <div>
+                  <div style={{ fontSize: F.size.sm, fontWeight: F.weight.bold, letterSpacing: 1.5, color: T.gold, textTransform: 'uppercase' as const }}>Travel-Swish</div>
+                  <h1 style={{ margin: `${S.sm}px 0 ${S.xs}px 0`, fontSize: 'clamp(30px, 8vw, 40px)', lineHeight: 1.15, letterSpacing: -0.5 }}>
+                    {lang === 'no' ? 'Finn opplevelser som passer deg' : lang === 'sv' ? 'Hitta upplevelser som passar dig' : 'Find experiences that fit you'}
+                  </h1>
+                  <p className="muted" style={{ lineHeight: 1.7, marginTop: S.xs2, maxWidth: 440, fontSize: F.size.md }}>
+                    {UI.landingDesc[lang]}
+                  </p>
+                </div>
               </div>
-              <div className="pill muted" style={{ alignSelf: 'flex-start' }}>Build {APP_VERSION}</div>
-            </div>
 
-            <div style={{ marginTop: S.md2 }}>
-              <button className="btn btnPrimary btnFull" onClick={() => setPage('home')}>{UI.getStarted[lang]}</button>
-            </div>
+              <div style={{ marginTop: S.xl, display: 'flex', gap: S.sm, flexWrap: 'wrap' }}>
+                <button className="btn btnPrimary btnFull" style={{ fontSize: F.size.md, padding: `${S.md}px ${S.xl}px` }} onClick={() => setPage('home')}>
+                  {UI.getStarted[lang]} →
+                </button>
+              </div>
 
-            <div style={{ marginTop: S.md2 }} className="muted">
-              {UI.landingTip[lang]}
-            </div>
-
-            <div style={{ marginTop: S.lg }}>
-              <div style={{ fontWeight: F.weight.black, marginBottom: S.xs2 }}>{UI.howItWorksTitle[lang]}</div>
-              <div className="muted" style={{ lineHeight: 1.6 }}>
-                <div style={{ marginBottom: S.xs2 }}>1) {UI.howItWorks1[lang]}</div>
-                <div style={{ marginBottom: S.xs2 }}>2) {UI.howItWorks2[lang]}</div>
-                <div>3) {UI.howItWorks3[lang]}</div>
+              {/* How it works */}
+              <div style={{ marginTop: S.xl + 8, display: 'grid', gap: S.md, gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))' }}>
+                {[
+                  { emoji: '🎯', title: lang === 'no' ? 'Velg modus' : lang === 'sv' ? 'Välj läge' : 'Pick a mode', desc: UI.howItWorks1[lang] },
+                  { emoji: '👆', title: lang === 'no' ? 'Sveip kort' : lang === 'sv' ? 'Svajpa kort' : 'Swipe cards', desc: UI.howItWorks2[lang] },
+                  { emoji: '✨', title: lang === 'no' ? 'Få forslag' : lang === 'sv' ? 'Få förslag' : 'Get matches', desc: UI.howItWorks3[lang] },
+                ].map((step, i) => (
+                  <div key={i} style={{
+                    padding: S.md,
+                    borderRadius: R.lg,
+                    background: T.glassLo,
+                    border: `1px solid ${T.borderSoft}`,
+                  }}>
+                    <div style={{ fontSize: 24, marginBottom: S.xs }}>{step.emoji}</div>
+                    <div style={{ fontWeight: F.weight.black, fontSize: F.size.base, marginBottom: S.xxs }}>{step.title}</div>
+                    <div className="muted" style={{ fontSize: F.size.sm, lineHeight: 1.5 }}>{step.desc}</div>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
@@ -1304,8 +1422,57 @@ export default function App() {
             />
           </div>
 
-          <div className="muted" style={{ marginTop: S.xs2, fontSize: F.size.sm }}>
-            {UI.apiKeyNote[lang]}
+          {/* Optional API key for AI-powered suggestions */}
+          <div style={{ marginTop: S.md }}>
+            <button
+              onClick={() => setShowApiKeyInput(!showApiKeyInput)}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                color: T.dim,
+                cursor: 'pointer',
+                fontSize: F.size.sm,
+                padding: 0,
+                textDecoration: 'underline',
+              }}
+            >
+              {showApiKeyInput
+                ? (lang === 'no' ? 'Skjul API-nøkkel' : lang === 'sv' ? 'Dölj API-nyckel' : 'Hide API key')
+                : (lang === 'no' ? 'Legg til Anthropic API-nøkkel for AI-forslag' : lang === 'sv' ? 'Lägg till Anthropic API-nyckel för AI-förslag' : 'Add Anthropic API key for AI suggestions')
+              }
+            </button>
+            {apiKey && !showApiKeyInput && (
+              <span style={{ color: T.green, fontSize: F.size.sm, marginLeft: S.sm }}>
+                {lang === 'no' ? 'Nøkkel satt' : lang === 'sv' ? 'Nyckel inställd' : 'Key set'}
+              </span>
+            )}
+            {showApiKeyInput && (
+              <div style={{ marginTop: S.xs2 }}>
+                <input
+                  type="password"
+                  value={apiKey}
+                  onChange={e => setApiKey(e.target.value)}
+                  placeholder="sk-ant-..."
+                  style={{
+                    width: '100%',
+                    padding: S.sm2,
+                    borderRadius: R.md,
+                    border: `1px solid ${T.border}`,
+                    background: T.card,
+                    color: T.txt,
+                    fontFamily: 'monospace',
+                    fontSize: F.size.sm,
+                  }}
+                />
+                <div style={{ color: T.dim, fontSize: F.size.sm, marginTop: S.xs, lineHeight: 1.5 }}>
+                  {lang === 'no'
+                    ? 'Brukes for AI-drevne forslag med websøk når backend er utilgjengelig. Nøkkelen lagres kun i nettleseren din.'
+                    : lang === 'sv'
+                      ? 'Används för AI-drivna förslag med webbsökning när backend inte finns. Nyckeln sparas bara i din webbläsare.'
+                      : 'Powers AI suggestions with web search when backend is unavailable. Key is stored only in your browser.'}
+                </div>
+              </div>
+            )}
           </div>
 
           <div style={{ marginTop: S.md2, display: 'flex', gap: S.sm, flexWrap: 'wrap' }}>
@@ -1351,8 +1518,35 @@ export default function App() {
 
           <h2 style={{ marginTop: 0 }}>{labels}: {destination}</h2>
           <div style={{ color: T.dim, marginBottom: S.sm }}>{UI.swipeHint[lang]}</div>
-          <div style={{ color: T.dim, fontSize: F.size.sm, marginBottom: S.md2 }}>
-            {UI.total[lang]}: {swipeCount} / {MIN_SWIPES}
+          {/* Progress bar toward minimum swipes */}
+          <div style={{ marginBottom: S.md2 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: S.xs }}>
+              <div style={{ color: T.dim, fontSize: F.size.sm }}>
+                {swipeCount} / {MIN_SWIPES} {lang === 'no' ? 'sveip' : lang === 'sv' ? 'svajp' : 'swipes'}
+              </div>
+              {canSearch && (
+                <div style={{ color: T.green, fontSize: F.size.sm, fontWeight: F.weight.bold }}>
+                  {lang === 'no' ? 'Klar for forslag!' : lang === 'sv' ? 'Redo för förslag!' : 'Ready for suggestions!'}
+                </div>
+              )}
+            </div>
+            <div style={{
+              width: '100%',
+              height: 6,
+              borderRadius: R.pill,
+              background: T.border,
+              overflow: 'hidden',
+            }}>
+              <div style={{
+                width: `${Math.min(100, (swipeCount / MIN_SWIPES) * 100)}%`,
+                height: '100%',
+                borderRadius: R.pill,
+                background: canSearch
+                  ? `linear-gradient(135deg, ${T.gold}, ${T.teal})`
+                  : T.teal,
+                transition: `width ${M.snap}ms ${M.ease}`,
+              }} />
+            </div>
           </div>
 
           {/* Swipe deck (stacked, Tinder-like) */}
@@ -1431,7 +1625,7 @@ export default function App() {
               )}
               <button
                 onClick={findItems}
-                disabled={loading || (cooldownUntil && cooldownUntil > Date.now())}
+                disabled={loading || (cooldownUntil > 0 && cooldownUntil > Date.now())}
                 style={{
                   padding: `${S.sm}px ${S.md}px`,
                   borderRadius: R.pill,
@@ -1470,7 +1664,7 @@ export default function App() {
               <div className="noticeActions">
                 <button
                   onClick={findItems}
-                  disabled={loading || (cooldownUntil && cooldownUntil > Date.now())}
+                  disabled={loading || (cooldownUntil > 0 && cooldownUntil > Date.now())}
                   className="btnPill btnPillPrimary btnFull"
                 >
                   {loading ? UI.loading[lang] : UI.tryAgain[lang]}
@@ -1552,7 +1746,7 @@ export default function App() {
 
                         <button
                           onClick={findItems}
-                          disabled={loading || (cooldownUntil && cooldownUntil > Date.now())}
+                          disabled={loading || (cooldownUntil > 0 && cooldownUntil > Date.now())}
                           className="btnPill btnPillPrimary btnFull"
                         >
                           {loading ? UI.loading[lang] : UI.findMore[lang]}
@@ -1665,12 +1859,15 @@ export default function App() {
                         </div>
 
                         {it.why && (
-                          <details style={{ marginTop: S.sm2 }}>
-                            <summary style={{ cursor: 'pointer', color: T.dim, fontWeight: F.weight.bold }}>
-                              {UI.why[lang]}
-                            </summary>
-                            <div style={{ color: T.dim, marginTop: S.xs2, lineHeight: 1.55, whiteSpace: 'pre-wrap' }}>{it.why}</div>
-                          </details>
+                          <div style={{
+                            marginTop: S.sm2,
+                            padding: `${S.xs2}px ${S.sm}px`,
+                            borderLeft: `3px solid ${pct >= 75 ? T.gold : pct >= 50 ? T.teal : T.dim}`,
+                            background: T.glassLo,
+                            borderRadius: `0 ${R.sm}px ${R.sm}px 0`,
+                          }}>
+                            <div style={{ color: T.txt, lineHeight: 1.55, fontSize: F.size.base }}>{it.why}</div>
+                          </div>
                         )}
                       </div>
                     );
