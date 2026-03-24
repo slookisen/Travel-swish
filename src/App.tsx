@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { T, globalCss, F, R, S, M } from './ui';
 import { DIMS, getDeckCards, t as tData, type Card, type Lang, type Mode } from './dataset';
 import { BUILD_META } from './buildMeta';
@@ -71,7 +71,7 @@ async function fetchJson(
 }
 
 // --- Strings
-const UI = {
+const UI: Record<string, any> = {
   landingTitle: {
     no: 'Swipe → plan → book',
     en: 'Swipe → plan → book',
@@ -144,15 +144,14 @@ const UI = {
   },
   noResults: {
     no: 'Ingen forslag ennå. Prøv «Finn flere» eller sveip noen flere kort.',
-    en: 'No suggestions yet. Try “Find more” or swipe a few more cards.',
-    sv: 'Inga förslag än. Prova “Hitta fler” eller svajpa några fler kort.',
+    en: 'No suggestions yet. Try "Find more" or swipe a few more cards.',
+    sv: 'Inga förslag än. Prova "Hitta fler" eller svajpa några fler kort.',
   },
   noResultsFiltered: {
     no: (cat: string) => `Ingen forslag i «${cat}». Prøv «Alle» eller «Finn flere».`,
     en: (cat: string) => `No suggestions in "${cat}". Try "All" or "Find more".`,
     sv: (cat: string) => `Inga förslag i "${cat}". Prova "Alla" eller "Hitta fler".`,
   },
-  // kept for backwards compatibility (not used)
   apiKeyMissing: { no: 'API-nøkkel mangler', en: 'API key required', sv: 'API-nyckel krävs' },
   back: { no: 'Tilbake', en: 'Back', sv: 'Tillbaka' },
   startMode: {
@@ -208,6 +207,79 @@ const UI = {
   deckEmptyTitle: { no: 'Ingen flere kort', en: 'No more cards', sv: 'Inga fler kort' },
   openLink: { no: 'Åpne lenke', en: 'Open link', sv: 'Öppna länk' },
   openMaps: { no: 'Åpne i Maps', en: 'Open in Maps', sv: 'Öppna i Maps' },
+
+  // TS1: Settings / Delete history
+  settingsTitle: { no: 'Innstillinger', en: 'Settings', sv: 'Inställningar' },
+  deleteHistory: { no: 'Slett min historikk', en: 'Delete my history', sv: 'Radera min historik' },
+  deleteConfirmTitle: { no: 'Start på nytt?', en: 'Start over?', sv: 'Börja om?' },
+  deleteConfirmBody: {
+    no: 'Vi glemmer alle sveipene dine og forrige resultater. Destinasjon og API-nøkkel beholdes.',
+    en: 'We\u2019ll forget all your swipes and previous results. Destination and API key are kept.',
+    sv: 'Vi glömmer alla dina svajpningar och tidigare resultat. Destination och API-nyckel behålls.',
+  },
+  deleteConfirmCancel: { no: 'Avbryt', en: 'Cancel', sv: 'Avbryt' },
+  deleteConfirmOk: { no: 'Ja, start på nytt 🧹', en: 'Yes, start over 🧹', sv: 'Ja, börja om 🧹' },
+  deleteSuccessToast: { no: 'Ferdig! Nytt eventyr venter 🌍', en: 'Done! A new adventure awaits 🌍', sv: 'Klart! Ett nytt äventyr väntar 🌍' },
+
+  // TS1: Previous results
+  lastResultsSeeAll: { no: 'Se alle', en: 'See all', sv: 'Se alla' },
+  lastResultsJustNow: { no: 'akkurat nå', en: 'just now', sv: 'just nu' },
+
+  // TS2: Landing + API guide
+  landingHero: { no: 'Vanskelige valg?', en: 'Hard choices?', sv: 'Svåra val?' },
+  landingSubtitle: {
+    no: 'Vi hjelper deg finne det som faktisk passer deg.',
+    en: 'We help you find what actually fits you.',
+    sv: 'Vi hjälper dig hitta det som faktiskt passar dig.',
+  },
+  landingCta: { no: '✈️  Kom i gang', en: '✈️  Get started', sv: '✈️  Kom igång' },
+  landingTagline: {
+    no: 'Ingen konto. Ingen reklame. Bare gode treff.',
+    en: 'No account. No ads. Just great matches.',
+    sv: 'Inget konto. Ingen reklam. Bara bra träffar.',
+  },
+  landingStep1: { no: '👆 Sveip 20 kort', en: '👆 Swipe 20 cards', sv: '👆 Svajpa 20 kort' },
+  landingStep2: { no: '🧠 Vi lærer smaken din', en: '🧠 We learn your taste', sv: '🧠 Vi lär oss din smak' },
+  landingStep3: { no: '🎯 Treff som passer deg', en: '🎯 Matches that fit you', sv: '🎯 Träffar som passar dig' },
+
+  apiGuideTitle: { no: '🔑 API-nøkkel — 30 sekunder', en: '🔑 API Key — 30 seconds', sv: '🔑 API-nyckel — 30 sekunder' },
+  apiGuideStep1: { no: 'Gå til console.anthropic.com', en: 'Go to console.anthropic.com', sv: 'Gå till console.anthropic.com' },
+  apiGuideStep2: { no: 'Logg inn eller opprett konto (gratis)', en: 'Log in or create account (free)', sv: 'Logga in eller skapa konto (gratis)' },
+  apiGuideStep3: { no: 'Klikk "API Keys" i venstremenyen', en: 'Click "API Keys" in the left menu', sv: 'Klicka "API Keys" i vänstermenyn' },
+  apiGuideStep4: { no: 'Klikk "Create Key" og gi den et navn', en: 'Click "Create Key" and name it', sv: 'Klicka "Create Key" och namnge den' },
+  apiGuideStep5: { no: 'Kopier nøkkelen og lim inn under', en: 'Copy the key and paste below', sv: 'Kopiera nyckeln och klistra in nedan' },
+  apiGuideSave: { no: 'Lagre nøkkel ✓', en: 'Save key ✓', sv: 'Spara nyckel ✓' },
+  apiGuidePrivacy: {
+    no: 'Nøkkelen lagres kun i din nettleser. Vi ser den aldri.',
+    en: 'The key is stored only in your browser. We never see it.',
+    sv: 'Nyckeln lagras bara i din webbläsare. Vi ser den aldrig.',
+  },
+  apiGuideMenu: { no: '📜 API-nøkkel guide', en: '📜 API key guide', sv: '📜 API-nyckel guide' },
+
+  // TS3: Profile
+  profileTitle: { no: '🧠 Din smaksprofil så langt', en: '🧠 Your taste profile so far', sv: '🧠 Din smaksprofil hittills' },
+
+  // TS4: Loading
+  loadingCancel: { no: 'Avbryt', en: 'Cancel', sv: 'Avbryt' },
+
+  // TS5: Swipe milestone
+  swipeMilestone: {
+    no: 'Bra! Du kan søke nå 🎯',
+    en: 'Nice! You can search now 🎯',
+    sv: 'Bra! Du kan söka nu 🎯',
+  },
+
+  // TS6: Map + Share
+  viewList: { no: '📋 Liste', en: '📋 List', sv: '📋 Lista' },
+  viewMap: { no: '🗺️ Kart', en: '🗺️ Map', sv: '🗺️ Karta' },
+  shareButton: { no: 'Del 📤', en: 'Share 📤', sv: 'Dela 📤' },
+  shareCopied: { no: 'Kopiert til utklippstavlen 📋', en: 'Copied to clipboard 📋', sv: 'Kopierat till urklipp 📋' },
+  shareSuccess: { no: 'Delt! 🎉', en: 'Shared! 🎉', sv: 'Delat! 🎉' },
+  mapNoCoordsAll: {
+    no: 'Ingen av treffene har koordinater ennå. Prøv igjen og koordinater genereres automatisk.',
+    en: 'None of the results have coordinates yet. Try again and they\'ll be generated automatically.',
+    sv: 'Inga av träffarna har koordinater ännu. Prova igen så genereras de automatiskt.',
+  },
 };
 
 // --- Modes
@@ -215,6 +287,17 @@ const UI = {
 const MODE_LABELS: Record<Mode, { no: string; en: string; sv: string }> = {
   experiences: { no: 'Opplevelser', en: 'Experiences', sv: 'Upplevelser' },
   restaurants: { no: 'Restauranter', en: 'Restaurants', sv: 'Restauranger' },
+};
+
+const MODES_ORDERED: { mode: Mode; emoji: string }[] = [
+  { mode: 'experiences', emoji: '🎭' },
+  { mode: 'restaurants', emoji: '🍽️' },
+];
+
+// --- TS3: Dimension emoji map
+const DIM_EMOJI: Record<string, string> = {
+  adv: '🎒', soc: '👥', lux: '✨', act: '🏃', cul: '🏛️',
+  nat: '🏔️', food: '🍜', night: '🌙', spont: '⚡',
 };
 
 // --- Storage
@@ -261,7 +344,7 @@ function loadMemory(mode: Mode) {
     const totalSwipes = parseInt(localStorage.getItem(K.totalSwipes) || '0', 10);
     const seenRaw = JSON.parse(localStorage.getItem(K.seen) || '[]') as any;
     const seen = Array.isArray(seenRaw)
-      ? [...new Set(seenRaw.map((x) => normalizeSeenKey(String(x || ''))).filter(Boolean))]
+      ? [...new Set(seenRaw.map((x: any) => normalizeSeenKey(String(x || ''))).filter(Boolean))]
       : [];
     return { swipes, totalSwipes: Number.isFinite(totalSwipes) ? totalSwipes : 0, seen };
   } catch {
@@ -297,6 +380,56 @@ function getOrCreateId(key: string) {
   } catch {
     return `u_${Math.random().toString(16).slice(2)}_${Date.now()}`;
   }
+}
+
+// --- TS1: Last results storage
+function destSlug(dest: string): string {
+  return dest.toLowerCase().replace(/[^a-z0-9]/g, '_').slice(0, 40);
+}
+
+function saveLastResults(mode: Mode, dest: string, items: RecItem[], lang: Lang) {
+  const slug = destSlug(dest);
+  const key = `ts_last_results_${mode}_${slug}`;
+  try {
+    let toSave = items;
+    const payload = JSON.stringify({ ts: Date.now(), dest, items: toSave, lang });
+    if (payload.length > 80000) toSave = items.slice(0, 5);
+    localStorage.setItem(key, JSON.stringify({ ts: Date.now(), dest, items: toSave, lang }));
+  } catch {}
+}
+
+function loadLastResults(mode: Mode, dest: string): { ts: number; dest: string; items: RecItem[]; lang: Lang } | null {
+  const slug = destSlug(dest);
+  try {
+    const raw = localStorage.getItem(`ts_last_results_${mode}_${slug}`);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed?.items)) return null;
+    return parsed;
+  } catch { return null; }
+}
+
+function deleteAllHistory() {
+  try {
+    const keysToDelete: string[] = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (!k) continue;
+      if (
+        k.startsWith('ts_swipes_') || k.startsWith('ts_totalSwipes_') ||
+        k.startsWith('ts_seen_') || k.startsWith('ts_catFilter_') ||
+        k.startsWith('ts_last_results_')
+      ) {
+        keysToDelete.push(k);
+      }
+    }
+    // Also delete without underscore suffix (legacy keys)
+    for (const suffix of ['_experiences', '_restaurants']) {
+      keysToDelete.push(`ts_swipes${suffix}`, `ts_totalSwipes${suffix}`, `ts_seen${suffix}`, `ts_catFilter${suffix}`);
+    }
+    const unique = [...new Set(keysToDelete)];
+    unique.forEach(k => localStorage.removeItem(k));
+  } catch {}
 }
 
 // --- Cards (dataset-driven)
@@ -344,6 +477,25 @@ function describeProfile(dims: Record<string, number>, lang: Lang) {
     parts.push(`${level}${dir} ${label.toLowerCase()} (${k}:${Math.round(v)})`);
   }
 
+  return parts.join(', ') || (lang === 'no' ? 'balansert reisende' : lang === 'sv' ? 'balanserad resenär' : 'balanced traveler');
+}
+
+// Clean version of describeProfile for UI display (strips dim keys)
+function describeProfileClean(dims: Record<string, number>, lang: Lang) {
+  const labels = Object.fromEntries(DIMS.map((d) => [d, tData(lang, `dims.${d}`)])) as Record<string, string>;
+  const parts: string[] = [];
+  for (const [k, v] of Object.entries(dims)) {
+    if (Math.abs(v) <= 10) continue;
+    const abs = Math.abs(v);
+    const level = abs > 70
+      ? (lang === 'no' ? 'svært' : lang === 'sv' ? 'väldigt' : 'very')
+      : abs > 40
+        ? (lang === 'no' ? 'ganske' : lang === 'sv' ? 'ganska' : 'moderately')
+        : (lang === 'no' ? 'litt' : lang === 'sv' ? 'lite' : 'somewhat');
+    const dir = v > 0 ? '' : (lang === 'no' ? ' ikke' : lang === 'sv' ? ' inte' : ' not');
+    const label = labels[k] || k;
+    parts.push(`${level}${dir} ${label.toLowerCase()}`);
+  }
   return parts.join(', ') || (lang === 'no' ? 'balansert reisende' : lang === 'sv' ? 'balanserad resenär' : 'balanced traveler');
 }
 
@@ -426,23 +578,16 @@ function shuffleArray<T>(arr: T[]) {
 }
 
 type RecItem = {
-  // id may be missing for local/demo items
   id?: string;
   name: string;
-
-  // common rec fields
   cat?: string;
-  match?: number; // 0-100
+  match?: number;
   why?: string;
   url?: string;
-
-  // web rec extras
-  source?: string; // e.g. "brave"
+  source?: string;
   snippet?: string;
   domain?: string;
   query_source?: string;
-
-  // legacy/demo fields (kept for backwards compat)
   quote?: string;
   price?: string;
   duration?: string;
@@ -461,112 +606,6 @@ function parseItems(result: string, lang: Lang): RecItem[] {
   return [{ name: lang === 'no' ? 'AI-svar mottatt' : lang === 'sv' ? 'AI-svar mottaget' : 'AI response received', why: result.slice(0, 400), match: 50 }];
 }
 
-function SwipeDeckCard({
-  card,
-  lang,
-  onSwipe,
-}: {
-  card: Card;
-  lang: Lang;
-  onSwipe: (val: number) => void;
-}) {
-  const [dx, setDx] = useState(0);
-  const [dragging, setDragging] = useState(false);
-  const startX = useRef<number | null>(null);
-
-  const threshold = 90; // px
-
-  function endDrag(finalDx: number) {
-    setDragging(false);
-    startX.current = null;
-
-    if (finalDx > threshold) {
-      onSwipe(1);
-      setDx(0);
-      return;
-    }
-    if (finalDx < -threshold) {
-      onSwipe(-1);
-      setDx(0);
-      return;
-    }
-
-    // snap back
-    setDx(0);
-  }
-
-  return (
-    <div
-      style={{
-        position: 'absolute',
-        inset: 0,
-        display: 'grid',
-        placeItems: 'center',
-        touchAction: 'pan-y',
-      }}
-    >
-      <div
-        onTouchStart={(e) => {
-          setDragging(true);
-          startX.current = e.touches[0].clientX;
-        }}
-        onTouchMove={(e) => {
-          if (startX.current == null) return;
-          const cur = e.touches[0].clientX;
-          setDx(cur - startX.current);
-        }}
-        onTouchEnd={() => endDrag(dx)}
-        onMouseDown={(e) => {
-          setDragging(true);
-          startX.current = e.clientX;
-        }}
-        onMouseMove={(e) => {
-          if (!dragging || startX.current == null) return;
-          setDx(e.clientX - startX.current);
-        }}
-        onMouseUp={() => endDrag(dx)}
-        onMouseLeave={() => dragging && endDrag(dx)}
-        style={{
-          width: '100%',
-          maxWidth: 520,
-          background: T.card,
-          border: `1px solid ${T.border}`,
-          borderRadius: R.lg,
-          padding: S.md2,
-          transform: `translateX(${dx}px) rotate(${dx / 18}deg)`,
-          transition: dragging ? 'none' : `transform ${M.snap}ms ${M.ease}`,
-          boxShadow: T.shadow,
-          userSelect: 'none',
-        }}
-      >
-        <div style={{ display: 'flex', gap: S.sm, alignItems: 'center' }}>
-          <div style={{ fontSize: F.size.emoji }}>{card.emoji}</div>
-          <div style={{ fontWeight: F.weight.black, fontSize: F.size.md }}>{card.q}</div>
-        </div>
-        <div style={{ color: T.dim, marginTop: S.xs2, lineHeight: 1.5 }}>{card.desc}</div>
-
-        <div style={{ display: 'flex', gap: S.sm, marginTop: S.md }}>
-          <button
-            onClick={() => onSwipe(-1)}
-            style={{ padding: `${S.sm}px ${S.sm2}px`, borderRadius: R.md, border: `1px solid ${T.border}`, background: 'transparent', color: T.red, cursor: 'pointer', fontWeight: F.weight.black }}
-          >
-            {UI.no[lang]}
-          </button>
-          <button
-            onClick={() => onSwipe(1)}
-            style={{ padding: `${S.sm}px ${S.sm2}px`, borderRadius: R.md, border: `1px solid ${T.border}`, background: 'transparent', color: T.green, cursor: 'pointer', fontWeight: F.weight.black }}
-          >
-            {UI.yes[lang]}
-          </button>
-          <div style={{ marginLeft: 'auto', color: T.dim, fontSize: F.size.sm, alignSelf: 'center' }}>
-            {lang === 'no' ? 'Dra ←/→' : lang === 'sv' ? 'Dra ←/→' : 'Drag ←/→'}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 function clamp(n: number, min: number, max: number) {
   return Math.max(min, Math.min(max, n));
 }
@@ -582,14 +621,434 @@ function motionMs(ms: number) {
   }
 }
 
+// --- TS1: Toast component
+function Toast({ message, visible }: { message: string; visible: boolean }) {
+  if (!message) return null;
+  return (
+    <div style={{
+      position: 'fixed',
+      bottom: 24,
+      left: '50%',
+      transform: 'translateX(-50%)',
+      padding: `${S.sm}px ${S.lg}px`,
+      borderRadius: R.pill,
+      background: `linear-gradient(135deg, ${T.gold}, ${T.teal})`,
+      color: T.bg,
+      fontWeight: F.weight.black,
+      fontSize: F.size.base,
+      zIndex: 9500,
+      animation: visible ? 'toastIn 300ms ease both' : 'toastOut 300ms ease both',
+      pointerEvents: 'none',
+      whiteSpace: 'nowrap',
+      boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
+    }}>
+      {message}
+    </div>
+  );
+}
+
+// --- TS1: ConfirmDialog
+function ConfirmDialog({ title, body, cancelText, confirmText, onCancel, onConfirm }: {
+  title: string; body: string; cancelText: string; confirmText: string;
+  onCancel: () => void; onConfirm: () => void;
+}) {
+  return (
+    <div
+      onClick={onCancel}
+      style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 9100, display: 'grid', placeItems: 'center' }}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          background: T.card, border: `1px solid ${T.borderSoft}`, borderRadius: R.lg, padding: S.page,
+          maxWidth: 380, width: '90%', boxShadow: T.shadow,
+        }}
+      >
+        <div style={{ fontWeight: F.weight.black, fontSize: F.size.lg, marginBottom: S.sm }}>{title}</div>
+        <div style={{ color: T.dim, lineHeight: 1.6, marginBottom: S.lg }}>{body}</div>
+        <div style={{ display: 'flex', gap: S.sm }}>
+          <button onClick={onCancel} className="btnPill" style={{ flex: 1, background: 'transparent', border: `1px solid ${T.border}`, color: T.txt }}>
+            {cancelText}
+          </button>
+          <button onClick={onConfirm} className="btnPill btnPillPrimary" style={{ flex: 1 }}>
+            {confirmText}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// --- TS1: SettingsMenu
+function SettingsMenu({ lang, onDeleteHistory, onApiGuide, onClose }: {
+  lang: Lang; onDeleteHistory: () => void; onApiGuide: () => void; onClose: () => void;
+}) {
+  return (
+    <>
+      <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 8900 }} />
+      <div style={{
+        position: 'absolute', top: '100%', right: 0, marginTop: 4, zIndex: 8950,
+        background: T.card, border: `1px solid ${T.borderSoft}`, borderRadius: R.lg,
+        padding: `${S.sm}px 0`, minWidth: 220, boxShadow: T.shadow,
+      }}>
+        <div style={{ padding: `${S.xs2}px ${S.md}px`, color: T.dim, fontSize: F.size.sm, fontWeight: F.weight.bold }}>
+          {UI.settingsTitle[lang]}
+        </div>
+        <button
+          onClick={() => { onDeleteHistory(); onClose(); }}
+          style={{
+            display: 'block', width: '100%', textAlign: 'left', padding: `${S.sm}px ${S.md}px`,
+            background: 'transparent', border: 'none', color: T.red, cursor: 'pointer', fontSize: F.size.base,
+          }}
+        >
+          🗑️ {UI.deleteHistory[lang]}
+        </button>
+        <button
+          onClick={() => { onApiGuide(); onClose(); }}
+          style={{
+            display: 'block', width: '100%', textAlign: 'left', padding: `${S.sm}px ${S.md}px`,
+            background: 'transparent', border: 'none', color: T.txt, cursor: 'pointer', fontSize: F.size.base,
+          }}
+        >
+          {UI.apiGuideMenu[lang]}
+        </button>
+      </div>
+    </>
+  );
+}
+
+// --- TS2: ApiKeyGuideModal
+function ApiKeyGuideModal({ lang, onClose, onSave, currentKey }: {
+  lang: Lang; onClose: () => void; onSave: (key: string) => void; currentKey: string;
+}) {
+  const [key, setKey] = useState(currentKey);
+  const [showKey, setShowKey] = useState(false);
+
+  return (
+    <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.65)', zIndex: 9000, display: 'grid', placeItems: 'center' }}>
+      <div onClick={(e) => e.stopPropagation()} style={{
+        background: T.card, border: `1px solid ${T.borderSoft}`, borderRadius: R.lg, padding: S.page,
+        maxWidth: 440, width: '92%', boxShadow: T.shadow, maxHeight: '90vh', overflow: 'auto',
+      }}>
+        <div style={{ fontWeight: F.weight.black, fontSize: F.size.lg, marginBottom: S.md }}>{UI.apiGuideTitle[lang]}</div>
+        <ol style={{ margin: 0, paddingLeft: 20, color: T.txt, lineHeight: 2, fontSize: F.size.base }}>
+          <li>{UI.apiGuideStep1[lang]} <a href="https://console.anthropic.com" target="_blank" rel="noreferrer" style={{ color: T.teal }}>🔗</a></li>
+          <li>{UI.apiGuideStep2[lang]}</li>
+          <li>{UI.apiGuideStep3[lang]}</li>
+          <li>{UI.apiGuideStep4[lang]}</li>
+          <li>{UI.apiGuideStep5[lang]}</li>
+        </ol>
+        <div style={{ marginTop: S.md, position: 'relative' }}>
+          <input
+            type={showKey ? 'text' : 'password'}
+            value={key}
+            onChange={(e) => setKey(e.target.value)}
+            placeholder="sk-ant-..."
+            style={{
+              width: '100%', padding: `${S.sm2}px ${S.xl + 20}px ${S.sm2}px ${S.sm2}px`,
+              borderRadius: R.md, border: `1px solid ${T.border}`, background: T.glassHi,
+              color: T.txt, fontFamily: 'monospace', fontSize: F.size.sm,
+            }}
+          />
+          <button onClick={() => setShowKey(!showKey)} style={{
+            position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)',
+            background: 'transparent', border: 'none', cursor: 'pointer', color: T.dim, fontSize: 16,
+          }}>
+            {showKey ? '🙈' : '👁'}
+          </button>
+        </div>
+        <button
+          onClick={() => { onSave(key); onClose(); }}
+          className="btnPill btnPillPrimary"
+          style={{ width: '100%', marginTop: S.sm2 }}
+        >
+          {UI.apiGuideSave[lang]}
+        </button>
+        <div style={{ color: T.dim, fontSize: F.size.sm, marginTop: S.sm, textAlign: 'center', lineHeight: 1.5 }}>
+          {UI.apiGuidePrivacy[lang]}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// --- TS3: ModeTabBar
+function ModeTabBar({ mode, lang, onChange }: { mode: Mode; lang: Lang; onChange: (m: Mode) => void }) {
+  return (
+    <div style={{ display: 'flex', gap: S.xs2, marginBottom: S.md }}>
+      {MODES_ORDERED.map(({ mode: m, emoji }) => (
+        <button
+          key={m}
+          onClick={() => onChange(m)}
+          style={{
+            flex: 1,
+            padding: `${S.sm}px ${S.md}px`,
+            borderRadius: R.pill,
+            border: mode === m ? 'none' : `1px solid ${T.borderSoft}`,
+            cursor: 'pointer',
+            background: mode === m ? `linear-gradient(135deg, ${T.gold}, ${T.teal})` : 'transparent',
+            color: mode === m ? T.bg : T.dim,
+            fontWeight: F.weight.black,
+            fontSize: F.size.base,
+            transition: `all ${M.snap}ms ${M.ease}`,
+          }}
+        >
+          {emoji} {MODE_LABELS[m][lang]}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+// --- TS3: ProfileSummary
+function ProfileSummary({ swipes, cards, lang, totalSwipes }: {
+  swipes: Record<string, number>; cards: Card[]; lang: Lang; totalSwipes: number;
+}) {
+  const [open, setOpen] = useState(false);
+  const minForProfile = 10;
+  const remaining = Math.max(0, minForProfile - totalSwipes);
+
+  if (totalSwipes < minForProfile) {
+    return (
+      <div style={{ color: T.dim, fontSize: F.size.sm, marginTop: S.md, textAlign: 'center' }}>
+        {lang === 'no' ? `Sveip ${remaining} til for å se smaksprofilen din` :
+         lang === 'sv' ? `Svajpa ${remaining} till för att se din smakprofil` :
+         `Swipe ${remaining} more to see your taste profile`}
+      </div>
+    );
+  }
+
+  const dims = calcProfile(swipes, cards);
+  const topDims = Object.entries(dims)
+    .sort((a, b) => Math.abs(b[1]) - Math.abs(a[1]))
+    .slice(0, 5)
+    .filter(([, v]) => Math.abs(v) > 10);
+
+  const cleanDesc = describeProfileClean(dims, lang);
+
+  return (
+    <div style={{ marginTop: S.md }}>
+      <button
+        onClick={() => setOpen(!open)}
+        style={{
+          display: 'flex', alignItems: 'center', gap: S.xs2, width: '100%',
+          background: 'transparent', border: 'none', cursor: 'pointer', color: T.txt,
+          fontWeight: F.weight.bold, fontSize: F.size.base, padding: `${S.xs2}px 0`,
+        }}
+      >
+        {UI.profileTitle[lang]} <span style={{ color: T.dim, fontSize: F.size.sm }}>{open ? '▴' : '▾'}</span>
+      </button>
+
+      {open && (
+        <div style={{ padding: S.sm2, background: T.glassHi, borderRadius: R.lg, border: `1px solid ${T.borderSoft}`, marginTop: S.xs2 }}>
+          <div style={{
+            padding: `${S.sm}px ${S.md}px`, background: T.glassLo, borderRadius: R.md,
+            color: T.txt, lineHeight: 1.6, fontSize: F.size.base,
+          }}>
+            {lang === 'no' ? `Du virker som en ${cleanDesc} 🗺️` :
+             lang === 'sv' ? `Du verkar vara en ${cleanDesc} resenär 🗺️` :
+             `You seem like a ${cleanDesc} traveler 🗺️`}
+          </div>
+
+          <div style={{ display: 'flex', gap: S.xs2, flexWrap: 'wrap', marginTop: S.sm }}>
+            {topDims.map(([k, v]) => {
+              const positive = v > 0;
+              const label = tData(lang, `dims.${k}`) || k;
+              return (
+                <span key={k} style={{
+                  padding: `${S.xxs}px ${S.sm}px`, borderRadius: R.pill, fontSize: F.size.sm, fontWeight: F.weight.bold,
+                  border: `1px solid ${positive ? T.green : T.red}`,
+                  background: positive ? 'rgba(52,211,153,0.08)' : 'rgba(248,113,113,0.08)',
+                  color: positive ? T.green : T.red,
+                }}>
+                  {DIM_EMOJI[k] || '📊'} {label} {positive ? '+' : ''}{Math.round(v)}
+                </span>
+              );
+            })}
+          </div>
+
+          <div style={{ color: T.dim, fontSize: F.size.sm, marginTop: S.sm }}>
+            {lang === 'no' ? `Basert på ${totalSwipes} av ${cards.length} kort` :
+             lang === 'sv' ? `Baserat på ${totalSwipes} av ${cards.length} kort` :
+             `Based on ${totalSwipes} of ${cards.length} cards`}
+            <div style={{
+              width: '100%', height: 3, borderRadius: R.pill, background: T.borderSoft, marginTop: S.xs2, overflow: 'hidden',
+            }}>
+              <div style={{
+                width: `${Math.min(100, (totalSwipes / cards.length) * 100)}%`,
+                height: '100%', borderRadius: R.pill,
+                background: `linear-gradient(135deg, ${T.gold}, ${T.teal})`,
+                transition: `width 300ms ease`,
+              }} />
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// --- TS4: FlyLoadingScreen
+const LANDMARKS = [
+  { emoji: '🗼', name: 'Paris' }, { emoji: '🗽', name: 'New York' }, { emoji: '🏯', name: 'Tokyo' },
+  { emoji: '🕌', name: 'Istanbul' }, { emoji: '⛩️', name: 'Kyoto' }, { emoji: '🏔️', name: 'Alps' },
+  { emoji: '🏖️', name: 'Maldives' }, { emoji: '🏛️', name: 'Rome' }, { emoji: '🌋', name: 'Iceland' },
+  { emoji: '🎡', name: 'London' }, { emoji: '🕍', name: 'Jerusalem' }, { emoji: '🏰', name: 'Prague' },
+  { emoji: '🎠', name: 'Vienna' }, { emoji: '🌁', name: 'San Francisco' },
+];
+
+const FUN_FACTS: Record<Lang, string[]> = {
+  no: [
+    'Visste du? Barcelona har 4,4 km strender midt i storbyen.',
+    'Tokyo har flere Michelin-stjerner enn noen annen by i verden.',
+    'Island har ingen mygg. Ikke én.',
+    'I Venezia er det flere kanaler enn veier.',
+    'New Zealand er det første landet med universell stemmerett.',
+    'Singapore forbyr tyggegummi. Selvsagt.',
+    'Portugal er det eldste landet i Europa med uendrede grenser.',
+    'Frankrike er det mest besøkte landet i verden — hvert år.',
+    'Den store barriere-revet er synlig fra verdensrommet.',
+    'Amsterdam har flere sykler enn innbyggere.',
+    'Antarktis er den eneste kontinenten uten tidszone.',
+    'Montana har tre ganger så mange kyr som mennesker.',
+    'I Japan finnes det hoteller kun for katter.',
+    'Kyoto var den opprinnelige japanske keiserhovedstaden i over tusen år.',
+    'Machu Picchu ble ikke oppdaget av europeere før i 1911.',
+  ],
+  en: [
+    'Did you know? Barcelona has 4.4 km of beaches right in the city.',
+    'Tokyo has more Michelin stars than any other city on Earth.',
+    'Iceland has no mosquitoes. Not a single one.',
+    'Venice has more canals than roads.',
+    'New Zealand was the first country with universal suffrage.',
+    'Singapore banned chewing gum. Obviously.',
+    'Portugal is the oldest country in Europe with unchanged borders.',
+    'France is the world\'s most visited country — every single year.',
+    'The Great Barrier Reef is visible from space.',
+    'Amsterdam has more bikes than people.',
+    'Antarctica is the only continent without a time zone.',
+    'Montana has three times as many cows as humans.',
+    'Japan has hotels exclusively for cats.',
+    'Kyoto was Japan\'s imperial capital for over a thousand years.',
+    'Machu Picchu wasn\'t discovered by Europeans until 1911.',
+  ],
+  sv: [
+    'Visste du? Barcelona har 4,4 km stränder mitt i storstaden.',
+    'Tokyo har fler Michelin-stjärnor än någon annan stad i världen.',
+    'Island har inga myggor. Inte en enda.',
+    'Venedig har fler kanaler än vägar.',
+    'Nya Zeeland var det första landet med allmän rösträtt.',
+    'Singapore förbjöd tuggummi. Självklart.',
+    'Portugal är Europas äldsta land med oförändrade gränser.',
+    'Frankrike är världens mest besökta land — varje enskilt år.',
+    'Stora barriärrevet syns från rymden.',
+    'Amsterdam har fler cyklar än invånare.',
+    'Antarktis är den enda kontinenten utan tidszon.',
+    'Montana har tre gånger fler kor än människor.',
+    'Japan har hotell enbart för katter.',
+    'Kyoto var Japans kejserliga huvudstad i över tusen år.',
+    'Machu Picchu upptäcktes inte av européer förrän 1911.',
+  ],
+};
+
+function FlyLoadingScreen({ destination, lang, mode, onCancel }: {
+  destination: string; lang: Lang; mode: Mode; onCancel: () => void;
+}) {
+  const [factIndex, setFactIndex] = useState(0);
+  const facts = FUN_FACTS[lang];
+
+  // Pick 5 stable landmarks based on destination
+  const chosenLandmarks = useMemo(() => {
+    let hash = 0;
+    for (let i = 0; i < destination.length; i++) hash = ((hash << 5) - hash + destination.charCodeAt(i)) | 0;
+    const shuffled = [...LANDMARKS].sort((a, b) => {
+      const ha = ((hash * 31 + a.name.charCodeAt(0)) | 0) % 100;
+      const hb = ((hash * 31 + b.name.charCodeAt(0)) | 0) % 100;
+      return ha - hb;
+    });
+    return shuffled.slice(0, 5);
+  }, [destination]);
+
+  useEffect(() => {
+    const iv = setInterval(() => setFactIndex(i => (i + 1) % facts.length), 4000);
+    return () => clearInterval(iv);
+  }, [facts.length]);
+
+  const modeLabel = MODE_LABELS[mode][lang].toLowerCase();
+
+  return (
+    <div style={{
+      position: 'fixed', inset: 0, zIndex: 8000, background: T.bg,
+      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+      padding: S.page,
+    }}>
+      {/* Plane */}
+      <div style={{
+        fontSize: 48, animation: 'flyAcross 3.5s ease-in-out infinite alternate',
+        position: 'absolute', top: '25%',
+      }}>
+        ✈️
+      </div>
+
+      {/* Landmarks */}
+      <div style={{ display: 'flex', gap: S.xl, marginBottom: S.xl, marginTop: 80 }}>
+        {chosenLandmarks.map((lm, i) => (
+          <div key={lm.name} style={{
+            fontSize: 36, animation: `landmarkPop 2.5s ease-in-out ${i * 0.3}s infinite`,
+          }}>
+            {lm.emoji}
+          </div>
+        ))}
+      </div>
+
+      {/* Status */}
+      <div style={{ textAlign: 'center', marginBottom: S.xl }}>
+        <div style={{ fontSize: F.size.lg, fontWeight: F.weight.bold, color: T.txt }}>
+          {lang === 'no' ? `Søker etter ${modeLabel} i` :
+           lang === 'sv' ? `Söker efter ${modeLabel} i` :
+           `Finding ${modeLabel} in`}
+        </div>
+        <div style={{ fontSize: F.size.hero, fontWeight: F.weight.ultra, color: T.gold, marginTop: S.xs2 }}>
+          {destination}
+        </div>
+      </div>
+
+      {/* Fun facts */}
+      <div style={{
+        maxWidth: 360, textAlign: 'center', borderTop: `1px solid ${T.borderSoft}`,
+        borderBottom: `1px solid ${T.borderSoft}`, padding: `${S.md}px 0`,
+        color: T.dim, fontStyle: 'italic', fontSize: F.size.base, lineHeight: 1.6,
+        minHeight: 60,
+      }}>
+        <div key={factIndex} style={{ animation: 'factFade 4s ease both' }}>
+          {facts[factIndex]}
+        </div>
+      </div>
+
+      {/* Cancel */}
+      <button onClick={onCancel} style={{
+        marginTop: S.lg, background: 'transparent', border: 'none', color: T.dim,
+        cursor: 'pointer', fontSize: F.size.sm, textDecoration: 'underline',
+      }}>
+        {UI.loadingCancel[lang]}
+      </button>
+    </div>
+  );
+}
+
+// --- TS5 + Original: SwipeStack (enhanced)
 function SwipeStack({
   cards,
   lang,
   onSwipe,
+  totalSwipes,
+  totalCards,
 }: {
   cards: Card[];
   lang: Lang;
   onSwipe: (card: Card, val: number) => void;
+  totalSwipes: number;
+  totalCards: number;
 }) {
   const top = cards[0];
   const rest = cards.slice(1, 3);
@@ -605,6 +1064,12 @@ function SwipeStack({
   const badgeYesOpacity = clamp(dx / 90, 0, 1);
   const badgeNoOpacity = clamp(-dx / 90, 0, 1);
 
+  // TS5: glow calculations
+  const greenGlow = Math.min(1, Math.max(0, dx / 120));
+  const redGlow = Math.min(1, Math.max(0, -dx / 120));
+  const glowIntensity = Math.max(greenGlow, redGlow);
+  const liftY = Math.abs(dx) > 30 ? -8 : 0;
+
   function reset() {
     setDx(0);
     setDy(0);
@@ -616,15 +1081,21 @@ function SwipeStack({
     if (!top || animating) return;
     setAnimating(true);
 
-    const offX = val * Math.max(420, Math.floor(window.innerWidth * 0.85));
-    setDx(offX);
-    setDy(dy);
+    // TS5: small pop before fly-out
+    setDx(val * 12);
+    setDy(-8);
 
     window.setTimeout(() => {
-      onSwipe(top, val);
-      setAnimating(false);
-      reset();
-    }, motionMs(M.commit));
+      const offX = val * Math.max(440, Math.floor(window.innerWidth * 0.9));
+      setDx(offX);
+      setDy(dy - 20);
+
+      window.setTimeout(() => {
+        onSwipe(top, val);
+        setAnimating(false);
+        reset();
+      }, motionMs(M.commit));
+    }, motionMs(60));
   }
 
   function endGesture(finalDx: number) {
@@ -640,10 +1111,12 @@ function SwipeStack({
       return;
     }
 
-    // snap back
     setDx(0);
     setDy(0);
   }
+
+  // TS5: progress bar
+  const progressPct = totalCards > 0 ? Math.min(100, (totalSwipes / totalCards) * 100) : 0;
 
   return (
     <div
@@ -661,12 +1134,12 @@ function SwipeStack({
         outline: 'none',
       }}
     >
-      {/* Back cards */}
+      {/* Back cards (TS5: enhanced with blur + shadow) */}
       {rest
         .slice()
         .reverse()
         .map((c, idxFromBack) => {
-          const idx = rest.length - 1 - idxFromBack + 1; // 1..2
+          const idx = rest.length - 1 - idxFromBack + 1;
           const scale = 1 - idx * 0.04;
           const y = idx * 10;
           return (
@@ -688,8 +1161,9 @@ function SwipeStack({
                   borderRadius: R.xl,
                   padding: S.md2,
                   transform: `translateY(${y}px) scale(${scale})`,
-                  boxShadow: T.shadow,
-                  opacity: 0.55,
+                  boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
+                  opacity: 0.45,
+                  filter: idx > 1 ? 'blur(1px)' : 'none',
                   userSelect: 'none',
                 }}
               >
@@ -703,7 +1177,7 @@ function SwipeStack({
           );
         })}
 
-      {/* Top card */}
+      {/* Top card (TS5: enhanced) */}
       {top && (
         <div
           style={{
@@ -730,36 +1204,46 @@ function SwipeStack({
             onPointerCancel={() => endGesture(dx)}
             style={{
               width: '100%',
-              background: T.card,
-              border: `1px solid ${T.border}`,
+              // TS5: direction-based glow
+              background: glowIntensity > 0.05
+                ? `radial-gradient(ellipse at ${dx > 0 ? '80%' : '20%'} 50%, rgba(${dx > 0 ? '52,211,153' : '248,113,113'}, ${glowIntensity * 0.18}) 0%, ${T.card} 60%)`
+                : T.card,
+              border: `1px solid ${Math.abs(dx) > 40 ? (dx > 0 ? 'rgba(52,211,153,0.3)' : 'rgba(248,113,113,0.3)') : T.border}`,
               borderRadius: R.xl,
               padding: S.md2,
-              transform: `translate(${dx}px, ${dy}px) rotate(${dx / 18}deg)`,
+              // TS5: improved tilt + lift
+              transform: `translate(${dx}px, ${dy + liftY}px) rotate(${dx / 15}deg)`,
               transition: dragging
                 ? 'none'
                 : animating
-                  ? `transform ${M.commit}ms ${M.ease}`
+                  ? `transform ${M.commit}ms cubic-bezier(0.4, 0, 0.2, 1)`
                   : `transform ${M.snap}ms ${M.ease}`,
-              boxShadow: T.shadow,
+              // TS5: enhanced shadow on drag
+              boxShadow: dragging
+                ? `0 28px 80px rgba(0,0,0,0.65), 0 0 0 1px ${Math.abs(dx) > 40 ? (dx > 0 ? 'rgba(52,211,153,0.3)' : 'rgba(248,113,113,0.3)') : T.border}`
+                : T.shadow,
               userSelect: 'none',
               position: 'relative',
             }}
           >
-            {/* Badges */}
+            {/* TS5: Enhanced badges with pulse + backdrop blur */}
             <div
               style={{
                 position: 'absolute',
                 top: S.md,
                 left: S.md,
-                padding: `${S.xs}px ${S.sm}px`,
+                padding: '6px 14px',
                 borderRadius: R.sm,
                 border: `3px solid ${T.red}`,
                 color: T.red,
-                fontWeight: F.weight.ultra /* closest to 1000 */,
+                fontWeight: F.weight.ultra,
+                fontSize: F.size.md,
                 letterSpacing: 1,
                 transform: 'rotate(-14deg)',
                 opacity: badgeNoOpacity,
                 background: T.overlay,
+                backdropFilter: 'blur(4px)',
+                animation: badgeNoOpacity > 0.7 ? 'badgePulse 0.6s ease infinite' : 'none',
               }}
             >
               {UI.no[lang]}
@@ -769,15 +1253,18 @@ function SwipeStack({
                 position: 'absolute',
                 top: S.md,
                 right: S.md,
-                padding: `${S.xs}px ${S.sm}px`,
+                padding: '6px 14px',
                 borderRadius: R.sm,
                 border: `3px solid ${T.green}`,
                 color: T.green,
-                fontWeight: F.weight.ultra /* closest to 1000 */,
+                fontWeight: F.weight.ultra,
+                fontSize: F.size.md,
                 letterSpacing: 1,
                 transform: 'rotate(14deg)',
                 opacity: badgeYesOpacity,
                 background: T.overlay,
+                backdropFilter: 'blur(4px)',
+                animation: badgeYesOpacity > 0.7 ? 'badgePulseRight 0.6s ease infinite' : 'none',
               }}
             >
               {UI.yes[lang]}
@@ -789,20 +1276,21 @@ function SwipeStack({
             </div>
             <div style={{ color: T.dim, marginTop: S.xs2, lineHeight: 1.5 }}>{top.desc}</div>
 
+            {/* TS5: Enhanced buttons with emoji */}
             <div style={{ display: 'flex', gap: S.sm, marginTop: S.md, alignItems: 'center' }}>
               <button
                 onClick={() => commitSwipe(-1)}
                 disabled={animating}
                 style={{ padding: `${S.sm}px ${S.sm2}px`, borderRadius: R.md, border: `1px solid ${T.border}`, background: 'transparent', color: T.red, cursor: animating ? 'not-allowed' : 'pointer', fontWeight: F.weight.black }}
               >
-                {UI.no[lang]}
+                ✗ {UI.no[lang]}
               </button>
               <button
                 onClick={() => commitSwipe(1)}
                 disabled={animating}
                 style={{ padding: `${S.sm}px ${S.sm2}px`, borderRadius: R.md, border: `1px solid ${T.border}`, background: 'transparent', color: T.green, cursor: animating ? 'not-allowed' : 'pointer', fontWeight: F.weight.black }}
               >
-                {UI.yes[lang]}
+                ✓ {UI.yes[lang]}
               </button>
               <div style={{ marginLeft: 'auto', color: T.dim, fontSize: F.size.sm }}>
                 {lang === 'no' ? 'Dra ←/→' : lang === 'sv' ? 'Dra ←/→' : 'Drag ←/→'}
@@ -811,27 +1299,167 @@ function SwipeStack({
           </div>
         </div>
       )}
+
+      {/* TS5: Progress bar under cards */}
+      <div style={{
+        position: 'absolute', bottom: -20, left: 0, right: 0,
+      }}>
+        <div style={{
+          width: '100%', height: 3, borderRadius: R.pill, background: T.borderSoft, overflow: 'hidden',
+        }}>
+          <div style={{
+            width: `${progressPct}%`, height: '100%', borderRadius: R.pill,
+            background: `linear-gradient(135deg, ${T.gold}, ${T.teal})`,
+            transition: 'width 300ms ease',
+          }} />
+        </div>
+      </div>
     </div>
   );
 }
 
+// --- TS6: MapView
+function MapView({ items, destination, lang }: { items: RecItem[]; destination: string; lang: Lang }) {
+  const mapRef = useRef<HTMLDivElement>(null);
+  const leafletMap = useRef<any>(null);
+
+  const validItems = useMemo(() => items.filter(i => typeof i.lat === 'number' && typeof i.lng === 'number'), [items]);
+
+  useEffect(() => {
+    if (!mapRef.current || typeof (window as any).L === 'undefined') return;
+    const L = (window as any).L;
+
+    if (leafletMap.current) {
+      leafletMap.current.remove();
+      leafletMap.current = null;
+    }
+
+    if (validItems.length === 0) return;
+
+    const map = L.map(mapRef.current, { zoomControl: true, attributionControl: false });
+    leafletMap.current = map;
+
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+      attribution: '\u00a9 OpenStreetMap contributors \u00a9 CARTO',
+      maxZoom: 19,
+    }).addTo(map);
+
+    const icon = L.divIcon({
+      html: `<div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#d4a574,#2dd4bf);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;color:#0a0d1a;box-shadow:0 2px 8px rgba(0,0,0,0.5);">★</div>`,
+      className: '',
+      iconSize: [28, 28],
+      iconAnchor: [14, 14],
+    });
+
+    const markers: any[] = [];
+    validItems.forEach((item) => {
+      const marker = L.marker([item.lat!, item.lng!], { icon })
+        .addTo(map)
+        .bindPopup(`
+          <div style="font-family:system-ui;color:#0a0d1a;min-width:180px">
+            <div style="font-weight:900;font-size:14px">${item.name}</div>
+            ${item.cat ? `<div style="font-size:11px;margin-top:2px;opacity:0.7">${item.cat}</div>` : ''}
+            ${item.match ? `<div style="margin-top:4px;font-size:12px;font-weight:700">Match: ${item.match}%</div>` : ''}
+            ${item.url ? `<a href="${item.url}" target="_blank" rel="noopener" style="display:block;margin-top:6px;font-size:12px;color:#0070f3">${lang === 'no' ? 'Åpne' : 'Open'} →</a>` : ''}
+          </div>
+        `);
+      markers.push(marker);
+    });
+
+    if (markers.length > 0) {
+      const group = L.featureGroup(markers);
+      map.fitBounds(group.getBounds().pad(0.3));
+    }
+
+    return () => {
+      if (leafletMap.current) {
+        leafletMap.current.remove();
+        leafletMap.current = null;
+      }
+    };
+  }, [validItems, lang]);
+
+  const noCoords = items.length - validItems.length;
+
+  if (validItems.length === 0) {
+    return (
+      <div style={{ padding: S.page, textAlign: 'center', color: T.dim, lineHeight: 1.6 }}>
+        {UI.mapNoCoordsAll[lang]}
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <div ref={mapRef} style={{ height: 420, borderRadius: R.lg, overflow: 'hidden', border: `1px solid ${T.borderSoft}` }} />
+      {noCoords > 0 && (
+        <div style={{ color: T.dim, fontSize: F.size.sm, marginTop: S.xs2, textAlign: 'center' }}>
+          {lang === 'no' ? `${noCoords} treff mangler koordinater og vises ikke på kartet.` :
+           lang === 'sv' ? `${noCoords} träffar saknar koordinater och visas inte på kartan.` :
+           `${noCoords} results have no coordinates and aren't shown on the map.`}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// --- TS6: Share function
+async function shareResults(items: RecItem[], destination: string, lang: Lang): Promise<'shared' | 'copied' | 'manual'> {
+  const topItems = items.slice(0, 8);
+  const lines = topItems.map((i, idx) =>
+    `${idx + 1}. ${i.name}${i.match ? ` (${i.match}% match)` : ''}${i.url ? `\n   ${i.url}` : ''}`
+  );
+
+  const header = lang === 'no'
+    ? `🗺️ Mine reisetreff i ${destination} (via Travel-Swish)\n\n`
+    : lang === 'sv'
+      ? `🗺️ Mina resefynd i ${destination} (via Travel-Swish)\n\n`
+      : `🗺️ My travel finds in ${destination} (via Travel-Swish)\n\n`;
+
+  const footer = `\nhttps://slookisen.github.io/Travel-swish`;
+  const text = header + lines.join('\n\n') + footer;
+
+  if (navigator.share) {
+    try {
+      await navigator.share({ title: `Travel-Swish: ${destination}`, text });
+      return 'shared';
+    } catch {}
+  }
+
+  try {
+    await navigator.clipboard.writeText(text);
+    return 'copied';
+  } catch {
+    return 'manual';
+  }
+}
+
+// --- TS2: Landing page emoji rotation
+const LANDING_EMOJI = ['🗼', '🗽', '🏯', '🏖️', '🎡', '🌋', '🏔️', '🎠', '🕌', '⛩️'];
+
+// --- TS1: Relative time helper
+function relativeTime(ts: number, lang: Lang): string {
+  const diffMs = Date.now() - ts;
+  const hours = Math.floor(diffMs / 3600000);
+  const days = Math.floor(diffMs / 86400000);
+  if (hours < 1) return UI.lastResultsJustNow[lang];
+  if (hours < 24) return lang === 'no' ? `${hours}t siden` : lang === 'sv' ? `${hours}t sedan` : `${hours}h ago`;
+  return lang === 'no' ? `${days} dager siden` : lang === 'sv' ? `${days} dagar sedan` : `${days} days ago`;
+}
+
+// ========================= MAIN APP =========================
+
 export default function App() {
   const [page, setPage] = useState<Page>('landing');
 
-  // Default language for new users: English. Persist choice in localStorage.
   const [lang, setLang] = useState<Lang>(() => {
-    // 1) explicit user choice (sticky)
     try {
       const saved = (localStorage.getItem('ts_lang') || '') as Lang;
       if (saved === 'no' || saved === 'en' || saved === 'sv') return saved;
     } catch {}
-
-    // 2) auto-detect from browser language
     const nav = (typeof navigator !== 'undefined' ? (navigator.language || '') : '').toLowerCase();
     if (nav.startsWith('sv')) return 'sv';
     if (nav.startsWith('no') || nav.startsWith('nb') || nav.startsWith('nn')) return 'no';
-
-    // 3) fallback
     return 'en';
   });
 
@@ -847,11 +1475,9 @@ export default function App() {
     try { return localStorage.getItem('ts_destination') || ''; } catch { return ''; }
   });
 
-  // API key: optional, for client-side Claude fallback when backend is unavailable
   const [apiKey, setApiKey] = useState(() => {
     try { return localStorage.getItem('ts_apiKey') || ''; } catch { return ''; }
   });
-  const [showApiKeyInput, setShowApiKeyInput] = useState(false);
   const [userId] = useState(() => getOrCreateId('ts_user_id'));
   const [error, setError] = useState('');
   const [info, setInfo] = useState('');
@@ -865,6 +1491,29 @@ export default function App() {
   const seenKeys = useRef<string[]>([]);
   const destinationInputRef = useRef<HTMLInputElement | null>(null);
 
+  // TS1: Settings + confirm + toast
+  const [showSettings, setShowSettings] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showApiGuide, setShowApiGuide] = useState(false);
+  const [toastMsg, setToastMsg] = useState('');
+  const [toastVisible, setToastVisible] = useState(false);
+
+  // TS2: Landing emoji
+  const [emojiIndex, setEmojiIndex] = useState(0);
+
+  // TS5: milestone toast
+  const milestoneShown = useRef(false);
+
+  // TS6: results view tab
+  const [resultsTab, setResultsTab] = useState<'list' | 'map'>('list');
+
+  function showToast(msg: string) {
+    setToastMsg(msg);
+    setToastVisible(true);
+    setTimeout(() => setToastVisible(false), 2200);
+    setTimeout(() => setToastMsg(''), 2500);
+  }
+
   useEffect(() => {
     if (page !== 'home') return;
     setError('');
@@ -872,8 +1521,13 @@ export default function App() {
     return () => clearTimeout(t);
   }, [page]);
 
-  // If the browser shows a cached build after a deploy, we want a simple
-  // "new version available" banner that can force a reload.
+  // TS2: emoji rotation on landing
+  useEffect(() => {
+    if (page !== 'landing') return;
+    const iv = setInterval(() => setEmojiIndex(i => (i + 1) % LANDING_EMOJI.length), 1800);
+    return () => clearInterval(iv);
+  }, [page]);
+
   const [updateAvailable, setUpdateAvailable] = useState<string | null>(null);
   useEffect(() => {
     const base = String((import.meta as any).env?.BASE_URL || '/');
@@ -887,7 +1541,6 @@ export default function App() {
       .catch(() => {});
   }, []);
 
-  // keep seen + filters cache per mode
   useEffect(() => {
     const mem = loadMemory(mode);
     seenKeys.current = mem.seen;
@@ -912,14 +1565,8 @@ export default function App() {
 
   const labels = MODE_LABELS[mode][lang];
 
-  useEffect(() => {
-    try { localStorage.setItem('ts_mode', mode); } catch {}
-  }, [mode]);
-
-  useEffect(() => {
-    try { localStorage.setItem('ts_destination', destination); } catch {}
-  }, [destination]);
-
+  useEffect(() => { try { localStorage.setItem('ts_mode', mode); } catch {} }, [mode]);
+  useEffect(() => { try { localStorage.setItem('ts_destination', destination); } catch {} }, [destination]);
   useEffect(() => {
     try {
       if (apiKey) localStorage.setItem('ts_apiKey', apiKey);
@@ -928,7 +1575,6 @@ export default function App() {
   }, [apiKey]);
 
   const cards = useMemo(() => getDeckCards(mode, lang), [mode, lang]);
-
   const mem = useMemo(() => loadMemory(mode), [mode]);
 
   const [swipes, setSwipes] = useState<Record<string, number>>(mem.swipes);
@@ -940,7 +1586,6 @@ export default function App() {
     setTotalSwipes(m.totalSwipes);
   }, [mode]);
 
-  // Build the deck: only unswiped cards
   const unswiped = useMemo(() => {
     const ids = new Set(Object.keys(swipes));
     return cards.filter(c => !ids.has(c.id));
@@ -950,7 +1595,6 @@ export default function App() {
   const [deckIndex, setDeckIndex] = useState(0);
 
   useEffect(() => {
-    // Refresh deck when mode or language changes or when swipes update.
     const fresh = shuffleArray(unswiped);
     setDeck(fresh);
     setDeckIndex(0);
@@ -959,6 +1603,12 @@ export default function App() {
   const swipeCount = Math.max(totalSwipes, Object.keys(swipes).length);
   const canSearch = swipeCount >= MIN_SWIPES;
   const swipeRemaining = Math.max(0, MIN_SWIPES - swipeCount);
+
+  // TS1: last results for home page
+  const lastResults = useMemo(() => {
+    if (!destination.trim()) return null;
+    return loadLastResults(mode, destination.trim());
+  }, [mode, destination, items]); // re-check when items change
 
   async function findItems() {
     if (cooldownUntil && cooldownUntil > Date.now()) {
@@ -973,12 +1623,9 @@ export default function App() {
 
     try {
       const profile = calcProfile(swipes, cards);
-
-      // v2: backend-first (local dev). If backend isn't available, fall back to local placeholder.
       const prefs: Record<string, number> = Object.fromEntries(
         Object.entries(profile).map(([k, v]) => [k, Math.round((v / 100) * 1000) / 1000])
       );
-
       const dest = destination.trim();
 
       if (MOCK_MODE) {
@@ -1012,6 +1659,7 @@ export default function App() {
         saveSeen(mode, seenKeys.current);
 
         setItems(mockItems);
+        saveLastResults(mode, dest, mockItems, lang);
         setPage('results');
         setInfo(lang === 'no' ? 'Mock mode aktiv (ingen backend-kall).' : 'Mock mode active (no backend calls).');
         return;
@@ -1023,7 +1671,6 @@ export default function App() {
           const prefsTimeoutMs = warm ? 20000 : 8000;
           const recsTimeoutMs = warm ? 45000 : 20000;
 
-          // Persist prefs so /recs/web can use them.
           await fetchJson(`${BACKEND_URL}/prefs`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -1055,6 +1702,8 @@ export default function App() {
                 snippet: typeof x?.snippet === 'string' ? x.snippet : '',
                 domain: String(x?.domain || ''),
                 query_source: String(x?.query_source || ''),
+                lat: typeof x?.lat === 'number' ? x.lat : undefined,
+                lng: typeof x?.lng === 'number' ? x.lng : undefined,
               }))
               .filter((i: RecItem) => i.name);
 
@@ -1067,6 +1716,7 @@ export default function App() {
             saveSeen(mode, seenKeys.current);
 
             setItems(newItems);
+            saveLastResults(mode, dest, newItems, lang);
             setPage('results');
             return;
           }
@@ -1088,7 +1738,6 @@ export default function App() {
           const isTimeout = /timeout/i.test(emsg);
           if (isTimeout) backendRetryCount.current = Math.min(3, backendRetryCount.current + 1);
 
-          // If we have an API key, try client-side Claude
           if (apiKey) {
             try {
               const profileText = describeProfile(profile, lang);
@@ -1107,6 +1756,7 @@ export default function App() {
                 saveSeen(mode, seenKeys.current);
 
                 setItems(newItems);
+                saveLastResults(mode, dest, newItems, lang);
                 setPage('results');
                 return;
               }
@@ -1133,7 +1783,6 @@ export default function App() {
           );
         }
       } else if (apiKey) {
-        // No backend — use client-side Claude API with web search
         try {
           const profileText = describeProfile(profile, lang);
           const excludeList = seenKeys.current.map(k => k.replace(/^(id:|name:)/, '')).slice(-20);
@@ -1151,6 +1800,7 @@ export default function App() {
             saveSeen(mode, seenKeys.current);
 
             setItems(newItems);
+            saveLastResults(mode, dest, newItems, lang);
             setPage('results');
             return;
           }
@@ -1182,7 +1832,6 @@ export default function App() {
         );
       }
 
-      // Minimal local suggestions (placeholder) based on strongest dims.
       const top = Object.entries(profile)
         .sort((a, b) => Math.abs(b[1]) - Math.abs(a[1]))
         .slice(0, 3)
@@ -1211,6 +1860,7 @@ export default function App() {
       saveSeen(mode, seenKeys.current);
 
       setItems(newItems);
+      saveLastResults(mode, dest, newItems, lang);
       setPage('results');
     } catch (e: any) {
       const msg = String(e?.message || 'Unknown error');
@@ -1227,7 +1877,12 @@ export default function App() {
     setTotalSwipes(nextTotal);
     saveSwipes(mode, next, nextTotal);
 
-    // Advance deck
+    // TS5: milestone toast
+    if (nextTotal === MIN_SWIPES && !milestoneShown.current) {
+      milestoneShown.current = true;
+      showToast(UI.swipeMilestone[lang]);
+    }
+
     setDeckIndex((i) => Math.min(i + 1, deck.length));
   }
 
@@ -1238,7 +1893,6 @@ export default function App() {
       localStorage.removeItem(K.totalSwipes);
       localStorage.removeItem(K.seen);
     } catch {}
-    // reset state
     setSwipes({});
     setTotalSwipes(0);
     seenKeys.current = [];
@@ -1246,6 +1900,28 @@ export default function App() {
     setDeckIndex(0);
     setError('');
     setInfo('');
+  }
+
+  // TS1: Delete all history
+  function handleDeleteHistory() {
+    deleteAllHistory();
+    setSwipes({});
+    setTotalSwipes(0);
+    seenKeys.current = [];
+    setItems([]);
+    setDeckIndex(0);
+    setError('');
+    setInfo('');
+    setPage('home');
+    showToast(UI.deleteSuccessToast[lang]);
+  }
+
+  // Handle mode change (reset items + filter)
+  function handleModeChange(m: Mode) {
+    setMode(m);
+    setItems([]);
+    setCatFilter('');
+    milestoneShown.current = false;
   }
 
   // Guard: never allow swipe/results without destination
@@ -1256,13 +1932,55 @@ export default function App() {
     }
   }, [page, destination, lang]);
 
-  // --- UI (stable; with swipe deck)
+  // --- RENDER
   return (
     <div style={{ minHeight: '100vh', background: T.bg, color: T.txt, fontFamily: F.system }}>
       <style>{globalCss}</style>
+
+      {/* TS4: Loading screen overlay */}
+      {loading && (
+        <FlyLoadingScreen
+          destination={destination}
+          lang={lang}
+          mode={mode}
+          onCancel={() => setLoading(false)}
+        />
+      )}
+
+      {/* TS1: Toast */}
+      <Toast message={toastMsg} visible={toastVisible} />
+
+      {/* TS1: Delete confirm dialog */}
+      {showDeleteConfirm && (
+        <ConfirmDialog
+          title={UI.deleteConfirmTitle[lang]}
+          body={UI.deleteConfirmBody[lang]}
+          cancelText={UI.deleteConfirmCancel[lang]}
+          confirmText={UI.deleteConfirmOk[lang]}
+          onCancel={() => setShowDeleteConfirm(false)}
+          onConfirm={() => { setShowDeleteConfirm(false); handleDeleteHistory(); }}
+        />
+      )}
+
+      {/* TS2: API key guide modal */}
+      {showApiGuide && (
+        <ApiKeyGuideModal
+          lang={lang}
+          currentKey={apiKey}
+          onClose={() => setShowApiGuide(false)}
+          onSave={(key) => setApiKey(key)}
+        />
+      )}
+
+      {/* Top bar */}
       <div style={{ padding: `${S.md}px ${S.lg}px`, display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: `1px solid ${T.borderSoft}` }}>
-        <div style={{ fontWeight: F.weight.black, color: T.gold, letterSpacing: 0.2 }}>Travel-Swish</div>
-        <div className="row">
+        <div
+          onClick={() => setPage('landing')}
+          style={{ fontWeight: F.weight.black, color: T.gold, letterSpacing: 0.2, cursor: 'pointer' }}
+        >
+          ✈️ Travel-Swish
+        </div>
+        <div className="row" style={{ position: 'relative' }}>
           <select
             value={lang}
             onChange={(e) => {
@@ -1277,6 +1995,29 @@ export default function App() {
             <option value="no">NO</option>
             <option value="sv">SV</option>
           </select>
+
+          {/* TS1: Settings gear (visible on home, swipe, results) */}
+          {page !== 'landing' && (
+            <div style={{ position: 'relative' }}>
+              <button
+                onClick={() => setShowSettings(!showSettings)}
+                style={{
+                  background: 'transparent', border: 'none', color: T.dim, cursor: 'pointer',
+                  fontSize: 18, padding: `${S.xxs}px ${S.xs}px`,
+                }}
+              >
+                ⚙️
+              </button>
+              {showSettings && (
+                <SettingsMenu
+                  lang={lang}
+                  onDeleteHistory={() => setShowDeleteConfirm(true)}
+                  onApiGuide={() => setShowApiGuide(true)}
+                  onClose={() => setShowSettings(false)}
+                />
+              )}
+            </div>
+          )}
         </div>
       </div>
 
@@ -1293,15 +2034,7 @@ export default function App() {
             flexWrap: 'wrap',
           }}
         >
-          <div
-            style={{
-              fontWeight: F.weight.black,
-              color: T.gold,
-              flex: '1 1 240px',
-              lineHeight: 1.25,
-              fontSize: F.size.base,
-            }}
-          >
+          <div style={{ fontWeight: F.weight.black, color: T.gold, flex: '1 1 240px', lineHeight: 1.25, fontSize: F.size.base }}>
             {UI.updateBanner[lang](updateAvailable, APP_VERSION)}
           </div>
           <button
@@ -1314,98 +2047,65 @@ export default function App() {
         </div>
       )}
 
+      {/* ============ LANDING (TS2: New design) ============ */}
       {page === 'landing' && (
-        <div className="container fadeUp">
-          <div className="card" style={{ padding: `${S.xl + 8}px`, overflow: 'hidden', position: 'relative' }}>
-            {/* Decorative gradient orb */}
-            <div style={{
-              position: 'absolute',
-              top: -80,
-              right: -80,
-              width: 220,
-              height: 220,
-              borderRadius: '50%',
-              background: `radial-gradient(circle, ${T.goldWashHi}, transparent 70%)`,
-              pointerEvents: 'none',
-            }} />
-            <div style={{
-              position: 'absolute',
-              bottom: -60,
-              left: -60,
-              width: 180,
-              height: 180,
-              borderRadius: '50%',
-              background: `radial-gradient(circle, rgba(45,212,191,0.08), transparent 70%)`,
-              pointerEvents: 'none',
-            }} />
+        <div className="container fadeUp" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', paddingTop: S.xl + 16 }}>
+          {/* Emoji animation */}
+          <div style={{ fontSize: 52, height: 64, marginBottom: S.lg }}>
+            <span key={emojiIndex} style={{ display: 'inline-block', animation: 'emojiRotate 1.8s ease both' }}>
+              {LANDING_EMOJI[emojiIndex]}
+            </span>
+          </div>
 
-            <div style={{ position: 'relative' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: S.sm }}>
-                <div>
-                  <div style={{ fontSize: F.size.sm, fontWeight: F.weight.bold, letterSpacing: 1.5, color: T.gold, textTransform: 'uppercase' as const }}>Travel-Swish</div>
-                  <h1 style={{ margin: `${S.sm}px 0 ${S.xs}px 0`, fontSize: 'clamp(30px, 8vw, 40px)', lineHeight: 1.15, letterSpacing: -0.5 }}>
-                    {lang === 'no' ? 'Finn opplevelser som passer deg' : lang === 'sv' ? 'Hitta upplevelser som passar dig' : 'Find experiences that fit you'}
-                  </h1>
-                  <p className="muted" style={{ lineHeight: 1.7, marginTop: S.xs2, maxWidth: 440, fontSize: F.size.md }}>
-                    {UI.landingDesc[lang]}
-                  </p>
-                </div>
-              </div>
+          {/* Hero headline */}
+          <h1 style={{ margin: 0, fontSize: 'clamp(32px, 9vw, 44px)', lineHeight: 1.1, letterSpacing: -0.5, fontWeight: F.weight.ultra }}>
+            {UI.landingHero[lang]}
+          </h1>
+          <p style={{ color: T.gold, fontSize: F.size.lg, marginTop: S.sm, maxWidth: 420, lineHeight: 1.5 }}>
+            {UI.landingSubtitle[lang]}
+          </p>
 
-              <div style={{ marginTop: S.xl, display: 'flex', gap: S.sm, flexWrap: 'wrap' }}>
-                <button className="btn btnPrimary btnFull" style={{ fontSize: F.size.md, padding: `${S.md}px ${S.xl}px` }} onClick={() => setPage('home')}>
-                  {UI.getStarted[lang]} →
-                </button>
+          {/* 3-step illustration */}
+          <div style={{ display: 'flex', gap: S.sm2, marginTop: S.xl + 8, flexWrap: 'wrap', justifyContent: 'center' }}>
+            {[UI.landingStep1[lang], UI.landingStep2[lang], UI.landingStep3[lang]].map((step, i) => (
+              <div key={i} style={{
+                padding: `${S.sm2}px ${S.md}px`, borderRadius: R.lg,
+                background: T.glassHi, border: `1px solid ${T.borderSoft}`,
+                fontSize: F.size.base, fontWeight: F.weight.bold, minWidth: 140,
+              }}>
+                {step}
               </div>
+            ))}
+          </div>
 
-              {/* How it works */}
-              <div style={{ marginTop: S.xl + 8, display: 'grid', gap: S.md, gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))' }}>
-                {[
-                  { emoji: '🎯', title: lang === 'no' ? 'Velg modus' : lang === 'sv' ? 'Välj läge' : 'Pick a mode', desc: UI.howItWorks1[lang] },
-                  { emoji: '👆', title: lang === 'no' ? 'Sveip kort' : lang === 'sv' ? 'Svajpa kort' : 'Swipe cards', desc: UI.howItWorks2[lang] },
-                  { emoji: '✨', title: lang === 'no' ? 'Få forslag' : lang === 'sv' ? 'Få förslag' : 'Get matches', desc: UI.howItWorks3[lang] },
-                ].map((step, i) => (
-                  <div key={i} style={{
-                    padding: S.md,
-                    borderRadius: R.lg,
-                    background: T.glassLo,
-                    border: `1px solid ${T.borderSoft}`,
-                  }}>
-                    <div style={{ fontSize: 24, marginBottom: S.xs }}>{step.emoji}</div>
-                    <div style={{ fontWeight: F.weight.black, fontSize: F.size.base, marginBottom: S.xxs }}>{step.title}</div>
-                    <div className="muted" style={{ fontSize: F.size.sm, lineHeight: 1.5 }}>{step.desc}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
+          {/* CTA */}
+          <button
+            onClick={() => setPage('home')}
+            className="btnPill btnPillPrimary"
+            style={{ marginTop: S.xl + 8, fontSize: F.size.md, padding: `${S.md}px ${S.xl + 16}px` }}
+          >
+            {UI.landingCta[lang]}
+          </button>
+
+          {/* Tagline */}
+          <div style={{ color: T.dim, fontSize: F.size.sm, marginTop: S.md, lineHeight: 1.5 }}>
+            {UI.landingTagline[lang]}
+          </div>
+
+          {/* Mode hint */}
+          <div style={{ color: T.dim, fontSize: F.size.sm, marginTop: S.xl }}>
+            🍽️ {MODE_LABELS.restaurants[lang]}   🎭 {MODE_LABELS.experiences[lang]}
           </div>
         </div>
       )}
 
+      {/* ============ HOME ============ */}
       {page === 'home' && (
         <div className="page">
-          <h2 style={{ marginTop: 0 }}>{UI.chooseMode[lang]}</h2>
-          <div style={{ display: 'flex', gap: S.sm, flexWrap: 'wrap' }}>
-            {(['experiences', 'restaurants'] as Mode[]).map(m => (
-              <button
-                key={m}
-                onClick={() => setMode(m)}
-                style={{
-                  padding: `${S.sm}px ${S.md}px`,
-                  borderRadius: R.pill,
-                  border: `1px solid ${T.border}`,
-                  cursor: 'pointer',
-                  background: mode === m ? `linear-gradient(135deg, ${T.gold}, ${T.teal})` : T.card,
-                  color: mode === m ? T.bg : T.txt,
-                  fontWeight: F.weight.bold,
-                }}
-              >
-                {MODE_LABELS[m][lang]}
-              </button>
-            ))}
-          </div>
+          {/* TS3: Mode tab bar */}
+          <ModeTabBar mode={mode} lang={lang} onChange={handleModeChange} />
 
-          <div style={{ marginTop: S.lg }}>
+          <div style={{ marginTop: S.sm }}>
             <label style={{ display: 'block', marginBottom: S.xs, color: T.dim }}>{UI.destination[lang]}</label>
             <input
               ref={destinationInputRef}
@@ -1422,58 +2122,59 @@ export default function App() {
             />
           </div>
 
-          {/* Optional API key for AI-powered suggestions */}
-          <div style={{ marginTop: S.md }}>
-            <button
-              onClick={() => setShowApiKeyInput(!showApiKeyInput)}
-              style={{
-                background: 'transparent',
-                border: 'none',
-                color: T.dim,
-                cursor: 'pointer',
-                fontSize: F.size.sm,
-                padding: 0,
-                textDecoration: 'underline',
-              }}
-            >
-              {showApiKeyInput
-                ? (lang === 'no' ? 'Skjul API-nøkkel' : lang === 'sv' ? 'Dölj API-nyckel' : 'Hide API key')
-                : (lang === 'no' ? 'Legg til Anthropic API-nøkkel for AI-forslag' : lang === 'sv' ? 'Lägg till Anthropic API-nyckel för AI-förslag' : 'Add Anthropic API key for AI suggestions')
-              }
-            </button>
-            {apiKey && !showApiKeyInput && (
-              <span style={{ color: T.green, fontSize: F.size.sm, marginLeft: S.sm }}>
-                {lang === 'no' ? 'Nøkkel satt' : lang === 'sv' ? 'Nyckel inställd' : 'Key set'}
-              </span>
-            )}
-            {showApiKeyInput && (
-              <div style={{ marginTop: S.xs2 }}>
-                <input
-                  type="password"
-                  value={apiKey}
-                  onChange={e => setApiKey(e.target.value)}
-                  placeholder="sk-ant-..."
-                  style={{
-                    width: '100%',
-                    padding: S.sm2,
-                    borderRadius: R.md,
-                    border: `1px solid ${T.border}`,
-                    background: T.card,
-                    color: T.txt,
-                    fontFamily: 'monospace',
-                    fontSize: F.size.sm,
-                  }}
-                />
-                <div style={{ color: T.dim, fontSize: F.size.sm, marginTop: S.xs, lineHeight: 1.5 }}>
-                  {lang === 'no'
-                    ? 'Brukes for AI-drevne forslag med websøk når backend er utilgjengelig. Nøkkelen lagres kun i nettleseren din.'
-                    : lang === 'sv'
-                      ? 'Används för AI-drivna förslag med webbsökning när backend inte finns. Nyckeln sparas bara i din webbläsare.'
-                      : 'Powers AI suggestions with web search when backend is unavailable. Key is stored only in your browser.'}
+          {/* TS1: Previous results section */}
+          {lastResults && destination.trim() && (
+            <div style={{
+              marginTop: S.md, padding: S.sm2, background: T.glassHi, borderRadius: R.lg,
+              border: `1px solid ${T.borderSoft}`,
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: S.xs2 }}>
+                <div style={{ fontWeight: F.weight.bold, fontSize: F.size.base }}>
+                  {lang === 'no' ? `📌 Forrige funn i ${lastResults.dest}` :
+                   lang === 'sv' ? `📌 Tidigare fynd i ${lastResults.dest}` :
+                   `📌 Previous finds in ${lastResults.dest}`}
+                  <span style={{ color: T.dim, fontSize: F.size.sm, marginLeft: S.xs2 }}>
+                    {relativeTime(lastResults.ts, lang)}
+                  </span>
                 </div>
+                <button
+                  onClick={() => {
+                    setItems(lastResults.items);
+                    setPage('results');
+                  }}
+                  style={{
+                    background: 'transparent', border: `1px solid ${T.borderSoft}`,
+                    color: T.teal, cursor: 'pointer', borderRadius: R.pill,
+                    padding: `${S.xxs}px ${S.sm}px`, fontSize: F.size.sm, fontWeight: F.weight.bold,
+                  }}
+                >
+                  {UI.lastResultsSeeAll[lang]}
+                </button>
               </div>
-            )}
-          </div>
+              <div style={{ display: 'grid', gap: S.xs2 }}>
+                {lastResults.items.slice(0, 3).map((it, i) => (
+                  <div key={i} style={{
+                    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                    padding: `${S.xs}px ${S.sm}px`, background: T.glassLo, borderRadius: R.md,
+                  }}>
+                    <div style={{ fontWeight: F.weight.bold, fontSize: F.size.sm }}>{it.name}</div>
+                    <div style={{ display: 'flex', gap: S.xs, alignItems: 'center' }}>
+                      {it.cat && <span style={{ fontSize: F.size.sm, color: T.dim }}>{it.cat}</span>}
+                      {it.match && (
+                        <span style={{
+                          fontSize: F.size.sm, fontWeight: F.weight.bold, color: T.gold,
+                          padding: `${S.xxs - 2}px ${S.xs}px`, borderRadius: R.pill,
+                          background: T.goldWash,
+                        }}>
+                          {it.match}%
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           <div style={{ marginTop: S.md2, display: 'flex', gap: S.sm, flexWrap: 'wrap' }}>
             <button
@@ -1506,8 +2207,12 @@ export default function App() {
         </div>
       )}
 
+      {/* ============ SWIPE ============ */}
       {page === 'swipe' && (
         <div className="page">
+          {/* TS3: Mode tab bar */}
+          <ModeTabBar mode={mode} lang={lang} onChange={handleModeChange} />
+
           <button
             onClick={() => setPage('home')}
             className="btnPill"
@@ -1518,6 +2223,7 @@ export default function App() {
 
           <h2 style={{ marginTop: 0 }}>{labels}: {destination}</h2>
           <div style={{ color: T.dim, marginBottom: S.sm }}>{UI.swipeHint[lang]}</div>
+
           {/* Progress bar toward minimum swipes */}
           <div style={{ marginBottom: S.md2 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: S.xs }}>
@@ -1531,16 +2237,11 @@ export default function App() {
               )}
             </div>
             <div style={{
-              width: '100%',
-              height: 6,
-              borderRadius: R.pill,
-              background: T.border,
-              overflow: 'hidden',
+              width: '100%', height: 6, borderRadius: R.pill, background: T.border, overflow: 'hidden',
             }}>
               <div style={{
                 width: `${Math.min(100, (swipeCount / MIN_SWIPES) * 100)}%`,
-                height: '100%',
-                borderRadius: R.pill,
+                height: '100%', borderRadius: R.pill,
                 background: canSearch
                   ? `linear-gradient(135deg, ${T.gold}, ${T.teal})`
                   : T.teal,
@@ -1549,7 +2250,7 @@ export default function App() {
             </div>
           </div>
 
-          {/* Swipe deck (stacked, Tinder-like) */}
+          {/* Swipe deck */}
           <div style={{ position: 'relative', minHeight: 360 }}>
             {deckIndex >= deck.length ? (
               <div className="emptyState" style={{ marginTop: S.page }}>
@@ -1577,11 +2278,16 @@ export default function App() {
                 cards={deck.slice(deckIndex, deckIndex + 3)}
                 lang={lang}
                 onSwipe={(card, val) => swipeCard(card, val)}
+                totalSwipes={swipeCount}
+                totalCards={cards.length}
               />
             )}
           </div>
 
-          <div style={{ marginTop: S.md2, display: 'flex', gap: S.sm, flexWrap: 'wrap' }}>
+          {/* TS3: Profile summary */}
+          <ProfileSummary swipes={swipes} cards={cards} lang={lang} totalSwipes={swipeCount} />
+
+          <div style={{ marginTop: S.md2 + 8, display: 'flex', gap: S.sm, flexWrap: 'wrap' }}>
             <button
               onClick={findItems}
               disabled={!canSearch || loading}
@@ -1607,8 +2313,12 @@ export default function App() {
         </div>
       )}
 
+      {/* ============ RESULTS ============ */}
       {page === 'results' && (
         <div className="page">
+          {/* TS3: Mode tab bar */}
+          <ModeTabBar mode={mode} lang={lang} onChange={handleModeChange} />
+
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: S.sm2, flexWrap: 'wrap' }}>
             <button
               onClick={() => setPage('swipe')}
@@ -1618,30 +2328,37 @@ export default function App() {
             </button>
 
             <div style={{ display: 'flex', gap: S.sm, alignItems: 'center', flexWrap: 'wrap' }}>
-              {cooldownUntil && cooldownUntil > Date.now() && (
+              {cooldownUntil && cooldownUntil > Date.now() ? (
                 <div style={{ color: T.dim, fontSize: F.size.sm }}>
                   {UI.cooldown[lang](cooldownLeft)}
                 </div>
-              )}
+              ) : null}
+
+              {/* TS6: Share button */}
+              <button
+                onClick={async () => {
+                  const result = await shareResults(items, destination, lang);
+                  if (result === 'copied') showToast(UI.shareCopied[lang]);
+                  else if (result === 'shared') showToast(UI.shareSuccess[lang]);
+                }}
+                style={{
+                  padding: `${S.sm}px ${S.md}px`, borderRadius: R.pill,
+                  border: `1px solid ${T.borderSoft}`, background: 'transparent',
+                  color: T.txt, fontWeight: F.weight.bold, cursor: 'pointer',
+                }}
+              >
+                {UI.shareButton[lang]}
+              </button>
+
               <button
                 onClick={findItems}
                 disabled={loading || (cooldownUntil > 0 && cooldownUntil > Date.now())}
                 style={{
-                  padding: `${S.sm}px ${S.md}px`,
-                  borderRadius: R.pill,
-                  border: 'none',
+                  padding: `${S.sm}px ${S.md}px`, borderRadius: R.pill, border: 'none',
                   cursor: loading ? 'not-allowed' : 'pointer',
                   background: loading ? T.card : `linear-gradient(135deg, ${T.gold}, ${T.teal})`,
-                  color: loading ? T.dim : T.bg,
-                  fontWeight: F.weight.black,
+                  color: loading ? T.dim : T.bg, fontWeight: F.weight.black,
                 }}
-                title={
-                  lang === 'no'
-                    ? 'Hent flere forslag basert på profilen din'
-                    : lang === 'sv'
-                      ? 'Hämta fler förslag baserat på din profil'
-                      : 'Fetch more suggestions based on your profile'
-                }
               >
                 {loading ? UI.loading[lang] : UI.findMore[lang]}
               </button>
@@ -1654,13 +2371,8 @@ export default function App() {
           {info && <div style={{ color: T.dim, marginTop: S.xs2, fontSize: F.size.sm }}>{info}</div>}
 
           {backendNotice && (
-            <div
-              className={`notice ${backendNotice.kind === 'cold' ? 'noticeWarn' : ''}`}
-              style={{ marginTop: S.md }}
-            >
-              <div className="muted" style={{ lineHeight: 1.55 }}>
-                {backendNotice.msg}
-              </div>
+            <div className={`notice ${backendNotice.kind === 'cold' ? 'noticeWarn' : ''}`} style={{ marginTop: S.md }}>
+              <div className="muted" style={{ lineHeight: 1.55 }}>{backendNotice.msg}</div>
               <div className="noticeActions">
                 <button
                   onClick={findItems}
@@ -1673,7 +2385,34 @@ export default function App() {
             </div>
           )}
 
-          {(() => {
+          {/* TS6: List/Map tab bar */}
+          <div style={{ display: 'flex', gap: S.xs2, marginTop: S.md }}>
+            {(['list', 'map'] as const).map(tab => (
+              <button
+                key={tab}
+                onClick={() => setResultsTab(tab)}
+                style={{
+                  padding: `${S.xs2}px ${S.md}px`, borderRadius: R.pill,
+                  border: resultsTab === tab ? 'none' : `1px solid ${T.borderSoft}`,
+                  background: resultsTab === tab ? `linear-gradient(135deg, ${T.gold}, ${T.teal})` : 'transparent',
+                  color: resultsTab === tab ? T.bg : T.dim,
+                  fontWeight: F.weight.black, cursor: 'pointer', fontSize: F.size.base,
+                }}
+              >
+                {tab === 'list' ? UI.viewList[lang] : UI.viewMap[lang]}
+              </button>
+            ))}
+          </div>
+
+          {/* TS6: Map tab */}
+          {resultsTab === 'map' && (
+            <div style={{ marginTop: S.md }}>
+              <MapView items={items} destination={destination} lang={lang} />
+            </div>
+          )}
+
+          {/* List tab */}
+          {resultsTab === 'list' && (() => {
             const cats = [...new Set(items.map(i => String(i.cat || '').trim()).filter(Boolean))];
             const active = cats.includes(catFilter) ? catFilter : '';
             const shown = active ? items.filter(i => i.cat === active) : items;
@@ -1691,13 +2430,10 @@ export default function App() {
                     <button
                       onClick={() => pick('')}
                       style={{
-                        padding: `${S.xs2}px ${S.sm2}px`,
-                        borderRadius: R.pill,
-                        border: `1px solid ${T.borderSoft}`,
-                        cursor: 'pointer',
+                        padding: `${S.xs2}px ${S.sm2}px`, borderRadius: R.pill,
+                        border: `1px solid ${T.borderSoft}`, cursor: 'pointer',
                         background: active === '' ? `linear-gradient(135deg, ${T.gold}, ${T.teal})` : T.card,
-                        color: active === '' ? T.bg : T.txt,
-                        fontWeight: F.weight.bold,
+                        color: active === '' ? T.bg : T.txt, fontWeight: F.weight.bold,
                       }}
                     >
                       {allLabel}
@@ -1707,13 +2443,10 @@ export default function App() {
                         key={cat}
                         onClick={() => pick(cat)}
                         style={{
-                          padding: `${S.xs2}px ${S.sm2}px`,
-                          borderRadius: R.pill,
-                          border: `1px solid ${T.borderSoft}`,
-                          cursor: 'pointer',
+                          padding: `${S.xs2}px ${S.sm2}px`, borderRadius: R.pill,
+                          border: `1px solid ${T.borderSoft}`, cursor: 'pointer',
                           background: active === cat ? `linear-gradient(135deg, ${T.gold}, ${T.teal})` : T.card,
-                          color: active === cat ? T.bg : T.txt,
-                          fontWeight: F.weight.bold,
+                          color: active === cat ? T.bg : T.txt, fontWeight: F.weight.bold,
                         }}
                       >
                         {cat}
@@ -1731,19 +2464,12 @@ export default function App() {
                       <div className="muted" style={{ lineHeight: 1.55 }}>
                         {items.length && active ? UI.noResultsFiltered[lang](active) : UI.noResults[lang]}
                       </div>
-
                       <div className="emptyActions">
                         {active && (
-                          <button
-                            onClick={() => pick('')}
-                            className="btnPill"
-                            title={lang === 'no' ? 'Vis alle kategorier' : lang === 'sv' ? 'Visa alla kategorier' : 'Show all categories'}
-                            style={{ background: T.card }}
-                          >
+                          <button onClick={() => pick('')} className="btnPill" style={{ background: T.card }}>
                             {allLabel}
                           </button>
                         )}
-
                         <button
                           onClick={findItems}
                           disabled={loading || (cooldownUntil > 0 && cooldownUntil > Date.now())}
@@ -1751,12 +2477,7 @@ export default function App() {
                         >
                           {loading ? UI.loading[lang] : UI.findMore[lang]}
                         </button>
-
-                        <button
-                          onClick={() => setPage('swipe')}
-                          className="btnPill"
-                          style={{ background: 'transparent', color: T.dim }}
-                        >
+                        <button onClick={() => setPage('swipe')} className="btnPill" style={{ background: 'transparent', color: T.dim }}>
                           {UI.back[lang]}
                         </button>
                       </div>
@@ -1768,10 +2489,8 @@ export default function App() {
                         key={it.id || it.name || idx}
                         style={{
                           background: `linear-gradient(180deg, ${T.glassHi}, ${T.glassLo})`,
-                          border: `1px solid ${T.border}`,
-                          borderRadius: R.lg,
-                          padding: S.md2,
-                          boxShadow: T.shadowMd,
+                          border: `1px solid ${T.border}`, borderRadius: R.lg,
+                          padding: S.md2, boxShadow: T.shadowMd,
                         }}
                       >
                         <div style={{ display: 'flex', justifyContent: 'space-between', gap: S.sm2, alignItems: 'flex-start' }}>
@@ -1779,13 +2498,11 @@ export default function App() {
                             <div style={{ fontWeight: F.weight.ultra, fontSize: F.size.lg, lineHeight: 1.2, wordBreak: 'break-word' }}>
                               {it.name}
                             </div>
-
                             {it.snippet && (
                               <div className="clamp3" style={{ color: T.dim, marginTop: S.xs2, lineHeight: 1.55, fontSize: F.size.base }}>
                                 {it.snippet}
                               </div>
                             )}
-
                             <div style={{ display: 'flex', gap: S.xs2, flexWrap: 'wrap', marginTop: S.sm, alignItems: 'center' }}>
                               {it.cat && (
                                 <span style={{ fontSize: F.size.sm, color: T.txt, border: `1px solid ${T.borderSoft}`, padding: `${S.xxs}px ${S.sm}px`, borderRadius: R.pill, background: T.glassLo }}>
@@ -1804,16 +2521,10 @@ export default function App() {
                               )}
                             </div>
                           </div>
-
                           <div style={{
-                            flexShrink: 0,
-                            padding: `${S.xs}px ${S.sm}px`,
-                            borderRadius: R.pill,
-                            background: T.goldWashHi,
-                            border: `1px solid ${T.goldBorder}`,
-                            color: T.gold,
-                            fontWeight: F.weight.ultra,
-                            fontSize: F.size.sm,
+                            flexShrink: 0, padding: `${S.xs}px ${S.sm}px`, borderRadius: R.pill,
+                            background: T.goldWashHi, border: `1px solid ${T.goldBorder}`,
+                            color: T.gold, fontWeight: F.weight.ultra, fontSize: F.size.sm,
                           }}>
                             {pct}%
                           </div>
@@ -1826,14 +2537,10 @@ export default function App() {
                               target="_blank"
                               rel="noreferrer"
                               style={{
-                                textDecoration: 'none',
-                                padding: `${S.xs2}px ${S.sm2}px`,
-                                borderRadius: R.pill,
-                                border: `1px solid ${T.borderSoft}`,
+                                textDecoration: 'none', padding: `${S.xs2}px ${S.sm2}px`,
+                                borderRadius: R.pill, border: `1px solid ${T.borderSoft}`,
                                 background: `linear-gradient(135deg, ${T.gold}, ${T.teal})`,
-                                color: T.bg,
-                                fontWeight: F.weight.black,
-                                fontSize: F.size.base,
+                                color: T.bg, fontWeight: F.weight.black, fontSize: F.size.base,
                               }}
                             >
                               {UI.openLink[lang]}
@@ -1844,14 +2551,9 @@ export default function App() {
                             target="_blank"
                             rel="noreferrer"
                             style={{
-                              textDecoration: 'none',
-                              padding: `${S.xs2}px ${S.sm2}px`,
-                              borderRadius: R.pill,
-                              border: `1px solid ${T.borderSoft}`,
-                              background: 'transparent',
-                              color: T.txt,
-                              fontWeight: F.weight.bold,
-                              fontSize: F.size.base,
+                              textDecoration: 'none', padding: `${S.xs2}px ${S.sm2}px`,
+                              borderRadius: R.pill, border: `1px solid ${T.borderSoft}`,
+                              background: 'transparent', color: T.txt, fontWeight: F.weight.bold, fontSize: F.size.base,
                             }}
                           >
                             {UI.openMaps[lang]}
@@ -1860,11 +2562,9 @@ export default function App() {
 
                         {it.why && (
                           <div style={{
-                            marginTop: S.sm2,
-                            padding: `${S.xs2}px ${S.sm}px`,
+                            marginTop: S.sm2, padding: `${S.xs2}px ${S.sm}px`,
                             borderLeft: `3px solid ${pct >= 75 ? T.gold : pct >= 50 ? T.teal : T.dim}`,
-                            background: T.glassLo,
-                            borderRadius: `0 ${R.sm}px ${R.sm}px 0`,
+                            background: T.glassLo, borderRadius: `0 ${R.sm}px ${R.sm}px 0`,
                           }}>
                             <div style={{ color: T.txt, lineHeight: 1.55, fontSize: F.size.base }}>{it.why}</div>
                           </div>

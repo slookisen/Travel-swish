@@ -118,6 +118,56 @@ export const globalCss = `
   @keyframes fadeUp { from { opacity: 0; transform: translateY(10px);} to { opacity: 1; transform: translateY(0);} }
   @keyframes pop { 0%{ transform: scale(0.98);} 100%{ transform: scale(1);} }
 
+  /* TS5: Swipe badge pulse */
+  @keyframes badgePulse {
+    0%, 100% { transform: rotate(-14deg) scale(1); }
+    50% { transform: rotate(-14deg) scale(1.08); }
+  }
+  @keyframes badgePulseRight {
+    0%, 100% { transform: rotate(14deg) scale(1); }
+    50% { transform: rotate(14deg) scale(1.08); }
+  }
+  @keyframes cardPop {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.03); }
+    100% { transform: scale(1); }
+  }
+
+  /* TS4: Fly loading animations */
+  @keyframes flyAcross {
+    0%   { transform: translateX(-60px) translateY(20px) rotate(-8deg); }
+    50%  { transform: translateX(calc(50vw - 24px)) translateY(-30px) rotate(0deg); }
+    100% { transform: translateX(calc(100vw + 20px)) translateY(15px) rotate(8deg); }
+  }
+  @keyframes landmarkPop {
+    0%   { opacity: 0; transform: scale(0.5) translateY(10px); }
+    20%  { opacity: 1; transform: scale(1) translateY(0); }
+    80%  { opacity: 1; transform: scale(1) translateY(0); }
+    100% { opacity: 0; transform: scale(0.8) translateY(-5px); }
+  }
+  @keyframes factFade {
+    0%, 100% { opacity: 0; }
+    10%, 90%  { opacity: 1; }
+  }
+
+  /* TS2: Landing emoji rotation */
+  @keyframes emojiRotate {
+    0% { opacity: 0; transform: scale(0.7); }
+    10% { opacity: 1; transform: scale(1); }
+    90% { opacity: 1; transform: scale(1); }
+    100% { opacity: 0; transform: scale(0.7); }
+  }
+
+  /* TS1: Toast animation */
+  @keyframes toastIn {
+    from { opacity: 0; transform: translateX(-50%) translateY(12px); }
+    to { opacity: 1; transform: translateX(-50%) translateY(0); }
+  }
+  @keyframes toastOut {
+    from { opacity: 1; transform: translateX(-50%) translateY(0); }
+    to { opacity: 0; transform: translateX(-50%) translateY(12px); }
+  }
+
   .container{ max-width: 860px; margin: 0 auto; padding: var(--s-xl); }
   .page{ max-width: 760px; margin: 0 auto; padding: var(--s-page); }
   .card{ background:var(--card); border:1px solid var(--border-soft); border-radius: var(--r-lg); box-shadow:var(--shadow); }
