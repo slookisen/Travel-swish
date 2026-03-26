@@ -1052,16 +1052,13 @@ function SwipeStack({
   lang,
   onSwipe,
   totalSwipes,
-  totalCards,
 }: {
   cards: Card[];
   lang: Lang;
   onSwipe: (card: Card, val: number) => void;
   totalSwipes: number;
-  totalCards: number;
 }) {
   const top = cards[0];
-  const rest = cards.slice(1, 3);
 
   const [dx, setDx] = useState(0);
   const [dy, setDy] = useState(0);
@@ -1125,8 +1122,7 @@ function SwipeStack({
     setDy(0);
   }
 
-  // TS5: progress bar
-  const progressPct = totalCards > 0 ? Math.min(100, (totalSwipes / totalCards) * 100) : 0;
+  const minProgressPct = Math.min(100, (totalSwipes / MIN_SWIPES) * 100);
 
   return (
     <div
@@ -1138,62 +1134,43 @@ function SwipeStack({
       }}
       style={{
         position: 'relative',
-        height: '100%',
-        minHeight: 320,
-        maxWidth: 560,
+        height: 'min(72vh, 520px)',
+        width: '100%',
+        maxWidth: 400,
         margin: '0 auto',
         outline: 'none',
       }}
     >
-      {/* Back cards (TS5: enhanced with blur + shadow) */}
-      {rest
-        .slice()
-        .reverse()
-        .map((c, idxFromBack) => {
-          const idx = rest.length - 1 - idxFromBack + 1;
-          const scale = 1 - idx * 0.04;
-          const y = idx * 10;
-          return (
-            <div
-              key={c.id}
-              style={{
-                position: 'absolute',
-                inset: 0,
-                display: 'grid',
-                placeItems: 'center',
-                pointerEvents: 'none',
-              }}
-            >
-              <div
-                style={{
-                  width: '100%',
-                  background: T.card,
-                  border: `1px solid ${T.border}`,
-                  borderRadius: R.xl,
-                  padding: S.md2,
-                  transform: `translateY(${y}px) scale(${scale})`,
-                  boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
-                  opacity: 0.45,
-                  filter: idx > 1 ? 'blur(1px)' : 'none',
-                  userSelect: 'none',
-                }}
-              >
-                <div style={{ display: 'flex', gap: S.sm, alignItems: 'center' }}>
-                  <div style={{ fontSize: F.size.emoji }}>{c.emoji}</div>
-                  <div style={{ fontWeight: F.weight.black, fontSize: F.size.md }}>{c.q}</div>
-                </div>
-                <div style={{ color: T.dim, marginTop: S.xs2, lineHeight: 1.5 }}>{c.desc}</div>
-              </div>
-            </div>
-          );
-        })}
+      {totalSwipes < MIN_SWIPES && (
+        <div style={{ marginBottom: S.sm2 }}>
+          <div style={{
+            width: '100%',
+            maxWidth: 400,
+            height: 4,
+            borderRadius: 4,
+            background: T.borderSoft,
+            overflow: 'hidden',
+            margin: '0 auto',
+          }}>
+            <div style={{
+              width: `${minProgressPct}%`,
+              height: '100%',
+              borderRadius: 4,
+              background: `linear-gradient(135deg, ${T.gold}, ${T.teal})`,
+              transition: `width ${M.snap}ms ${M.ease}`,
+            }} />
+          </div>
+          <div style={{ marginTop: S.xs2, textAlign: 'center', color: T.dim, fontSize: F.size.sm }}>
+            {Math.min(totalSwipes, MIN_SWIPES)} / {MIN_SWIPES}
+          </div>
+        </div>
+      )}
 
-      {/* Top card (TS5: enhanced) */}
       {top && (
         <div
           style={{
-            position: 'absolute',
-            inset: 0,
+            position: 'relative',
+            height: '100%',
             display: 'grid',
             placeItems: 'center',
             touchAction: 'pan-y',
@@ -1221,7 +1198,7 @@ function SwipeStack({
                 : T.card,
               border: `1px solid ${Math.abs(dx) > 40 ? (dx > 0 ? 'rgba(52,211,153,0.3)' : 'rgba(248,113,113,0.3)') : T.border}`,
               borderRadius: R.xl,
-              padding: S.md2,
+              padding: '32px 24px',
               // TS5: improved tilt + lift
               transform: `translate(${dx}px, ${dy + liftY}px) rotate(${dx / 15}deg)`,
               transition: dragging
@@ -1235,6 +1212,12 @@ function SwipeStack({
                 : T.shadow,
               userSelect: 'none',
               position: 'relative',
+              minHeight: '100%',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 16,
             }}
           >
             {/* TS5: Enhanced badges with pulse + backdrop blur */}
@@ -1251,10 +1234,10 @@ function SwipeStack({
                 fontSize: F.size.md,
                 letterSpacing: 1,
                 transform: 'rotate(-14deg)',
-                opacity: badgeNoOpacity,
+                opacity: dragging ? badgeNoOpacity : 0,
                 background: T.overlay,
                 backdropFilter: 'blur(4px)',
-                animation: badgeNoOpacity > 0.7 ? 'badgePulse 0.6s ease infinite' : 'none',
+                animation: dragging && badgeNoOpacity > 0.7 ? 'badgePulse 0.6s ease infinite' : 'none',
               }}
             >
               {UI.no[lang]}
@@ -1272,59 +1255,28 @@ function SwipeStack({
                 fontSize: F.size.md,
                 letterSpacing: 1,
                 transform: 'rotate(14deg)',
-                opacity: badgeYesOpacity,
+                opacity: dragging ? badgeYesOpacity : 0,
                 background: T.overlay,
                 backdropFilter: 'blur(4px)',
-                animation: badgeYesOpacity > 0.7 ? 'badgePulseRight 0.6s ease infinite' : 'none',
+                animation: dragging && badgeYesOpacity > 0.7 ? 'badgePulseRight 0.6s ease infinite' : 'none',
               }}
             >
               {UI.yes[lang]}
             </div>
 
-            <div style={{ display: 'flex', gap: S.sm, alignItems: 'center' }}>
-              <div style={{ fontSize: F.size.emoji }}>{top.emoji}</div>
-              <div style={{ fontWeight: F.weight.black, fontSize: F.size.md }}>{top.q}</div>
+            <div style={{ fontSize: '4rem', textAlign: 'center', paddingTop: 24, lineHeight: 1 }}>
+              {top.emoji}
             </div>
-            <div style={{ color: T.dim, marginTop: S.xs2, lineHeight: 1.5 }}>{top.desc}</div>
-
-            {/* TS5: Enhanced buttons with emoji */}
-            <div style={{ display: 'flex', gap: S.sm, marginTop: S.md, alignItems: 'center' }}>
-              <button
-                onClick={() => commitSwipe(-1)}
-                disabled={animating}
-                style={{ minHeight: 48, padding: `${S.sm}px ${S.sm2}px`, borderRadius: R.md, border: `1px solid ${T.border}`, background: 'transparent', color: T.red, cursor: animating ? 'not-allowed' : 'pointer', fontWeight: F.weight.black }}
-              >
-                ✗ {UI.no[lang]}
-              </button>
-              <button
-                onClick={() => commitSwipe(1)}
-                disabled={animating}
-                style={{ minHeight: 48, padding: `${S.sm}px ${S.sm2}px`, borderRadius: R.md, border: `1px solid ${T.border}`, background: 'transparent', color: T.green, cursor: animating ? 'not-allowed' : 'pointer', fontWeight: F.weight.black }}
-              >
-                ✓ {UI.yes[lang]}
-              </button>
-              <div style={{ marginLeft: 'auto', color: T.dim, fontSize: F.size.sm }}>
-                {lang === 'no' ? 'Dra ←/→' : lang === 'sv' ? 'Dra ←/→' : 'Drag ←/→'}
-              </div>
+            <div style={{ fontWeight: F.weight.black, fontSize: '1.25rem', textAlign: 'center' }}>
+              {top.q}
             </div>
+            <div style={{ color: T.dim, fontSize: '0.95rem', textAlign: 'center', maxWidth: 280, lineHeight: 1.5 }}>
+              {top.desc}
+            </div>
+            <div style={{ flex: 1 }} />
           </div>
         </div>
       )}
-
-      {/* TS5: Progress bar under cards */}
-      <div style={{
-        position: 'absolute', bottom: -20, left: 0, right: 0,
-      }}>
-        <div style={{
-          width: '100%', height: 3, borderRadius: R.pill, background: T.borderSoft, overflow: 'hidden',
-        }}>
-          <div style={{
-            width: `${progressPct}%`, height: '100%', borderRadius: R.pill,
-            background: `linear-gradient(135deg, ${T.gold}, ${T.teal})`,
-            transition: 'width 300ms ease',
-          }} />
-        </div>
-      </div>
     </div>
   );
 }
@@ -2264,31 +2216,6 @@ export default function App() {
             </button>
           </div>
 
-          <div style={{ marginBottom: S.sm2 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: S.xs }}>
-              <div style={{ color: T.dim, fontSize: F.size.sm }}>
-                {swipeCount} / {MIN_SWIPES} {lang === 'no' ? 'sveip' : lang === 'sv' ? 'svajp' : 'swipes'}
-              </div>
-              {canSearch && (
-                <div style={{ color: T.green, fontSize: F.size.sm, fontWeight: F.weight.bold }}>
-                  {lang === 'no' ? 'Klar for forslag!' : lang === 'sv' ? 'Redo för förslag!' : 'Ready for suggestions!'}
-                </div>
-              )}
-            </div>
-            <div style={{
-              width: '100%', height: 6, borderRadius: R.pill, background: T.border, overflow: 'hidden',
-            }}>
-              <div style={{
-                width: `${Math.min(100, (swipeCount / MIN_SWIPES) * 100)}%`,
-                height: '100%', borderRadius: R.pill,
-                background: canSearch
-                  ? `linear-gradient(135deg, ${T.gold}, ${T.teal})`
-                  : T.teal,
-                transition: `width ${M.snap}ms ${M.ease}`,
-              }} />
-            </div>
-          </div>
-
           {/* Swipe deck */}
           <div style={{ position: 'relative', flex: 1, minHeight: 0, display: 'flex' }}>
             {deckIndex >= deck.length ? (
@@ -2318,7 +2245,6 @@ export default function App() {
                 lang={lang}
                 onSwipe={(card, val) => swipeCard(card, val)}
                 totalSwipes={swipeCount}
-                totalCards={cards.length}
               />
             )}
           </div>
@@ -2328,9 +2254,19 @@ export default function App() {
               {UI.swipeMagicHint[lang](swipeRemaining)}
             </div>
           )}
-          <div style={{ marginTop: S.xs2, color: T.dim, textAlign: 'center', fontSize: F.size.sm }}>
-            ← PASS &nbsp; ♥ LOVE →
-          </div>
+          {swipeCount < 5 && (
+            <div style={{
+              margin: '8px auto 0',
+              maxWidth: 400,
+              display: 'flex',
+              justifyContent: 'space-between',
+              color: T.dim,
+              fontSize: '0.8rem',
+            }}>
+              <span>← PASS</span>
+              <span>♥ LOVE →</span>
+            </div>
+          )}
 
           {error && <div style={{ marginTop: S.md, color: T.red }}>{error}</div>}
           {info && <div style={{ marginTop: S.sm, color: T.dim }}>{info}</div>}
