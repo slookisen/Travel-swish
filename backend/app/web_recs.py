@@ -330,26 +330,35 @@ BLOCKED_DOMAINS = {
     "reddit.com",
     "quora.com",
     "tripadvisor.com",
+    "ricksteves.com",  # travel forum/articles, not specific venues
+    "lonelyplanet.com",
+    "fodors.com",
+    "frommers.com",
+    "roughguides.com",
+    "nomadicmatt.com",
+    "theguardian.com",
+    "nytimes.com",
+    "timeout.com",  # listicle site
+    "thepointsguy.com",
+    "travelandleisure.com",
 }
 
+# Only block clearly harmful/useless content — keep it narrow to avoid over-filtering
 BLOCKED_TITLE_PATTERNS = [
     r"scam",
     r"fraud",
     r"tourist trap",
-    r"avoid",
-    r"warning",
-    r"worst.*travel",
-    r"travel.*worst",
+    r"\btourist traps\b",
     r"how to stay safe",
     r"travel insurance",
     r"travel safety",
-    r"dangerous",
-    r"\d+\s+(things|places|ways|tips|reasons)",
-    r"top \d+",
-    r"best \d+",
-    r"ultimate guide",
-    r"complete guide",
-    r"everything you need",
+    r"\bdangerous\b",
+    r"worst.*travel",
+    r"travel.*worst",
+    r"travel forum",
+    r"travel community",
+    r"\bforum\b",
+    r"\bcommunity\b.*discuss",
 ]
 
 
@@ -560,11 +569,12 @@ def rank_web_recs(
 
     scored.sort(key=lambda x: float(x.get("match") or 0.0), reverse=True)
 
-    # quality floor: prefer strong matches; relax only if too few remain
-    quality_floor = 45.0
+    # quality floor: relax when prefs are sparse (user hasn't swiped much yet)
+    has_prefs = any(abs(float(v)) > 0.1 for v in (prefs or {}).values() if isinstance(v, (int, float)))
+    quality_floor = 45.0 if has_prefs else 30.0
     quality_filtered = [it for it in scored if float(it.get("match") or 0.0) >= quality_floor]
     if len(quality_filtered) < 3:
-        quality_filtered = [it for it in scored if float(it.get("match") or 0.0) >= 35.0]
+        quality_filtered = scored  # last resort: return everything that passed junk filter
 
     # diversity
     final = diversify_web(quality_filtered, limit=limit, max_per_domain=2)
