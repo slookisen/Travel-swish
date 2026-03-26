@@ -422,6 +422,7 @@ def recs_web(req: WebRecsRequest, request: Request) -> WebRecsResponse:
                     prefs=prefs,
                     limit=req.limit,
                     max_queries=req.max_queries,
+                    seed=req.seed,
                 )
             else:
                 rl_key = brave_rate_limit_key(request=request, user_id=req.user_id)
