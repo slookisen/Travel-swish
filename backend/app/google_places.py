@@ -53,8 +53,14 @@ def _get_api_key() -> str | None:
     return os.getenv("GOOGLE_PLACES_API_KEY")
 
 
-def _cache_key(query: str, max_results: int) -> str:
-    raw = f"{query}|{max_results}"
+def _cache_key(
+    query: str,
+    max_results: int,
+    included_type: str | None = None,
+    min_rating: float | None = None,
+    price_levels: list[str] | None = None,
+) -> str:
+    raw = f"{query}|{max_results}|{included_type}|{min_rating}|{price_levels}"
     return hashlib.sha1(raw.encode("utf-8")).hexdigest()
 
 
@@ -63,13 +69,16 @@ def google_places_search(
     *,
     max_results: int = 10,
     cache_ttl_s: int = 3600,
+    included_type: str | None = None,
+    min_rating: float | None = None,
+    price_levels: list[str] | None = None,
 ) -> tuple[list[dict[str, Any]], bool]:
     """Search Google Places and return normalized items + cache_hit flag."""
     api_key = _get_api_key()
     if not api_key:
         raise RuntimeError("GOOGLE_PLACES_API_KEY not set")
 
-    ck = _cache_key(query, max_results)
+    ck = _cache_key(query, max_results, included_type, min_rating, price_levels)
     now = int(time.time())
 
     cached = cache_get(namespace="google_places", key=ck, now=now)
@@ -89,6 +98,12 @@ def google_places_search(
         "maxResultCount": min(max_results, 20),
         "languageCode": "en",
     }
+    if included_type:
+        body["includedType"] = included_type
+    if min_rating is not None:
+        body["minRating"] = min_rating
+    if price_levels:
+        body["priceLevels"] = price_levels
 
     try:
         resp = httpx.post(PLACES_URL, json=body, headers=headers, timeout=10.0)
