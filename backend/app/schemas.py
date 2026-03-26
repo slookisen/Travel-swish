@@ -156,6 +156,13 @@ class WebRecItem(BaseModel):
     snippet: str = ""
     domain: str = ""
     query_source: str = ""
+    lat: Optional[float] = None
+    lng: Optional[float] = None
+    rating: Optional[float] = None
+    rating_count: Optional[int] = None
+    price_level: str = ""
+    types: List[str] = Field(default_factory=list)
+    primary_type: str = ""
 
 
 class WebRecsResponse(BaseModel):

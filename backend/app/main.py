@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 import sqlite3
 import time
 import uuid
@@ -28,6 +29,7 @@ from .ratelimit import (
     api_rate_limit_key,
     brave_rate_limit_key,
 )
+from .places_recs import rank_places_recs
 from .web_recs import rank_web_recs
 
 log = logging.getLogger(__name__)
@@ -383,11 +385,12 @@ def brave_search(
 
 @app.post("/recs/web", response_model=WebRecsResponse)
 def recs_web(req: WebRecsRequest, request: Request) -> WebRecsResponse:
-    """Live web recommendations (Brave -> normalize -> rank -> diversify).
+    """Live web recommendations (Google Places preferred, Brave fallback).
 
-    This endpoint is intended for the Brave demo MVP. It:
+    This endpoint:
+    - uses Google Places when GOOGLE_PLACES_API_KEY is configured
+    - falls back to Brave web recommendations if Google key is missing
     - generates multiple destination-aware queries from learned prefs
-    - calls Brave Web Search server-side (API key never reaches client)
     - scores results against prefs (keyword/facet matching)
     - de-dups, adds domain/category diversity, and returns explainable why
     """
@@ -409,24 +412,34 @@ def recs_web(req: WebRecsRequest, request: Request) -> WebRecsResponse:
         ).fetchone()
         prefs = json.loads(prow["prefs_json"]) if prow and prow["prefs_json"] else {}
 
-        rl_key = brave_rate_limit_key(request=request, user_id=req.user_id)
-
         try:
-            payload = rank_web_recs(
-                user_id=req.user_id,
-                mode=req.mode,
-                destination=req.destination,
-                prefs=prefs,
-                limit=req.limit,
-                max_queries=req.max_queries,
-                per_query=req.per_query,
-                seed=req.seed,
-                country=req.country,
-                search_lang=req.search_lang,
-                safesearch=req.safesearch,
-                freshness=req.freshness,
-                rate_limit_key=rl_key,
-            )
+            google_key = os.getenv("GOOGLE_PLACES_API_KEY")
+            if google_key:
+                payload = rank_places_recs(
+                    user_id=req.user_id,
+                    mode=req.mode,
+                    destination=req.destination,
+                    prefs=prefs,
+                    limit=req.limit,
+                    max_queries=req.max_queries,
+                )
+            else:
+                rl_key = brave_rate_limit_key(request=request, user_id=req.user_id)
+                payload = rank_web_recs(
+                    user_id=req.user_id,
+                    mode=req.mode,
+                    destination=req.destination,
+                    prefs=prefs,
+                    limit=req.limit,
+                    max_queries=req.max_queries,
+                    per_query=req.per_query,
+                    seed=req.seed,
+                    country=req.country,
+                    search_lang=req.search_lang,
+                    safesearch=req.safesearch,
+                    freshness=req.freshness,
+                    rate_limit_key=rl_key,
+                )
         except RateLimitError as e:
             log.warning("recs_web rate_limited key=%s retry_after_s=%s", e.key, e.retry_after_s)
             raise HTTPException(status_code=429, detail="rate_limited", headers={"Retry-After": str(e.retry_after_s)})
