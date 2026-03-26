@@ -411,6 +411,7 @@ def recs_web(req: WebRecsRequest, request: Request) -> WebRecsResponse:
             (req.user_id, req.mode),
         ).fetchone()
         prefs = json.loads(prow["prefs_json"]) if prow and prow["prefs_json"] else {}
+        taste = req.taste if hasattr(req, "taste") and req.taste else None
 
         try:
             google_key = os.getenv("GOOGLE_PLACES_API_KEY")
@@ -420,6 +421,7 @@ def recs_web(req: WebRecsRequest, request: Request) -> WebRecsResponse:
                     mode=req.mode,
                     destination=req.destination,
                     prefs=prefs,
+                    taste=taste,
                     limit=req.limit,
                     max_queries=req.max_queries,
                     seed=req.seed,

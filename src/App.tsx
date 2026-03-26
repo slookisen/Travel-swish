@@ -480,6 +480,50 @@ function calcProfile(swipes: Record<string, number>, cards: Card[]) {
   return dims;
 }
 
+function buildTasteProfile(swipes: Record<string, number>, cards: Card[]): TasteProfile {
+  const catLikes: Record<string, number> = {};
+  const catCounts: Record<string, number> = {};
+  const dimPairs: Record<string, number> = {};
+
+  for (const card of cards) {
+    const val = swipes[card.id];
+    if (!val) continue;
+    const w = val > 0 ? 1.0 : -0.5;
+
+    const cat = String((card as any).cat || '');
+    if (cat) {
+      catLikes[cat] = (catLikes[cat] || 0) + w;
+      catCounts[cat] = (catCounts[cat] || 0) + 1;
+    }
+
+    if (val > 0) {
+      const activeDims = Object.entries(card.dims)
+        .filter(([_, v]) => Number(v) > 0.3)
+        .map(([k]) => k)
+        .sort();
+      for (let i = 0; i < activeDims.length; i++) {
+        for (let j = i + 1; j < activeDims.length; j++) {
+          const pair = `${activeDims[i]}+${activeDims[j]}`;
+          dimPairs[pair] = (dimPairs[pair] || 0) + 1;
+        }
+      }
+    }
+  }
+
+  const cats: Record<string, number> = {};
+  for (const [cat, sum] of Object.entries(catLikes)) {
+    const count = catCounts[cat] || 1;
+    cats[cat] = Math.max(-1, Math.min(1, sum / count));
+  }
+
+  const topPairs = Object.entries(dimPairs)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5)
+    .map(([pair, count]) => ({ pair, count }));
+
+  return { cats, topPairs, totalSwipes: Object.keys(swipes).length };
+}
+
 function describeProfile(dims: Record<string, number>, lang: Lang) {
   const labels = Object.fromEntries(DIMS.map((d) => [d, tData(lang, `dims.${d}`)])) as Record<string, string>;
 
@@ -587,6 +631,12 @@ function buildPrompt(mode: Mode, dest: string, profileText: string, lang: Lang, 
     ? `Search for restaurants in ${dest} for this profile: ${profileText}.${excludeStr}\nReturn a JSON array of 8-10 restaurants sorted by match. Each object: {"name","why","quote","cat","url","price","match","lat","lng"}. ONLY JSON.`
     : `Search for experiences in ${dest} for this profile: ${profileText}.${excludeStr}\nReturn a JSON array of 8-10 experiences sorted by match. Each object: {"name","why","quote","cat","url","price","duration","match","lat","lng"}. ONLY JSON.`;
 }
+
+type TasteProfile = {
+  cats: Record<string, number>;
+  topPairs: Array<{ pair: string; count: number }>;
+  totalSwipes: number;
+};
 
 type Page = 'landing' | 'home' | 'swipe' | 'results';
 
@@ -1611,7 +1661,14 @@ export default function App() {
           const j = await fetchJson(`${BACKEND_URL}/recs/web`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ user_id: userId, mode, destination: dest, limit: 20, seed: Date.now() % 100000 }),
+            body: JSON.stringify({
+              user_id: userId,
+              mode,
+              destination: dest,
+              limit: 20,
+              seed: Date.now() % 100000,
+              taste: buildTasteProfile(swipes, cards),
+            }),
             timeoutMs: recsTimeoutMs,
           });
 

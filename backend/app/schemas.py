@@ -134,6 +134,9 @@ class WebRecsRequest(BaseModel):
     safesearch: str = "moderate"
     freshness: Optional[str] = None
 
+    # Multi-layer taste profile from frontend
+    taste: dict | None = None
+
 
 class WebRecsQuery(BaseModel):
     query: str
