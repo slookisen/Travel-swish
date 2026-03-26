@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useMemo, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { T, globalCss, F, R, S, M } from './ui';
 import { DIMS, getDeckCards, t as tData, type Card, type Lang, type Mode } from './dataset';
 import { BUILD_META } from './buildMeta';
@@ -416,8 +416,6 @@ function saveLastResults(mode: Mode, dest: string, items: RecItem[], lang: Lang)
   } catch {}
 }
 
-const RESULT_TTL_MS = 5 * 60 * 1000; // 5 minutes
-
 function loadLastResults(mode: Mode, dest: string): { ts: number; dest: string; items: RecItem[]; lang: Lang } | null {
   const slug = destSlug(dest);
   try {
@@ -425,7 +423,6 @@ function loadLastResults(mode: Mode, dest: string): { ts: number; dest: string; 
     if (!raw) return null;
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed?.items)) return null;
-    if (parsed.ts && Date.now() - parsed.ts > RESULT_TTL_MS) return null;
     return parsed;
   } catch { return null; }
 }
@@ -572,7 +569,7 @@ async function askClaude(prompt: string, apiKey: string) {
 function buildPrompt(mode: Mode, dest: string, profileText: string, lang: Lang, excludeNames: string[]) {
   const excludeStr = excludeNames.length
     ? (lang === 'no' ? `\nUNNG├à disse som allerede er vist: ${excludeNames.join(', ')}.` : `\nEXCLUDE these already-shown items: ${excludeNames.join(', ')}.`)
-    : '';
+    : 'https://travel-swish-backend.onrender.com';
 
   const isRestaurants = mode === 'restaurants';
 
@@ -1407,8 +1404,6 @@ export default function App() {
   const [items, setItems] = useState<RecItem[]>([]);
   const [catFilter, setCatFilter] = useState(() => loadCatFilter(mode));
   const seenKeys = useRef<string[]>([]);
-  const findMoreCount = useRef(0);
-  const lastDestRef = useRef('');
   const destinationInputRef = useRef<HTMLInputElement | null>(null);
 
   // TS1: Settings + confirm + toast
@@ -1542,19 +1537,11 @@ export default function App() {
     setBackendNotice(null);
 
     try {
-      findMoreCount.current += 1;
       const profile = calcProfile(swipes, cards);
       const prefs: Record<string, number> = Object.fromEntries(
         Object.entries(profile).map(([k, v]) => [k, Math.round((v / 100) * 1000) / 1000])
       );
       const dest = destination.trim();
-
-      // Reset seenKeys when destination changes
-      if (dest !== lastDestRef.current) {
-        seenKeys.current = [];
-        saveSeen(mode, []);
-        lastDestRef.current = dest;
-      }
 
       if (MOCK_MODE) {
         const mockItems: RecItem[] = [
@@ -1637,7 +1624,7 @@ export default function App() {
 
             const seen = new Set(seenKeys.current);
             const filtered = newItems.filter(i => !seen.has(itemSeenKey(i)));
-            newItems = filtered.length >= 3 ? filtered : newItems;
+            newItems = filtered.length ? filtered : newItems;
 
             const newKeys = newItems.map(itemSeenKey).filter(Boolean);
             seenKeys.current = [...seenKeys.current, ...newKeys];
