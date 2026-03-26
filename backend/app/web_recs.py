@@ -359,6 +359,9 @@ BLOCKED_TITLE_PATTERNS = [
     r"travel community",
     r"\bforum\b",
     r"\bcommunity\b.*discuss",
+    r"ultimate guide",
+    r"complete guide",
+    r"everything you need to know",
 ]
 
 
@@ -576,8 +579,11 @@ def rank_web_recs(
     if len(quality_filtered) < 3:
         quality_filtered = scored  # last resort: return everything that passed junk filter
 
-    # diversity
+    # diversity — allow max 2 per domain, but ensure we fill up to limit
     final = diversify_web(quality_filtered, limit=limit, max_per_domain=2)
+    # if diversity was too strict and we got fewer than min(10, limit), relax to 3 per domain
+    if len(final) < min(10, limit):
+        final = diversify_web(quality_filtered, limit=limit, max_per_domain=3)
 
     payload = {
         "ok": True,

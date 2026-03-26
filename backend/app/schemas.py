@@ -124,8 +124,8 @@ class WebRecsRequest(BaseModel):
     limit: int = 20
 
     # query generation / provider controls
-    max_queries: int = 5
-    per_query: int = 7
+    max_queries: int = 10
+    per_query: int = 10
     seed: int = 42
 
     # Brave params (optional)
