@@ -698,8 +698,8 @@ function ConfirmDialog({ title, body, cancelText, confirmText, onCancel, onConfi
 }
 
 // --- TS1: SettingsMenu
-function SettingsMenu({ lang, onDeleteHistory, onApiGuide, onClose }: {
-  lang: Lang; onDeleteHistory: () => void; onApiGuide: () => void; onClose: () => void;
+function SettingsMenu({ lang, onDeleteHistory, onClose }: {
+  lang: Lang; onDeleteHistory: () => void; onClose: () => void;
 }) {
   return (
     <>
@@ -721,74 +721,12 @@ function SettingsMenu({ lang, onDeleteHistory, onApiGuide, onClose }: {
         >
           🗑️ {UI.deleteHistory[lang]}
         </button>
-        <button
-          onClick={() => { onApiGuide(); onClose(); }}
-          style={{
-            display: 'block', width: '100%', textAlign: 'left', padding: `${S.sm}px ${S.md}px`,
-            background: 'transparent', border: 'none', color: T.txt, cursor: 'pointer', fontSize: F.size.base,
-          }}
-        >
-          {UI.apiGuideMenu[lang]}
-        </button>
       </div>
     </>
   );
 }
 
-// --- TS2: ApiKeyGuideModal
-function ApiKeyGuideModal({ lang, onClose, onSave, currentKey }: {
-  lang: Lang; onClose: () => void; onSave: (key: string) => void; currentKey: string;
-}) {
-  const [key, setKey] = useState(currentKey);
-  const [showKey, setShowKey] = useState(false);
 
-  return (
-    <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.65)', zIndex: 9000, display: 'grid', placeItems: 'center' }}>
-      <div onClick={(e) => e.stopPropagation()} style={{
-        background: T.card, border: `1px solid ${T.borderSoft}`, borderRadius: R.lg, padding: S.page,
-        maxWidth: 440, width: '92%', boxShadow: T.shadow, maxHeight: '90vh', overflow: 'auto',
-      }}>
-        <div style={{ fontWeight: F.weight.black, fontSize: F.size.lg, marginBottom: S.md }}>{UI.apiGuideTitle[lang]}</div>
-        <ol style={{ margin: 0, paddingLeft: 20, color: T.txt, lineHeight: 2, fontSize: F.size.base }}>
-          <li>{UI.apiGuideStep1[lang]} <a href="https://console.anthropic.com" target="_blank" rel="noreferrer" style={{ color: T.teal }}>🔗</a></li>
-          <li>{UI.apiGuideStep2[lang]}</li>
-          <li>{UI.apiGuideStep3[lang]}</li>
-          <li>{UI.apiGuideStep4[lang]}</li>
-          <li>{UI.apiGuideStep5[lang]}</li>
-        </ol>
-        <div style={{ marginTop: S.md, position: 'relative' }}>
-          <input
-            type={showKey ? 'text' : 'password'}
-            value={key}
-            onChange={(e) => setKey(e.target.value)}
-            placeholder="sk-ant-..."
-            style={{
-              width: '100%', padding: `${S.sm2}px ${S.xl + 20}px ${S.sm2}px ${S.sm2}px`,
-              borderRadius: R.md, border: `1px solid ${T.border}`, background: T.glassHi,
-              color: T.txt, fontFamily: 'monospace', fontSize: F.size.sm,
-            }}
-          />
-          <button onClick={() => setShowKey(!showKey)} style={{
-            position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)',
-            background: 'transparent', border: 'none', cursor: 'pointer', color: T.dim, fontSize: 16,
-          }}>
-            {showKey ? '🙈' : '👁'}
-          </button>
-        </div>
-        <button
-          onClick={() => { onSave(key); onClose(); }}
-          className="btnPill btnPillPrimary"
-          style={{ width: '100%', marginTop: S.sm2 }}
-        >
-          {UI.apiGuideSave[lang]}
-        </button>
-        <div style={{ color: T.dim, fontSize: F.size.sm, marginTop: S.sm, textAlign: 'center', lineHeight: 1.5 }}>
-          {UI.apiGuidePrivacy[lang]}
-        </div>
-      </div>
-    </div>
-  );
-}
 
 // --- TS3: ModeTabBar
 function ModeTabBar({ mode, lang, onChange }: { mode: Mode; lang: Lang; onChange: (m: Mode) => void }) {
@@ -1471,7 +1409,7 @@ export default function App() {
   // TS1: Settings + confirm + toast
   const [showSettings, setShowSettings] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [showApiGuide, setShowApiGuide] = useState(false);
+
   const [toastMsg, setToastMsg] = useState('');
   const [toastVisible, setToastVisible] = useState(false);
 
@@ -1939,15 +1877,7 @@ export default function App() {
         />
       )}
 
-      {/* TS2: API key guide modal */}
-      {showApiGuide && (
-        <ApiKeyGuideModal
-          lang={lang}
-          currentKey={apiKey}
-          onClose={() => setShowApiGuide(false)}
-          onSave={(key) => setApiKey(key)}
-        />
-      )}
+
 
       {/* Top bar */}
       <div style={{ padding: `${S.md}px ${S.lg}px`, display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: `1px solid ${T.borderSoft}` }}>
@@ -1989,7 +1919,6 @@ export default function App() {
                 <SettingsMenu
                   lang={lang}
                   onDeleteHistory={() => setShowDeleteConfirm(true)}
-                  onApiGuide={() => setShowApiGuide(true)}
                   onClose={() => setShowSettings(false)}
                 />
               )}
