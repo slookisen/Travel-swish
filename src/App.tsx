@@ -32,6 +32,14 @@ const MOCK_MODE =
 const MIN_SWIPES = 20;
 const nowS = () => Math.floor(Date.now() / 1000);
 
+
+
+function displayWhy(why: string | undefined): string | null {
+  if (!why) return null;
+  if (/bootstrap|no prefs/i.test(why)) return null;
+  return why;
+}
+
 function googleMapsSearchUrl(placeName: string, destination: string) {
   const q = `${String(placeName || '').trim()} ${String(destination || '').trim()}`.trim();
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(q)}`;
@@ -2526,13 +2534,13 @@ export default function App() {
                           </a>
                         </div>
 
-                        {it.why && (
+                        {displayWhy(it.why) && (
                           <div style={{
                             marginTop: S.sm2, padding: `${S.xs2}px ${S.sm}px`,
                             borderLeft: `3px solid ${pct >= 75 ? T.gold : pct >= 50 ? T.teal : T.dim}`,
                             background: T.glassLo, borderRadius: `0 ${R.sm}px ${R.sm}px 0`,
                           }}>
-                            <div style={{ color: T.txt, lineHeight: 1.55, fontSize: F.size.base }}>{it.why}</div>
+                            <div style={{ color: T.txt, lineHeight: 1.55, fontSize: F.size.base }}>{displayWhy(it.why)}</div>
                           </div>
                         )}
                       </div>

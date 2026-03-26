@@ -452,6 +452,39 @@ _RESTAURANT_TEMPLATES: List[str] = [
 ]
 
 
+
+DIM_QUERIES: Dict[str, List[str]] = {
+    "cul": ["{dest} museum", "{dest} art gallery", "{dest} historic site"],
+    "nat": ["{dest} hiking trail", "{dest} national park", "{dest} viewpoint"],
+    "food": ["{dest} food market", "{dest} local restaurant", "{dest} street food"],
+    "night": ["{dest} live music venue", "{dest} jazz bar", "{dest} rooftop bar"],
+    "act": ["{dest} cycling route", "{dest} kayaking", "{dest} climbing wall"],
+    "lux": ["{dest} spa", "{dest} boutique hotel", "{dest} fine dining"],
+    "adv": ["{dest} adventure tour", "{dest} rock climbing", "{dest} paragliding"],
+    "soc": ["{dest} walking tour", "{dest} cooking class", "{dest} local event"],
+    "spont": ["{dest} hidden gem", "{dest} off the beaten path", "{dest} local secret"],
+}
+
+_FACET_TO_DIM: Dict[str, str] = {
+    "culture": "cul",
+    "learning": "cul",
+    "shopping": "cul",
+    "nature": "nat",
+    "food": "food",
+    "cuisine": "food",
+    "local": "food",
+    "nightlife": "night",
+    "social": "soc",
+    "lively": "night",
+    "drinks": "night",
+    "adrenaline": "adv",
+    "pace": "act",
+    "active": "act",
+    "luxury": "lux",
+    "fine": "lux",
+    "spontaneous": "spont",
+}
+
 # ─── Core logic ─────────────────────────────────────────────────────────────
 
 
@@ -560,6 +593,44 @@ def to_search_string(gq: GeneratedQuery) -> str:
     return (gq.query + (" " + negs if negs else "")).strip()
 
 
+
+
+def _top_positive_dims(prefs: Mapping[str, Any], n: int = 3) -> List[str]:
+    dim_scores: Dict[str, float] = {}
+    for facet, score in _top_pref_facets(prefs, max(6, n * 3)):
+        if score <= 0:
+            continue
+        bank_key = _facet_bank_key(facet)
+        dim = _FACET_TO_DIM.get(bank_key)
+        if not dim:
+            continue
+        dim_scores[dim] = dim_scores.get(dim, 0.0) + float(score)
+
+    ranked = sorted(dim_scores.items(), key=lambda kv: kv[1], reverse=True)
+    out = [d for d, _ in ranked[:n]]
+    if out:
+        return out
+    return ["cul", "nat", "food"][:n]
+
+
+def _generate_experience_queries(destination: str, prefs: Mapping[str, Any], max_queries: int) -> List[GeneratedQuery]:
+    dest_display = capitalise(destination)
+    dims = _top_positive_dims(prefs, n=3)
+    templates: List[tuple[str, str]] = []
+    for dim in dims:
+        for q in DIM_QUERIES.get(dim, []):
+            templates.append((dim, q.format(dest=dest_display).strip()))
+
+    global_negs = list(dict.fromkeys(list(NEGATIVE_KEYWORDS.get("experiences", [])) + ["scam", "warning", "avoid"]))
+    out: List[GeneratedQuery] = []
+    for i, (dim, q) in enumerate(templates):
+        if len(out) >= max_queries:
+            break
+        weight = round(max(0.55, 1.0 - i * 0.06), 2)
+        out.append(GeneratedQuery(query=q, weight=weight, source=f"dim:{dim}", negatives=global_negs))
+    return out
+
+
 def generate_queries(
     mode: Mode,
     destination: str,
@@ -574,6 +645,10 @@ def generate_queries(
     """
 
     max_queries = max(1, min(10, int(max_queries)))
+
+    if mode == "experiences":
+        return _generate_experience_queries(destination, prefs, max_queries)
+
     dest_key = (destination or "").strip().lower()
     dest_display = capitalise(destination)
 

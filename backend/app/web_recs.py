@@ -317,6 +317,64 @@ def diversify_web(
     return picked
 
 
+
+
+# Domains and title/snippet patterns that are consistently non-actionable for place recs.
+BLOCKED_DOMAINS = {
+    "insuremytrip.com",
+    "worldnomads.com",
+    "safety.com",
+    "travel.state.gov",
+    "smartraveller.gov.au",
+    "gov.uk",
+    "reddit.com",
+    "quora.com",
+    "tripadvisor.com",
+}
+
+BLOCKED_TITLE_PATTERNS = [
+    r"scam",
+    r"fraud",
+    r"tourist trap",
+    r"avoid",
+    r"warning",
+    r"worst.*travel",
+    r"travel.*worst",
+    r"how to stay safe",
+    r"travel insurance",
+    r"travel safety",
+    r"dangerous",
+    r"\d+\s+(things|places|ways|tips|reasons)",
+    r"top \d+",
+    r"best \d+",
+    r"ultimate guide",
+    r"complete guide",
+    r"everything you need",
+]
+
+
+def _is_blocked_domain(domain: str) -> bool:
+    d = (domain or "").lower().strip()
+    if not d:
+        return False
+    return any(d == bd or d.endswith("." + bd) for bd in BLOCKED_DOMAINS)
+
+
+def _is_junk_result(item: Mapping[str, Any]) -> bool:
+    domain = str(item.get("domain") or "").lower()
+    if _is_blocked_domain(domain):
+        return True
+
+    title = str(item.get("name") or "").lower()
+    snippet = str(item.get("snippet") or "").lower()
+    combined = f"{title} {snippet}"
+
+    for pattern in BLOCKED_TITLE_PATTERNS:
+        if re.search(pattern, combined, re.IGNORECASE):
+            return True
+    return False
+
+
 SearchFn = Callable[..., Tuple[List[Dict[str, Any]], bool]]
 
 
@@ -415,6 +473,9 @@ def rank_web_recs(
             it2["domain"] = domain_from_url(it2.get("url") or "")
             raw.append(it2)
 
+    # remove known junk (scam/warning/listicle pages) before scoring
+    raw = [item for item in raw if not _is_junk_result(item)]
+
     # de-dup by canonical URL
     deduped: Dict[str, Dict[str, Any]] = {}
     for it in raw:
@@ -499,8 +560,14 @@ def rank_web_recs(
 
     scored.sort(key=lambda x: float(x.get("match") or 0.0), reverse=True)
 
+    # quality floor: prefer strong matches; relax only if too few remain
+    quality_floor = 45.0
+    quality_filtered = [it for it in scored if float(it.get("match") or 0.0) >= quality_floor]
+    if len(quality_filtered) < 3:
+        quality_filtered = [it for it in scored if float(it.get("match") or 0.0) >= 35.0]
+
     # diversity
-    final = diversify_web(scored, limit=limit, max_per_domain=2)
+    final = diversify_web(quality_filtered, limit=limit, max_per_domain=2)
 
     payload = {
         "ok": True,
