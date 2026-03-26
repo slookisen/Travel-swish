@@ -6,11 +6,11 @@ import { BUILD_META } from './buildMeta';
 // --- Versioning (shows in footer; also helps debugging cached deploys)
 const APP_VERSION = BUILD_META.version;
 
-// Backend API (local dev default). On GitHub Pages we intentionally keep this empty.
+// Backend API — Render production, localhost for dev.
 const DEFAULT_BACKEND_URL =
   (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'))
     ? 'http://127.0.0.1:8787'
-    : '';
+    : 'https://travel-swish-backend.onrender.com';
 const BACKEND_URL = (String((import.meta as any).env?.VITE_BACKEND_URL || '').trim()) || DEFAULT_BACKEND_URL;
 const BACKEND_DISPLAY = (() => {
   if (!BACKEND_URL) return '';
