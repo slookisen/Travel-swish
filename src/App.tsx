@@ -1173,7 +1173,7 @@ function SwipeStack({
             height: '100%',
             display: 'grid',
             placeItems: 'center',
-            touchAction: 'pan-y',
+            touchAction: dragging ? 'none' : 'pan-y',
           }}
         >
           <div
@@ -1185,8 +1185,14 @@ function SwipeStack({
             }}
             onPointerMove={(e) => {
               if (!dragging || !start.current) return;
-              setDx(e.clientX - start.current.x);
-              setDy(e.clientY - start.current.y);
+              const dxNow = e.clientX - start.current.x;
+              const dyNow = e.clientY - start.current.y;
+              // Only lock to horizontal swipe if movement is primarily horizontal
+              if (Math.abs(dxNow) > Math.abs(dyNow) * 0.8) {
+                e.preventDefault();
+              }
+              setDx(dxNow);
+              setDy(dyNow);
             }}
             onPointerUp={() => endGesture(dx)}
             onPointerCancel={() => endGesture(dx)}
@@ -1897,7 +1903,7 @@ export default function App() {
 
   // --- RENDER
   return (
-    <div style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column', background: T.bg, color: T.txt, fontFamily: F.system }}>
+    <div style={{ minHeight: '100dvh', height: '100dvh', overflow: 'hidden', display: 'flex', flexDirection: 'column', background: T.bg, color: T.txt, fontFamily: F.system, overscrollBehavior: 'none' }}>
       <style>{globalCss}</style>
 
       {/* TS4: Loading screen overlay */}
