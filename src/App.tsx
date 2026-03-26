@@ -1861,7 +1861,7 @@ export default function App() {
 
   // --- RENDER
   return (
-    <div style={{ minHeight: '100dvh', height: '100dvh', overflow: 'hidden', display: 'flex', flexDirection: 'column', background: T.bg, color: T.txt, fontFamily: F.system, overscrollBehavior: 'none' }}>
+    <div style={{ minHeight: '100dvh', height: page === 'swipe' ? '100dvh' : 'auto', overflow: page === 'swipe' ? 'hidden' : 'visible', display: 'flex', flexDirection: 'column', background: T.bg, color: T.txt, fontFamily: F.system, overscrollBehavior: 'none' }}>
       <style>{globalCss}</style>
 
       {/* TS4: Loading screen overlay */}
