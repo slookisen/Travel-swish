@@ -143,8 +143,8 @@ const UI: Record<string, any> = {
     sv: 'Inga träffar än',
   },
   noResults: {
-    no: 'Ingen forslag ennå. Prøv «Finn flere» eller sveip noen flere kort.',
-    en: 'No suggestions yet. Try "Find more" or swipe a few more cards.',
+    no: 'Hmm, vi fant ikke noe akkurat nå. Prøv igjen?',
+    en: 'Hmm, nothing came up just now. Want to try again?',
     sv: 'Inga förslag än. Prova "Hitta fler" eller svajpa några fler kort.',
   },
   noResultsFiltered: {
@@ -200,9 +200,19 @@ const UI: Record<string, any> = {
   tryAgain: { no: 'Prøv igjen', en: 'Try again', sv: 'Försök igen' },
   swipeAtLeast: { no: 'Sveip noen flere kort først.', en: 'Swipe a few more cards first.', sv: 'Svajpa några fler kort först.' },
   swipeRemaining: {
-    no: (n: number) => `Sveip ${n} til for å låse opp forslag.`,
-    en: (n: number) => `Swipe ${n} more to unlock suggestions.`,
+    no: (n: number) => `Sveip ${n} til`,
+    en: (n: number) => `Swipe ${n} more`,
     sv: (n: number) => `Svajpa ${n} till för att låsa upp förslag.`,
+  },
+  swipeMagicHint: {
+    no: (n: number) => `${n} kort igjen før magien skjer ✨`,
+    en: (n: number) => `${n} more swipes until the magic happens ✨`,
+    sv: (n: number) => `${n} fler svajp innan magin händer ✨`,
+  },
+  resultsHeadline: {
+    no: (dest: string) => `Her er dine treff i ${dest} 🎯`,
+    en: (dest: string) => `Here's what we found in ${dest} for you 🎯`,
+    sv: (dest: string) => `Här är dina träffar i ${dest} 🎯`,
   },
   deckEmptyTitle: { no: 'Ingen flere kort', en: 'No more cards', sv: 'Inga fler kort' },
   openLink: { no: 'Åpne lenke', en: 'Open link', sv: 'Öppna länk' },
@@ -228,8 +238,8 @@ const UI: Record<string, any> = {
   // TS2: Landing + API guide
   landingHero: { no: 'Vanskelige valg?', en: 'Hard choices?', sv: 'Svåra val?' },
   landingSubtitle: {
-    no: 'Vi hjelper deg finne det som faktisk passer deg.',
-    en: 'We help you find what actually fits you.',
+    no: 'Fortell oss hva du elsker — vi finner resten 🗺️',
+    en: 'Tell us what you love — we\'ll find the rest 🗺️',
     sv: 'Vi hjälper dig hitta det som faktiskt passar dig.',
   },
   landingCta: { no: '✈️  Kom i gang', en: '✈️  Get started', sv: '✈️  Kom igång' },
@@ -1128,7 +1138,8 @@ function SwipeStack({
       }}
       style={{
         position: 'relative',
-        height: 330,
+        height: '100%',
+        minHeight: 320,
         maxWidth: 560,
         margin: '0 auto',
         outline: 'none',
@@ -1281,14 +1292,14 @@ function SwipeStack({
               <button
                 onClick={() => commitSwipe(-1)}
                 disabled={animating}
-                style={{ padding: `${S.sm}px ${S.sm2}px`, borderRadius: R.md, border: `1px solid ${T.border}`, background: 'transparent', color: T.red, cursor: animating ? 'not-allowed' : 'pointer', fontWeight: F.weight.black }}
+                style={{ minHeight: 48, padding: `${S.sm}px ${S.sm2}px`, borderRadius: R.md, border: `1px solid ${T.border}`, background: 'transparent', color: T.red, cursor: animating ? 'not-allowed' : 'pointer', fontWeight: F.weight.black }}
               >
                 ✗ {UI.no[lang]}
               </button>
               <button
                 onClick={() => commitSwipe(1)}
                 disabled={animating}
-                style={{ padding: `${S.sm}px ${S.sm2}px`, borderRadius: R.md, border: `1px solid ${T.border}`, background: 'transparent', color: T.green, cursor: animating ? 'not-allowed' : 'pointer', fontWeight: F.weight.black }}
+                style={{ minHeight: 48, padding: `${S.sm}px ${S.sm2}px`, borderRadius: R.md, border: `1px solid ${T.border}`, background: 'transparent', color: T.green, cursor: animating ? 'not-allowed' : 'pointer', fontWeight: F.weight.black }}
               >
                 ✓ {UI.yes[lang]}
               </button>
@@ -1934,7 +1945,7 @@ export default function App() {
 
   // --- RENDER
   return (
-    <div style={{ minHeight: '100vh', background: T.bg, color: T.txt, fontFamily: F.system }}>
+    <div style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column', background: T.bg, color: T.txt, fontFamily: F.system }}>
       <style>{globalCss}</style>
 
       {/* TS4: Loading screen overlay */}
@@ -2047,6 +2058,7 @@ export default function App() {
         </div>
       )}
 
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
       {/* ============ LANDING (TS2: New design) ============ */}
       {page === 'landing' && (
         <div className="container fadeUp" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', paddingTop: S.xl + 16 }}>
@@ -2209,23 +2221,50 @@ export default function App() {
 
       {/* ============ SWIPE ============ */}
       {page === 'swipe' && (
-        <div className="page">
+        <div className="page" style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
           {/* TS3: Mode tab bar */}
           <ModeTabBar mode={mode} lang={lang} onChange={handleModeChange} />
 
-          <button
-            onClick={() => setPage('home')}
-            className="btnPill"
-            style={{ marginBottom: S.sm, background: 'transparent', border: `1px solid ${T.border}`, color: T.txt }}
+          <div style={{ display: 'flex', justifyContent: 'space-between', gap: S.sm, alignItems: 'center', marginTop: S.sm, marginBottom: S.sm }}>
+            <h2 style={{ margin: 0 }}>{labels}: {destination}</h2>
+            <button
+              onClick={() => setPage('home')}
+              className="btnPill"
+              style={{ minHeight: 48, background: 'transparent', border: `1px solid ${T.border}`, color: T.txt }}
+            >
+              {UI.back[lang]}
+            </button>
+          </div>
+
+          <div
+            style={{
+              position: 'sticky',
+              top: 0,
+              zIndex: 5,
+              background: T.bg,
+              paddingBottom: S.sm2,
+              marginBottom: S.sm,
+            }}
           >
-            {UI.back[lang]}
-          </button>
+            <button
+              onClick={findItems}
+              disabled={!canSearch || loading}
+              className="btnPill btnPillPrimary btnFull"
+              style={{
+                width: '100%',
+                minHeight: 48,
+                borderRadius: R.pill,
+                cursor: !canSearch || loading ? 'not-allowed' : 'pointer',
+                opacity: !canSearch || loading ? 0.55 : 1,
+                background: !canSearch || loading ? T.card : `linear-gradient(135deg, ${T.gold}, ${T.teal})`,
+                color: !canSearch || loading ? T.dim : T.bg,
+              }}
+            >
+              {loading ? UI.loading[lang] : canSearch ? UI.fetch[lang] : UI.swipeRemaining[lang](swipeRemaining)}
+            </button>
+          </div>
 
-          <h2 style={{ marginTop: 0 }}>{labels}: {destination}</h2>
-          <div style={{ color: T.dim, marginBottom: S.sm }}>{UI.swipeHint[lang]}</div>
-
-          {/* Progress bar toward minimum swipes */}
-          <div style={{ marginBottom: S.md2 }}>
+          <div style={{ marginBottom: S.sm2 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: S.xs }}>
               <div style={{ color: T.dim, fontSize: F.size.sm }}>
                 {swipeCount} / {MIN_SWIPES} {lang === 'no' ? 'sveip' : lang === 'sv' ? 'svajp' : 'swipes'}
@@ -2251,9 +2290,9 @@ export default function App() {
           </div>
 
           {/* Swipe deck */}
-          <div style={{ position: 'relative', minHeight: 360 }}>
+          <div style={{ position: 'relative', flex: 1, minHeight: 0, display: 'flex' }}>
             {deckIndex >= deck.length ? (
-              <div className="emptyState" style={{ marginTop: S.page }}>
+              <div className="emptyState" style={{ marginTop: S.page, width: '100%' }}>
                 <div style={{ fontWeight: F.weight.black, color: T.txt, marginBottom: S.xs }}>
                   {UI.deckEmptyTitle[lang]}
                 </div>
@@ -2284,28 +2323,13 @@ export default function App() {
             )}
           </div>
 
-          {/* TS3: Profile summary */}
-          <ProfileSummary swipes={swipes} cards={cards} lang={lang} totalSwipes={swipeCount} />
-
-          <div style={{ marginTop: S.md2 + 8, display: 'flex', gap: S.sm, flexWrap: 'wrap' }}>
-            <button
-              onClick={findItems}
-              disabled={!canSearch || loading}
-              className="btnPill btnPillPrimary btnFull"
-              style={{
-                cursor: !canSearch || loading ? 'not-allowed' : 'pointer',
-                opacity: !canSearch || loading ? 0.55 : 1,
-                background: !canSearch || loading ? T.card : undefined,
-                color: !canSearch || loading ? T.dim : undefined,
-              }}
-            >
-              {loading ? UI.loading[lang] : UI.fetch[lang]}
-            </button>
-            {!canSearch && (
-              <div style={{ color: T.dim, alignSelf: 'center', lineHeight: 1.4 }}>
-                {UI.swipeRemaining[lang](swipeRemaining)}
-              </div>
-            )}
+          {!canSearch && (
+            <div style={{ marginTop: S.sm2, color: T.dim, textAlign: 'center', lineHeight: 1.4 }}>
+              {UI.swipeMagicHint[lang](swipeRemaining)}
+            </div>
+          )}
+          <div style={{ marginTop: S.xs2, color: T.dim, textAlign: 'center', fontSize: F.size.sm }}>
+            ← PASS &nbsp; ♥ LOVE →
           </div>
 
           {error && <div style={{ marginTop: S.md, color: T.red }}>{error}</div>}
@@ -2365,7 +2389,7 @@ export default function App() {
             </div>
           </div>
 
-          <h2 style={{ margin: `${S.md}px 0 0 0`, letterSpacing: 0.2 }}>{labels}: {destination}</h2>
+          <h2 style={{ margin: `${S.md}px 0 0 0`, letterSpacing: 0.2 }}>{UI.resultsHeadline[lang](destination)}</h2>
           <div style={{ color: T.dim, marginTop: S.xs, fontSize: F.size.sm }}>{UI.resultsHint[lang]}</div>
           {error && <div style={{ marginTop: S.md, color: T.red }}>{error}</div>}
           {info && <div style={{ color: T.dim, marginTop: S.xs2, fontSize: F.size.sm }}>{info}</div>}
@@ -2578,6 +2602,7 @@ export default function App() {
           })()}
         </div>
       )}
+      </div>
 
       <div style={{ padding: `${S.lg}px ${S.lg}px`, color: T.dim, fontSize: F.size.sm, borderTop: `1px solid ${T.border}` }}>
         {APP_VERSION} • {mode} • {lang} • backend: {BACKEND_DISPLAY || 'off'}
