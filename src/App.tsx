@@ -6,7 +6,7 @@ import { BUILD_META } from './buildMeta';
 // --- Versioning (shows in footer; also helps debugging cached deploys)
 const APP_VERSION = BUILD_META.version;
 
-// Backend API — Render production, localhost for dev.
+// Backend API (local dev default). On GitHub Pages we intentionally keep this empty.
 const DEFAULT_BACKEND_URL =
   (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'))
     ? 'http://127.0.0.1:8787'
@@ -81,53 +81,53 @@ async function fetchJson(
 // --- Strings
 const UI: Record<string, any> = {
   landingTitle: {
-    no: 'Swipe ÔåÆ plan ÔåÆ book',
-    en: 'Swipe ÔåÆ plan ÔåÆ book',
-    sv: 'Swipe ÔåÆ plan ÔåÆ boka',
+    no: 'Swipe → plan → book',
+    en: 'Swipe → plan → book',
+    sv: 'Swipe → plan → boka',
   },
   landingDesc: {
-    no: 'Bygg en smakprofil p├Ñ sekunder. Vi finner forslag som faktisk passer deg.',
+    no: 'Bygg en smakprofil på sekunder. Vi finner forslag som faktisk passer deg.',
     en: 'Build a taste profile in seconds. Get suggestions that actually fit you.',
-    sv: 'Bygg en smakprofil p├Ñ sekunder. F├Ñ f├Ârslag som faktiskt passar dig.',
+    sv: 'Bygg en smakprofil på sekunder. Få förslag som faktiskt passar dig.',
   },
   landingTip: {
-    no: 'Tips: Velg modus, skriv inn sted, sveip 20 kort og f├Ñ forslag.',
+    no: 'Tips: Velg modus, skriv inn sted, sveip 20 kort og få forslag.',
     en: 'Tip: Pick a mode, enter a destination, swipe 20 cards, get suggestions.',
-    sv: 'Tips: V├ñlj l├ñge, skriv in plats, svajpa 20 kort och f├Ñ f├Ârslag.',
+    sv: 'Tips: Välj läge, skriv in plats, svajpa 20 kort och få förslag.',
   },
   howItWorksTitle: {
     no: 'Slik fungerer det',
     en: 'How it works',
-    sv: 'S├Ñ funkar det',
+    sv: 'Så funkar det',
   },
   howItWorks1: {
     no: 'Velg modus (opplevelser eller restauranter).',
     en: 'Choose a mode (experiences or restaurants).',
-    sv: 'V├ñlj l├ñge (upplevelser eller restauranger).',
+    sv: 'Välj läge (upplevelser eller restauranger).',
   },
   howItWorks2: {
-    no: 'Skriv inn destinasjon og sveip kort for ├Ñ l├ªre profilen din.',
+    no: 'Skriv inn destinasjon og sveip kort for å lære profilen din.',
     en: 'Enter a destination and swipe to teach your taste profile.',
-    sv: 'Skriv in en destination och svajpa f├Âr att l├ñra din profil.',
+    sv: 'Skriv in en destination och svajpa för att lära din profil.',
   },
   howItWorks3: {
-    no: 'Trykk ┬½Finn forslag┬╗ for treff + forklaring.',
+    no: 'Trykk «Finn forslag» for treff + forklaring.',
     en: 'Tap "Find suggestions" for matches + explanations.',
-    sv: 'Tryck "Hitta f├Ârslag" f├Âr tr├ñffar + f├Ârklaring.',
+    sv: 'Tryck "Hitta förslag" för träffar + förklaring.',
   },
-  getStarted: { no: 'Kom i gang', en: 'Get started', sv: 'Kom ig├Ñng' },
-  chooseMode: { no: 'Velg modus', en: 'Choose mode', sv: 'V├ñlj l├ñge' },
+  getStarted: { no: 'Kom i gang', en: 'Get started', sv: 'Kom igång' },
+  chooseMode: { no: 'Velg modus', en: 'Choose mode', sv: 'Välj läge' },
   destination: { no: 'Destinasjon', en: 'Destination', sv: 'Destination' },
-  destinationMissing: { no: 'Destinasjon mangler', en: 'Destination required', sv: 'Destination kr├ñvs' },
+  destinationMissing: { no: 'Destinasjon mangler', en: 'Destination required', sv: 'Destination krävs' },
   destinationHelp: {
-    no: 'Skriv inn et reisem├Ñl for ├Ñ starte.',
+    no: 'Skriv inn et reisemål for å starte.',
     en: 'Enter a destination to get started.',
-    sv: 'Skriv in en destination f├Âr att b├Ârja.',
+    sv: 'Skriv in en destination för att börja.',
   },
   apiKeyNote: {
-    no: 'API-n├©kkel er ikke lenger n├©dvendig i appen.',
+    no: 'API-nøkkel er ikke lenger nødvendig i appen.',
     en: 'API key is no longer required in the app.',
-    sv: 'API-nyckel beh├Âvs inte l├ñngre i appen.',
+    sv: 'API-nyckel behövs inte längre i appen.',
   },
   updateAvailable: {
     no: 'Oppdatering tilgjengelig',
@@ -141,26 +141,26 @@ const UI: Record<string, any> = {
   },
   refresh: { no: 'Oppdater', en: 'Refresh', sv: 'Uppdatera' },
   resultsHint: {
-    no: 'Store kort, lite st├©y. Trykk p├Ñ ┬½Hvorfor┬╗ for forklaring.',
+    no: 'Store kort, lite støy. Trykk på «Hvorfor» for forklaring.',
     en: 'Big cards, low noise. Tap "Why" for an explanation.',
-    sv: 'Stora kort, lite brus. Tryck p├Ñ "Varf├Âr" f├Âr f├Ârklaring.',
+    sv: 'Stora kort, lite brus. Tryck på "Varför" för förklaring.',
   },
   noResultsTitle: {
-    no: 'Ingen treff enn├Ñ',
+    no: 'Ingen treff ennå',
     en: 'No matches yet',
-    sv: 'Inga tr├ñffar ├ñn',
+    sv: 'Inga träffar än',
   },
   noResults: {
-    no: 'Hmm, vi fant ikke noe akkurat n├Ñ. Pr├©v igjen?',
+    no: 'Hmm, vi fant ikke noe akkurat nå. Prøv igjen?',
     en: 'Hmm, nothing came up just now. Want to try again?',
-    sv: 'Inga f├Ârslag ├ñn. Prova "Hitta fler" eller svajpa n├Ñgra fler kort.',
+    sv: 'Inga förslag än. Prova "Hitta fler" eller svajpa några fler kort.',
   },
   noResultsFiltered: {
-    no: (cat: string) => `Ingen forslag i ┬½${cat}┬╗. Pr├©v ┬½Alle┬╗ eller ┬½Finn flere┬╗.`,
+    no: (cat: string) => `Ingen forslag i «${cat}». Prøv «Alle» eller «Finn flere».`,
     en: (cat: string) => `No suggestions in "${cat}". Try "All" or "Find more".`,
-    sv: (cat: string) => `Inga f├Ârslag i "${cat}". Prova "Alla" eller "Hitta fler".`,
+    sv: (cat: string) => `Inga förslag i "${cat}". Prova "Alla" eller "Hitta fler".`,
   },
-  apiKeyMissing: { no: 'API-n├©kkel mangler', en: 'API key required', sv: 'API-nyckel kr├ñvs' },
+  apiKeyMissing: { no: 'API-nøkkel mangler', en: 'API key required', sv: 'API-nyckel krävs' },
   back: { no: 'Tilbake', en: 'Back', sv: 'Tillbaka' },
   startMode: {
     no: (modeLabel: string) => `Start ${modeLabel}`,
@@ -168,135 +168,135 @@ const UI: Record<string, any> = {
     sv: (modeLabel: string) => `Starta ${modeLabel}`,
   },
   swipeHint: {
-    no: 'Sveip h├©yre = JA, venstre = NEI. Vi l├ªrer profilen din.',
+    no: 'Sveip høyre = JA, venstre = NEI. Vi lærer profilen din.',
     en: 'Swipe right = YES, left = NO. We learn your taste profile.',
-    sv: 'Svajpa h├Âger = JA, v├ñnster = NEJ. Vi l├ñr oss din profil.',
+    sv: 'Svajpa höger = JA, vänster = NEJ. Vi lär oss din profil.',
   },
   total: { no: 'Totalt', en: 'Total', sv: 'Totalt' },
   yes: { no: 'JA', en: 'YES', sv: 'JA' },
   no: { no: 'NEI', en: 'NO', sv: 'NEJ' },
-  fetch: { no: 'Finn forslag', en: 'Find suggestions', sv: 'Hitta f├Ârslag' },
+  fetch: { no: 'Finn forslag', en: 'Find suggestions', sv: 'Hitta förslag' },
   findMore: { no: 'Finn flere', en: 'Find more', sv: 'Hitta fler' },
-  why: { no: 'Hvorfor', en: 'Why', sv: 'Varf├Âr' },
-  resetDeck: { no: 'Start p├Ñ nytt', en: 'Start over', sv: 'B├Ârja om' },
+  why: { no: 'Hvorfor', en: 'Why', sv: 'Varför' },
+  resetDeck: { no: 'Start på nytt', en: 'Start over', sv: 'Börja om' },
   resetDeckHelp: {
-    no: 'Du har sveipet gjennom alle kortene i denne modusen. Start p├Ñ nytt for ├Ñ f├Ñ kort igjen.',
+    no: 'Du har sveipet gjennom alle kortene i denne modusen. Start på nytt for å få kort igjen.',
     en: 'You have swiped through all cards in this mode. Start over to get cards again.',
-    sv: 'Du har svajpat igenom alla kort i detta l├ñge. B├Ârja om f├Âr att f├Ñ kort igen.',
+    sv: 'Du har svajpat igenom alla kort i detta läge. Börja om för att få kort igen.',
   },
-  loading: { no: 'HenterÔÇª', en: 'LoadingÔÇª', sv: 'LaddarÔÇª' },
+  loading: { no: 'Henter…', en: 'Loading…', sv: 'Laddar…' },
   cooldown: {
     no: (s: number) => `Cooldown: ${s}s`,
     en: (s: number) => `Cooldown: ${s}s`,
     sv: (s: number) => `Cooldown: ${s}s`,
   },
   cooldownError: {
-    no: (s: number) => `For mange foresp├©rsler. Vent ${s}s og pr├©v igjen.`,
+    no: (s: number) => `For mange forespørsler. Vent ${s}s og prøv igjen.`,
     en: (s: number) => `Too many requests. Wait ${s}s and try again.`,
-    sv: (s: number) => `F├Âr m├Ñnga f├Ârfr├Ñgningar. V├ñnta ${s}s och f├Ârs├Âk igen.`,
+    sv: (s: number) => `För många förfrågningar. Vänta ${s}s och försök igen.`,
   },
   backendColdStart: {
-    no: 'Backend starter opp (cold start) - f├©rste kall kan time out. Vent litt og pr├©v igjen.',
+    no: 'Backend starter opp (cold start) - første kall kan time out. Vent litt og prøv igjen.',
     en: 'Backend is waking up (cold start) - the first call can time out. Wait a bit and try again.',
-    sv: 'Backend vaknar (cold start) - f├Ârsta anropet kan time out. V├ñnta lite och f├Ârs├Âk igen.',
+    sv: 'Backend vaknar (cold start) - första anropet kan time out. Vänta lite och försök igen.',
   },
   backendDown: {
-    no: 'Backend utilgjengelig akkurat n├Ñ. Vi viser demo-forslag, men du kan pr├©ve igjen.',
+    no: 'Backend utilgjengelig akkurat nå. Vi viser demo-forslag, men du kan prøve igjen.',
     en: 'Backend is unavailable right now. Showing demo suggestions - try again in a moment.',
-    sv: 'Backend ├ñr otillg├ñnglig just nu. Visar demo-f├Ârslag - f├Ârs├Âk igen om en stund.',
+    sv: 'Backend är otillgänglig just nu. Visar demo-förslag - försök igen om en stund.',
   },
-  tryAgain: { no: 'Pr├©v igjen', en: 'Try again', sv: 'F├Ârs├Âk igen' },
-  swipeAtLeast: { no: 'Sveip noen flere kort f├©rst.', en: 'Swipe a few more cards first.', sv: 'Svajpa n├Ñgra fler kort f├Ârst.' },
+  tryAgain: { no: 'Prøv igjen', en: 'Try again', sv: 'Försök igen' },
+  swipeAtLeast: { no: 'Sveip noen flere kort først.', en: 'Swipe a few more cards first.', sv: 'Svajpa några fler kort först.' },
   swipeRemaining: {
     no: (n: number) => `Sveip ${n} til`,
     en: (n: number) => `Swipe ${n} more`,
-    sv: (n: number) => `Svajpa ${n} till f├Âr att l├Ñsa upp f├Ârslag.`,
+    sv: (n: number) => `Svajpa ${n} till för att låsa upp förslag.`,
   },
   swipeMagicHint: {
-    no: (n: number) => `${n} kort igjen f├©r magien skjer Ô£¿`,
-    en: (n: number) => `${n} more swipes until the magic happens Ô£¿`,
-    sv: (n: number) => `${n} fler svajp innan magin h├ñnder Ô£¿`,
+    no: (n: number) => `${n} kort igjen før magien skjer ✨`,
+    en: (n: number) => `${n} more swipes until the magic happens ✨`,
+    sv: (n: number) => `${n} fler svajp innan magin händer ✨`,
   },
   resultsHeadline: {
-    no: (dest: string) => `Her er dine treff i ${dest} ­ƒÄ»`,
-    en: (dest: string) => `Here's what we found in ${dest} for you ­ƒÄ»`,
-    sv: (dest: string) => `H├ñr ├ñr dina tr├ñffar i ${dest} ­ƒÄ»`,
+    no: (dest: string) => `Her er dine treff i ${dest} 🎯`,
+    en: (dest: string) => `Here's what we found in ${dest} for you 🎯`,
+    sv: (dest: string) => `Här är dina träffar i ${dest} 🎯`,
   },
   deckEmptyTitle: { no: 'Ingen flere kort', en: 'No more cards', sv: 'Inga fler kort' },
-  openLink: { no: '├àpne lenke', en: 'Open link', sv: '├ûppna l├ñnk' },
-  openMaps: { no: '├àpne i Maps', en: 'Open in Maps', sv: '├ûppna i Maps' },
+  openLink: { no: 'Åpne lenke', en: 'Open link', sv: 'Öppna länk' },
+  openMaps: { no: 'Åpne i Maps', en: 'Open in Maps', sv: 'Öppna i Maps' },
 
   // TS1: Settings / Delete history
-  settingsTitle: { no: 'Innstillinger', en: 'Settings', sv: 'Inst├ñllningar' },
+  settingsTitle: { no: 'Innstillinger', en: 'Settings', sv: 'Inställningar' },
   deleteHistory: { no: 'Slett min historikk', en: 'Delete my history', sv: 'Radera min historik' },
-  deleteConfirmTitle: { no: 'Start p├Ñ nytt?', en: 'Start over?', sv: 'B├Ârja om?' },
+  deleteConfirmTitle: { no: 'Start på nytt?', en: 'Start over?', sv: 'Börja om?' },
   deleteConfirmBody: {
-    no: 'Vi glemmer alle sveipene dine og forrige resultater. Destinasjon og API-n├©kkel beholdes.',
+    no: 'Vi glemmer alle sveipene dine og forrige resultater. Destinasjon og API-nøkkel beholdes.',
     en: 'We\u2019ll forget all your swipes and previous results. Destination and API key are kept.',
-    sv: 'Vi gl├Âmmer alla dina svajpningar och tidigare resultat. Destination och API-nyckel beh├Ñlls.',
+    sv: 'Vi glömmer alla dina svajpningar och tidigare resultat. Destination och API-nyckel behålls.',
   },
   deleteConfirmCancel: { no: 'Avbryt', en: 'Cancel', sv: 'Avbryt' },
-  deleteConfirmOk: { no: 'Ja, start p├Ñ nytt ­ƒº╣', en: 'Yes, start over ­ƒº╣', sv: 'Ja, b├Ârja om ­ƒº╣' },
-  deleteSuccessToast: { no: 'Ferdig! Nytt eventyr venter ­ƒîì', en: 'Done! A new adventure awaits ­ƒîì', sv: 'Klart! Ett nytt ├ñventyr v├ñntar ­ƒîì' },
+  deleteConfirmOk: { no: 'Ja, start på nytt 🧹', en: 'Yes, start over 🧹', sv: 'Ja, börja om 🧹' },
+  deleteSuccessToast: { no: 'Ferdig! Nytt eventyr venter 🌍', en: 'Done! A new adventure awaits 🌍', sv: 'Klart! Ett nytt äventyr väntar 🌍' },
 
   // TS1: Previous results
   lastResultsSeeAll: { no: 'Se alle', en: 'See all', sv: 'Se alla' },
-  lastResultsJustNow: { no: 'akkurat n├Ñ', en: 'just now', sv: 'just nu' },
+  lastResultsJustNow: { no: 'akkurat nå', en: 'just now', sv: 'just nu' },
 
   // TS2: Landing + API guide
-  landingHero: { no: 'Vanskelige valg?', en: 'Hard choices?', sv: 'Sv├Ñra val?' },
+  landingHero: { no: 'Vanskelige valg?', en: 'Hard choices?', sv: 'Svåra val?' },
   landingSubtitle: {
-    no: 'Fortell oss hva du elsker ÔÇö vi finner resten ­ƒù║´©Å',
-    en: 'Tell us what you love ÔÇö we\'ll find the rest ­ƒù║´©Å',
-    sv: 'Vi hj├ñlper dig hitta det som faktiskt passar dig.',
+    no: 'Fortell oss hva du elsker — vi finner resten 🗺️',
+    en: 'Tell us what you love — we\'ll find the rest 🗺️',
+    sv: 'Vi hjälper dig hitta det som faktiskt passar dig.',
   },
-  landingCta: { no: 'Ô£ê´©Å  Kom i gang', en: 'Ô£ê´©Å  Get started', sv: 'Ô£ê´©Å  Kom ig├Ñng' },
+  landingCta: { no: '✈️  Kom i gang', en: '✈️  Get started', sv: '✈️  Kom igång' },
   landingTagline: {
     no: 'Ingen konto. Ingen reklame. Bare gode treff.',
     en: 'No account. No ads. Just great matches.',
-    sv: 'Inget konto. Ingen reklam. Bara bra tr├ñffar.',
+    sv: 'Inget konto. Ingen reklam. Bara bra träffar.',
   },
-  landingStep1: { no: '­ƒæå Sveip 20 kort', en: '­ƒæå Swipe 20 cards', sv: '­ƒæå Svajpa 20 kort' },
-  landingStep2: { no: '­ƒºá Vi l├ªrer smaken din', en: '­ƒºá We learn your taste', sv: '­ƒºá Vi l├ñr oss din smak' },
-  landingStep3: { no: '­ƒÄ» Treff som passer deg', en: '­ƒÄ» Matches that fit you', sv: '­ƒÄ» Tr├ñffar som passar dig' },
+  landingStep1: { no: '👆 Sveip 20 kort', en: '👆 Swipe 20 cards', sv: '👆 Svajpa 20 kort' },
+  landingStep2: { no: '🧠 Vi lærer smaken din', en: '🧠 We learn your taste', sv: '🧠 Vi lär oss din smak' },
+  landingStep3: { no: '🎯 Treff som passer deg', en: '🎯 Matches that fit you', sv: '🎯 Träffar som passar dig' },
 
-  apiGuideTitle: { no: '­ƒöæ API-n├©kkel ÔÇö 30 sekunder', en: '­ƒöæ API Key ÔÇö 30 seconds', sv: '­ƒöæ API-nyckel ÔÇö 30 sekunder' },
-  apiGuideStep1: { no: 'G├Ñ til console.anthropic.com', en: 'Go to console.anthropic.com', sv: 'G├Ñ till console.anthropic.com' },
+  apiGuideTitle: { no: '🔑 API-nøkkel — 30 sekunder', en: '🔑 API Key — 30 seconds', sv: '🔑 API-nyckel — 30 sekunder' },
+  apiGuideStep1: { no: 'Gå til console.anthropic.com', en: 'Go to console.anthropic.com', sv: 'Gå till console.anthropic.com' },
   apiGuideStep2: { no: 'Logg inn eller opprett konto (gratis)', en: 'Log in or create account (free)', sv: 'Logga in eller skapa konto (gratis)' },
-  apiGuideStep3: { no: 'Klikk "API Keys" i venstremenyen', en: 'Click "API Keys" in the left menu', sv: 'Klicka "API Keys" i v├ñnstermenyn' },
+  apiGuideStep3: { no: 'Klikk "API Keys" i venstremenyen', en: 'Click "API Keys" in the left menu', sv: 'Klicka "API Keys" i vänstermenyn' },
   apiGuideStep4: { no: 'Klikk "Create Key" og gi den et navn', en: 'Click "Create Key" and name it', sv: 'Klicka "Create Key" och namnge den' },
-  apiGuideStep5: { no: 'Kopier n├©kkelen og lim inn under', en: 'Copy the key and paste below', sv: 'Kopiera nyckeln och klistra in nedan' },
-  apiGuideSave: { no: 'Lagre n├©kkel Ô£ô', en: 'Save key Ô£ô', sv: 'Spara nyckel Ô£ô' },
+  apiGuideStep5: { no: 'Kopier nøkkelen og lim inn under', en: 'Copy the key and paste below', sv: 'Kopiera nyckeln och klistra in nedan' },
+  apiGuideSave: { no: 'Lagre nøkkel ✓', en: 'Save key ✓', sv: 'Spara nyckel ✓' },
   apiGuidePrivacy: {
-    no: 'N├©kkelen lagres kun i din nettleser. Vi ser den aldri.',
+    no: 'Nøkkelen lagres kun i din nettleser. Vi ser den aldri.',
     en: 'The key is stored only in your browser. We never see it.',
-    sv: 'Nyckeln lagras bara i din webbl├ñsare. Vi ser den aldrig.',
+    sv: 'Nyckeln lagras bara i din webbläsare. Vi ser den aldrig.',
   },
-  apiGuideMenu: { no: '­ƒô£ API-n├©kkel guide', en: '­ƒô£ API key guide', sv: '­ƒô£ API-nyckel guide' },
+  apiGuideMenu: { no: '📜 API-nøkkel guide', en: '📜 API key guide', sv: '📜 API-nyckel guide' },
 
   // TS3: Profile
-  profileTitle: { no: '­ƒºá Din smaksprofil s├Ñ langt', en: '­ƒºá Your taste profile so far', sv: '­ƒºá Din smaksprofil hittills' },
+  profileTitle: { no: '🧠 Din smaksprofil så langt', en: '🧠 Your taste profile so far', sv: '🧠 Din smaksprofil hittills' },
 
   // TS4: Loading
   loadingCancel: { no: 'Avbryt', en: 'Cancel', sv: 'Avbryt' },
 
   // TS5: Swipe milestone
   swipeMilestone: {
-    no: 'Bra! Du kan s├©ke n├Ñ ­ƒÄ»',
-    en: 'Nice! You can search now ­ƒÄ»',
-    sv: 'Bra! Du kan s├Âka nu ­ƒÄ»',
+    no: 'Bra! Du kan søke nå 🎯',
+    en: 'Nice! You can search now 🎯',
+    sv: 'Bra! Du kan söka nu 🎯',
   },
 
   // TS6: Map + Share
-  viewList: { no: '­ƒôï Liste', en: '­ƒôï List', sv: '­ƒôï Lista' },
-  viewMap: { no: '­ƒù║´©Å Kart', en: '­ƒù║´©Å Map', sv: '­ƒù║´©Å Karta' },
-  shareButton: { no: 'Del ­ƒôñ', en: 'Share ­ƒôñ', sv: 'Dela ­ƒôñ' },
-  shareCopied: { no: 'Kopiert til utklippstavlen ­ƒôï', en: 'Copied to clipboard ­ƒôï', sv: 'Kopierat till urklipp ­ƒôï' },
-  shareSuccess: { no: 'Delt! ­ƒÄë', en: 'Shared! ­ƒÄë', sv: 'Delat! ­ƒÄë' },
+  viewList: { no: '📋 Liste', en: '📋 List', sv: '📋 Lista' },
+  viewMap: { no: '🗺️ Kart', en: '🗺️ Map', sv: '🗺️ Karta' },
+  shareButton: { no: 'Del 📤', en: 'Share 📤', sv: 'Dela 📤' },
+  shareCopied: { no: 'Kopiert til utklippstavlen 📋', en: 'Copied to clipboard 📋', sv: 'Kopierat till urklipp 📋' },
+  shareSuccess: { no: 'Delt! 🎉', en: 'Shared! 🎉', sv: 'Delat! 🎉' },
   mapNoCoordsAll: {
-    no: 'Ingen av treffene har koordinater enn├Ñ. Pr├©v igjen og koordinater genereres automatisk.',
+    no: 'Ingen av treffene har koordinater ennå. Prøv igjen og koordinater genereres automatisk.',
     en: 'None of the results have coordinates yet. Try again and they\'ll be generated automatically.',
-    sv: 'Inga av tr├ñffarna har koordinater ├ñnnu. Prova igen s├Ñ genereras de automatiskt.',
+    sv: 'Inga av träffarna har koordinater ännu. Prova igen så genereras de automatiskt.',
   },
 };
 
@@ -308,14 +308,14 @@ const MODE_LABELS: Record<Mode, { no: string; en: string; sv: string }> = {
 };
 
 const MODES_ORDERED: { mode: Mode; emoji: string }[] = [
-  { mode: 'experiences', emoji: '­ƒÄ¡' },
-  { mode: 'restaurants', emoji: '­ƒì¢´©Å' },
+  { mode: 'experiences', emoji: '🎭' },
+  { mode: 'restaurants', emoji: '🍽️' },
 ];
 
 // --- TS3: Dimension emoji map
 const DIM_EMOJI: Record<string, string> = {
-  adv: '­ƒÄÆ', soc: '­ƒæÑ', lux: 'Ô£¿', act: '­ƒÅâ', cul: '­ƒÅø´©Å',
-  nat: '­ƒÅö´©Å', food: '­ƒì£', night: '­ƒîÖ', spont: 'ÔÜí',
+  adv: '🎒', soc: '👥', lux: '✨', act: '🏃', cul: '🏛️',
+  nat: '🏔️', food: '🍜', night: '🌙', spont: '⚡',
 };
 
 // --- Storage
@@ -416,6 +416,8 @@ function saveLastResults(mode: Mode, dest: string, items: RecItem[], lang: Lang)
   } catch {}
 }
 
+const RESULT_TTL_MS = 5 * 60 * 1000;
+
 function loadLastResults(mode: Mode, dest: string): { ts: number; dest: string; items: RecItem[]; lang: Lang } | null {
   const slug = destSlug(dest);
   try {
@@ -423,6 +425,7 @@ function loadLastResults(mode: Mode, dest: string): { ts: number; dest: string; 
     if (!raw) return null;
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed?.items)) return null;
+    if (parsed.ts && Date.now() - parsed.ts > RESULT_TTL_MS) return null;
     return parsed;
   } catch { return null; }
 }
@@ -485,7 +488,7 @@ function describeProfile(dims: Record<string, number>, lang: Lang) {
 
     const abs = Math.abs(v);
     const level = abs > 70
-      ? (lang === 'no' ? 'sv├ªrt' : lang === 'sv' ? 'v├ñldigt' : 'very')
+      ? (lang === 'no' ? 'svært' : lang === 'sv' ? 'väldigt' : 'very')
       : abs > 40
         ? (lang === 'no' ? 'ganske' : lang === 'sv' ? 'ganska' : 'moderately')
         : (lang === 'no' ? 'litt' : lang === 'sv' ? 'lite' : 'somewhat');
@@ -495,7 +498,7 @@ function describeProfile(dims: Record<string, number>, lang: Lang) {
     parts.push(`${level}${dir} ${label.toLowerCase()} (${k}:${Math.round(v)})`);
   }
 
-  return parts.join(', ') || (lang === 'no' ? 'balansert reisende' : lang === 'sv' ? 'balanserad resen├ñr' : 'balanced traveler');
+  return parts.join(', ') || (lang === 'no' ? 'balansert reisende' : lang === 'sv' ? 'balanserad resenär' : 'balanced traveler');
 }
 
 // Clean version of describeProfile for UI display (strips dim keys)
@@ -506,7 +509,7 @@ function describeProfileClean(dims: Record<string, number>, lang: Lang) {
     if (Math.abs(v) <= 10) continue;
     const abs = Math.abs(v);
     const level = abs > 70
-      ? (lang === 'no' ? 'sv├ªrt' : lang === 'sv' ? 'v├ñldigt' : 'very')
+      ? (lang === 'no' ? 'svært' : lang === 'sv' ? 'väldigt' : 'very')
       : abs > 40
         ? (lang === 'no' ? 'ganske' : lang === 'sv' ? 'ganska' : 'moderately')
         : (lang === 'no' ? 'litt' : lang === 'sv' ? 'lite' : 'somewhat');
@@ -514,13 +517,13 @@ function describeProfileClean(dims: Record<string, number>, lang: Lang) {
     const label = labels[k] || k;
     parts.push(`${level}${dir} ${label.toLowerCase()}`);
   }
-  return parts.join(', ') || (lang === 'no' ? 'balansert reisende' : lang === 'sv' ? 'balanserad resen├ñr' : 'balanced traveler');
+  return parts.join(', ') || (lang === 'no' ? 'balansert reisende' : lang === 'sv' ? 'balanserad resenär' : 'balanced traveler');
 }
 
 // --- Claude request (client-side demo). For launch, this moves to a backend.
 async function askClaude(prompt: string, apiKey: string) {
   const key = apiKey || (typeof window !== 'undefined' ? (window.localStorage?.getItem('apiKey') || '') : '');
-  if (!key) throw new Error('API-n├©kkel er p├Ñkrevd');
+  if (!key) throw new Error('API-nøkkel er påkrevd');
 
   const doFetch = () => fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
@@ -545,7 +548,7 @@ async function askClaude(prompt: string, apiKey: string) {
   while (true) {
     const res = await doFetch();
     if (!res.ok) {
-      if (res.status === 401) throw new Error('Ugyldig API-n├©kkel');
+      if (res.status === 401) throw new Error('Ugyldig API-nøkkel');
       if (res.status === 429) {
         const retryAfter = parseInt(res.headers.get('retry-after') || '', 10);
         const waitS = Number.isFinite(retryAfter) && retryAfter > 0 ? retryAfter : 60;
@@ -568,15 +571,15 @@ async function askClaude(prompt: string, apiKey: string) {
 
 function buildPrompt(mode: Mode, dest: string, profileText: string, lang: Lang, excludeNames: string[]) {
   const excludeStr = excludeNames.length
-    ? (lang === 'no' ? `\nUNNG├à disse som allerede er vist: ${excludeNames.join(', ')}.` : `\nEXCLUDE these already-shown items: ${excludeNames.join(', ')}.`)
-    : 'https://travel-swish-backend.onrender.com';
+    ? (lang === 'no' ? `\nUNNGÅ disse som allerede er vist: ${excludeNames.join(', ')}.` : `\nEXCLUDE these already-shown items: ${excludeNames.join(', ')}.`)
+    : '';
 
   const isRestaurants = mode === 'restaurants';
 
   if (lang === 'no') {
     return isRestaurants
-      ? `S├©k etter restauranter i ${dest} for denne profilen: ${profileText}.${excludeStr}\nReturner en JSON-array med 8-10 restauranter sortert etter match. Hvert objekt: {"name","why","quote","cat","url","price","match", "lat","lng"}. KUN JSON.`
-      : `S├©k etter opplevelser i ${dest} for denne profilen: ${profileText}.${excludeStr}\nReturner en JSON-array med 8-10 opplevelser sortert etter match. Hvert objekt: {"name","why","quote","cat","url","price","duration","match", "lat","lng"}. KUN JSON.`;
+      ? `Søk etter restauranter i ${dest} for denne profilen: ${profileText}.${excludeStr}\nReturner en JSON-array med 8-10 restauranter sortert etter match. Hvert objekt: {"name","why","quote","cat","url","price","match", "lat","lng"}. KUN JSON.`
+      : `Søk etter opplevelser i ${dest} for denne profilen: ${profileText}.${excludeStr}\nReturner en JSON-array med 8-10 opplevelser sortert etter match. Hvert objekt: {"name","why","quote","cat","url","price","duration","match", "lat","lng"}. KUN JSON.`;
   }
 
   return isRestaurants
@@ -719,7 +722,7 @@ function SettingsMenu({ lang, onDeleteHistory, onClose }: {
             background: 'transparent', border: 'none', color: T.red, cursor: 'pointer', fontSize: F.size.base,
           }}
         >
-          ­ƒùæ´©Å {UI.deleteHistory[lang]}
+          🗑️ {UI.deleteHistory[lang]}
         </button>
       </div>
     </>
@@ -767,8 +770,8 @@ function ProfileSummary({ swipes, cards, lang, totalSwipes }: {
   if (totalSwipes < minForProfile) {
     return (
       <div style={{ color: T.dim, fontSize: F.size.sm, marginTop: S.md, textAlign: 'center' }}>
-        {lang === 'no' ? `Sveip ${remaining} til for ├Ñ se smaksprofilen din` :
-         lang === 'sv' ? `Svajpa ${remaining} till f├Âr att se din smakprofil` :
+        {lang === 'no' ? `Sveip ${remaining} til for å se smaksprofilen din` :
+         lang === 'sv' ? `Svajpa ${remaining} till för att se din smakprofil` :
          `Swipe ${remaining} more to see your taste profile`}
       </div>
     );
@@ -792,7 +795,7 @@ function ProfileSummary({ swipes, cards, lang, totalSwipes }: {
           fontWeight: F.weight.bold, fontSize: F.size.base, padding: `${S.xs2}px 0`,
         }}
       >
-        {UI.profileTitle[lang]} <span style={{ color: T.dim, fontSize: F.size.sm }}>{open ? 'Ôû┤' : 'Ôû¥'}</span>
+        {UI.profileTitle[lang]} <span style={{ color: T.dim, fontSize: F.size.sm }}>{open ? '▴' : '▾'}</span>
       </button>
 
       {open && (
@@ -801,9 +804,9 @@ function ProfileSummary({ swipes, cards, lang, totalSwipes }: {
             padding: `${S.sm}px ${S.md}px`, background: T.glassLo, borderRadius: R.md,
             color: T.txt, lineHeight: 1.6, fontSize: F.size.base,
           }}>
-            {lang === 'no' ? `Du virker som en ${cleanDesc} ­ƒù║´©Å` :
-             lang === 'sv' ? `Du verkar vara en ${cleanDesc} resen├ñr ­ƒù║´©Å` :
-             `You seem like a ${cleanDesc} traveler ­ƒù║´©Å`}
+            {lang === 'no' ? `Du virker som en ${cleanDesc} 🗺️` :
+             lang === 'sv' ? `Du verkar vara en ${cleanDesc} resenär 🗺️` :
+             `You seem like a ${cleanDesc} traveler 🗺️`}
           </div>
 
           <div style={{ display: 'flex', gap: S.xs2, flexWrap: 'wrap', marginTop: S.sm }}>
@@ -817,15 +820,15 @@ function ProfileSummary({ swipes, cards, lang, totalSwipes }: {
                   background: positive ? 'rgba(52,211,153,0.08)' : 'rgba(248,113,113,0.08)',
                   color: positive ? T.green : T.red,
                 }}>
-                  {DIM_EMOJI[k] || '­ƒôè'} {label} {positive ? '+' : ''}{Math.round(v)}
+                  {DIM_EMOJI[k] || '📊'} {label} {positive ? '+' : ''}{Math.round(v)}
                 </span>
               );
             })}
           </div>
 
           <div style={{ color: T.dim, fontSize: F.size.sm, marginTop: S.sm }}>
-            {lang === 'no' ? `Basert p├Ñ ${totalSwipes} av ${cards.length} kort` :
-             lang === 'sv' ? `Baserat p├Ñ ${totalSwipes} av ${cards.length} kort` :
+            {lang === 'no' ? `Basert på ${totalSwipes} av ${cards.length} kort` :
+             lang === 'sv' ? `Baserat på ${totalSwipes} av ${cards.length} kort` :
              `Based on ${totalSwipes} of ${cards.length} cards`}
             <div style={{
               width: '100%', height: 3, borderRadius: R.pill, background: T.borderSoft, marginTop: S.xs2, overflow: 'hidden',
@@ -846,30 +849,30 @@ function ProfileSummary({ swipes, cards, lang, totalSwipes }: {
 
 // --- TS4: FlyLoadingScreen
 const LANDMARKS = [
-  { emoji: '­ƒù╝', name: 'Paris' }, { emoji: '­ƒù¢', name: 'New York' }, { emoji: '­ƒÅ»', name: 'Tokyo' },
-  { emoji: '­ƒòî', name: 'Istanbul' }, { emoji: 'Ôø®´©Å', name: 'Kyoto' }, { emoji: '­ƒÅö´©Å', name: 'Alps' },
-  { emoji: '­ƒÅû´©Å', name: 'Maldives' }, { emoji: '­ƒÅø´©Å', name: 'Rome' }, { emoji: '­ƒîï', name: 'Iceland' },
-  { emoji: '­ƒÄí', name: 'London' }, { emoji: '­ƒòì', name: 'Jerusalem' }, { emoji: '­ƒÅ░', name: 'Prague' },
-  { emoji: '­ƒÄá', name: 'Vienna' }, { emoji: '­ƒîü', name: 'San Francisco' },
+  { emoji: '🗼', name: 'Paris' }, { emoji: '🗽', name: 'New York' }, { emoji: '🏯', name: 'Tokyo' },
+  { emoji: '🕌', name: 'Istanbul' }, { emoji: '⛩️', name: 'Kyoto' }, { emoji: '🏔️', name: 'Alps' },
+  { emoji: '🏖️', name: 'Maldives' }, { emoji: '🏛️', name: 'Rome' }, { emoji: '🌋', name: 'Iceland' },
+  { emoji: '🎡', name: 'London' }, { emoji: '🕍', name: 'Jerusalem' }, { emoji: '🏰', name: 'Prague' },
+  { emoji: '🎠', name: 'Vienna' }, { emoji: '🌁', name: 'San Francisco' },
 ];
 
 const FUN_FACTS: Record<Lang, string[]> = {
   no: [
     'Visste du? Barcelona har 4,4 km strender midt i storbyen.',
     'Tokyo har flere Michelin-stjerner enn noen annen by i verden.',
-    'Island har ingen mygg. Ikke ├®n.',
+    'Island har ingen mygg. Ikke én.',
     'I Venezia er det flere kanaler enn veier.',
-    'New Zealand er det f├©rste landet med universell stemmerett.',
+    'New Zealand er det første landet med universell stemmerett.',
     'Singapore forbyr tyggegummi. Selvsagt.',
     'Portugal er det eldste landet i Europa med uendrede grenser.',
-    'Frankrike er det mest bes├©kte landet i verden ÔÇö hvert ├Ñr.',
+    'Frankrike er det mest besøkte landet i verden — hvert år.',
     'Den store barriere-revet er synlig fra verdensrommet.',
     'Amsterdam har flere sykler enn innbyggere.',
     'Antarktis er den eneste kontinenten uten tidszone.',
-    'Montana har tre ganger s├Ñ mange kyr som mennesker.',
+    'Montana har tre ganger så mange kyr som mennesker.',
     'I Japan finnes det hoteller kun for katter.',
-    'Kyoto var den opprinnelige japanske keiserhovedstaden i over tusen ├Ñr.',
-    'Machu Picchu ble ikke oppdaget av europeere f├©r i 1911.',
+    'Kyoto var den opprinnelige japanske keiserhovedstaden i over tusen år.',
+    'Machu Picchu ble ikke oppdaget av europeere før i 1911.',
   ],
   en: [
     'Did you know? Barcelona has 4.4 km of beaches right in the city.',
@@ -879,7 +882,7 @@ const FUN_FACTS: Record<Lang, string[]> = {
     'New Zealand was the first country with universal suffrage.',
     'Singapore banned chewing gum. Obviously.',
     'Portugal is the oldest country in Europe with unchanged borders.',
-    'France is the world\'s most visited country ÔÇö every single year.',
+    'France is the world\'s most visited country — every single year.',
     'The Great Barrier Reef is visible from space.',
     'Amsterdam has more bikes than people.',
     'Antarctica is the only continent without a time zone.',
@@ -889,21 +892,21 @@ const FUN_FACTS: Record<Lang, string[]> = {
     'Machu Picchu wasn\'t discovered by Europeans until 1911.',
   ],
   sv: [
-    'Visste du? Barcelona har 4,4 km str├ñnder mitt i storstaden.',
-    'Tokyo har fler Michelin-stj├ñrnor ├ñn n├Ñgon annan stad i v├ñrlden.',
+    'Visste du? Barcelona har 4,4 km stränder mitt i storstaden.',
+    'Tokyo har fler Michelin-stjärnor än någon annan stad i världen.',
     'Island har inga myggor. Inte en enda.',
-    'Venedig har fler kanaler ├ñn v├ñgar.',
-    'Nya Zeeland var det f├Ârsta landet med allm├ñn r├Âstr├ñtt.',
-    'Singapore f├Ârbj├Âd tuggummi. Sj├ñlvklart.',
-    'Portugal ├ñr Europas ├ñldsta land med of├Âr├ñndrade gr├ñnser.',
-    'Frankrike ├ñr v├ñrldens mest bes├Âkta land ÔÇö varje enskilt ├Ñr.',
-    'Stora barri├ñrrevet syns fr├Ñn rymden.',
-    'Amsterdam har fler cyklar ├ñn inv├Ñnare.',
-    'Antarktis ├ñr den enda kontinenten utan tidszon.',
-    'Montana har tre g├Ñnger fler kor ├ñn m├ñnniskor.',
-    'Japan har hotell enbart f├Âr katter.',
-    'Kyoto var Japans kejserliga huvudstad i ├Âver tusen ├Ñr.',
-    'Machu Picchu uppt├ñcktes inte av europ├®er f├Ârr├ñn 1911.',
+    'Venedig har fler kanaler än vägar.',
+    'Nya Zeeland var det första landet med allmän rösträtt.',
+    'Singapore förbjöd tuggummi. Självklart.',
+    'Portugal är Europas äldsta land med oförändrade gränser.',
+    'Frankrike är världens mest besökta land — varje enskilt år.',
+    'Stora barriärrevet syns från rymden.',
+    'Amsterdam har fler cyklar än invånare.',
+    'Antarktis är den enda kontinenten utan tidszon.',
+    'Montana har tre gånger fler kor än människor.',
+    'Japan har hotell enbart för katter.',
+    'Kyoto var Japans kejserliga huvudstad i över tusen år.',
+    'Machu Picchu upptäcktes inte av européer förrän 1911.',
   ],
 };
 
@@ -943,7 +946,7 @@ function FlyLoadingScreen({ destination, lang, mode, onCancel }: {
         fontSize: 48, animation: 'flyAcross 3.5s ease-in-out infinite alternate',
         position: 'absolute', top: '25%',
       }}>
-        Ô£ê´©Å
+        ✈️
       </div>
 
       {/* Landmarks */}
@@ -960,8 +963,8 @@ function FlyLoadingScreen({ destination, lang, mode, onCancel }: {
       {/* Status */}
       <div style={{ textAlign: 'center', marginBottom: S.xl }}>
         <div style={{ fontSize: F.size.lg, fontWeight: F.weight.bold, color: T.txt }}>
-          {lang === 'no' ? `S├©ker etter ${modeLabel} i` :
-           lang === 'sv' ? `S├Âker efter ${modeLabel} i` :
+          {lang === 'no' ? `Søker etter ${modeLabel} i` :
+           lang === 'sv' ? `Söker efter ${modeLabel} i` :
            `Finding ${modeLabel} in`}
         </div>
         <div style={{ fontSize: F.size.hero, fontWeight: F.weight.ultra, color: T.gold, marginTop: S.xs2 }}>
@@ -1260,7 +1263,7 @@ function MapView({ items, destination, lang }: { items: RecItem[]; destination: 
     }).addTo(map);
 
     const icon = L.divIcon({
-      html: `<div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#d4a574,#2dd4bf);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;color:#0a0d1a;box-shadow:0 2px 8px rgba(0,0,0,0.5);">Ôÿà</div>`,
+      html: `<div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#d4a574,#2dd4bf);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;color:#0a0d1a;box-shadow:0 2px 8px rgba(0,0,0,0.5);">★</div>`,
       className: '',
       iconSize: [28, 28],
       iconAnchor: [14, 14],
@@ -1275,7 +1278,7 @@ function MapView({ items, destination, lang }: { items: RecItem[]; destination: 
             <div style="font-weight:900;font-size:14px">${item.name}</div>
             ${item.cat ? `<div style="font-size:11px;margin-top:2px;opacity:0.7">${item.cat}</div>` : ''}
             ${item.match ? `<div style="margin-top:4px;font-size:12px;font-weight:700">Match: ${item.match}%</div>` : ''}
-            ${item.url ? `<a href="${item.url}" target="_blank" rel="noopener" style="display:block;margin-top:6px;font-size:12px;color:#0070f3">${lang === 'no' ? '├àpne' : 'Open'} ÔåÆ</a>` : ''}
+            ${item.url ? `<a href="${item.url}" target="_blank" rel="noopener" style="display:block;margin-top:6px;font-size:12px;color:#0070f3">${lang === 'no' ? 'Åpne' : 'Open'} →</a>` : ''}
           </div>
         `);
       markers.push(marker);
@@ -1309,8 +1312,8 @@ function MapView({ items, destination, lang }: { items: RecItem[]; destination: 
       <div ref={mapRef} style={{ height: 420, borderRadius: R.lg, overflow: 'hidden', border: `1px solid ${T.borderSoft}` }} />
       {noCoords > 0 && (
         <div style={{ color: T.dim, fontSize: F.size.sm, marginTop: S.xs2, textAlign: 'center' }}>
-          {lang === 'no' ? `${noCoords} treff mangler koordinater og vises ikke p├Ñ kartet.` :
-           lang === 'sv' ? `${noCoords} tr├ñffar saknar koordinater och visas inte p├Ñ kartan.` :
+          {lang === 'no' ? `${noCoords} treff mangler koordinater og vises ikke på kartet.` :
+           lang === 'sv' ? `${noCoords} träffar saknar koordinater och visas inte på kartan.` :
            `${noCoords} results have no coordinates and aren't shown on the map.`}
         </div>
       )}
@@ -1326,10 +1329,10 @@ async function shareResults(items: RecItem[], destination: string, lang: Lang): 
   );
 
   const header = lang === 'no'
-    ? `­ƒù║´©Å Mine reisetreff i ${destination} (via Travel-Swish)\n\n`
+    ? `🗺️ Mine reisetreff i ${destination} (via Travel-Swish)\n\n`
     : lang === 'sv'
-      ? `­ƒù║´©Å Mina resefynd i ${destination} (via Travel-Swish)\n\n`
-      : `­ƒù║´©Å My travel finds in ${destination} (via Travel-Swish)\n\n`;
+      ? `🗺️ Mina resefynd i ${destination} (via Travel-Swish)\n\n`
+      : `🗺️ My travel finds in ${destination} (via Travel-Swish)\n\n`;
 
   const footer = `\nhttps://slookisen.github.io/Travel-swish`;
   const text = header + lines.join('\n\n') + footer;
@@ -1350,7 +1353,7 @@ async function shareResults(items: RecItem[], destination: string, lang: Lang): 
 }
 
 // --- TS2: Landing page emoji rotation
-const LANDING_EMOJI = ['­ƒù╝', '­ƒù¢', '­ƒÅ»', '­ƒÅû´©Å', '­ƒÄí', '­ƒîï', '­ƒÅö´©Å', '­ƒÄá', '­ƒòî', 'Ôø®´©Å'];
+const LANDING_EMOJI = ['🗼', '🗽', '🏯', '🏖️', '🎡', '🌋', '🏔️', '🎠', '🕌', '⛩️'];
 
 // --- TS1: Relative time helper
 function relativeTime(ts: number, lang: Lang): string {
@@ -1404,6 +1407,8 @@ export default function App() {
   const [items, setItems] = useState<RecItem[]>([]);
   const [catFilter, setCatFilter] = useState(() => loadCatFilter(mode));
   const seenKeys = useRef<string[]>([]);
+  const findMoreCount = useRef(0);
+  const lastDestRef = useRef('');
   const destinationInputRef = useRef<HTMLInputElement | null>(null);
 
   // TS1: Settings + confirm + toast
@@ -1537,17 +1542,24 @@ export default function App() {
     setBackendNotice(null);
 
     try {
+      findMoreCount.current += 1;
       const profile = calcProfile(swipes, cards);
       const prefs: Record<string, number> = Object.fromEntries(
         Object.entries(profile).map(([k, v]) => [k, Math.round((v / 100) * 1000) / 1000])
       );
       const dest = destination.trim();
 
+      if (dest !== lastDestRef.current) {
+        seenKeys.current = [];
+        saveSeen(mode, []);
+        lastDestRef.current = dest;
+      }
+
       if (MOCK_MODE) {
         const mockItems: RecItem[] = [
           {
             id: `mock_${mode}_1`,
-            name: mode === 'restaurants' ? 'Mock: Sj├©matbistro' : 'Mock: Street food tour',
+            name: mode === 'restaurants' ? 'Mock: Sjømatbistro' : 'Mock: Street food tour',
             url: 'https://example.com',
             cat: mode === 'restaurants' ? 'Restaurant' : 'Experience',
             match: 86,
@@ -1624,7 +1636,7 @@ export default function App() {
 
             const seen = new Set(seenKeys.current);
             const filtered = newItems.filter(i => !seen.has(itemSeenKey(i)));
-            newItems = filtered.length ? filtered : newItems;
+            newItems = filtered.length >= 3 ? filtered : newItems;
 
             const newKeys = newItems.map(itemSeenKey).filter(Boolean);
             seenKeys.current = [...seenKeys.current, ...newKeys];
@@ -1641,9 +1653,9 @@ export default function App() {
 
           setInfo(
             lang === 'no'
-              ? 'Ingen treff fra backend enn├Ñ - viser demo-forslag.'
+              ? 'Ingen treff fra backend ennå - viser demo-forslag.'
               : lang === 'sv'
-                ? 'Inga tr├ñffar fr├Ñn backend ├ñnnu - visar demo-f├Ârslag.'
+                ? 'Inga träffar från backend ännu - visar demo-förslag.'
                 : 'No backend hits yet - showing demo suggestions.'
           );
         } catch (e: any) {
@@ -1664,7 +1676,7 @@ export default function App() {
                 let newItems = parsed.filter((i: RecItem) => i.name);
                 const seen = new Set(seenKeys.current);
                 const filtered = newItems.filter((i: RecItem) => !seen.has(itemSeenKey(i)));
-                newItems = filtered.length ? filtered : newItems;
+                newItems = filtered.length >= 3 ? filtered : newItems;
 
                 const newKeys = newItems.map(itemSeenKey).filter(Boolean);
                 seenKeys.current = [...seenKeys.current, ...newKeys];
@@ -1691,10 +1703,10 @@ export default function App() {
           setBackendNotice({ kind: isTimeout ? 'cold' : 'down', msg: isTimeout ? UI.backendColdStart[lang] : UI.backendDown[lang] });
           setInfo(
             lang === 'no'
-              ? 'Backend utilgjengelig ÔÇö viser demo-forslag.'
+              ? 'Backend utilgjengelig — viser demo-forslag.'
               : lang === 'sv'
-                ? 'Backend otillg├ñnglig ÔÇö visar demo-f├Ârslag.'
-                : 'Backend unavailable ÔÇö showing demo suggestions.'
+                ? 'Backend otillgänglig — visar demo-förslag.'
+                : 'Backend unavailable — showing demo suggestions.'
           );
         }
       } else if (apiKey) {
@@ -1708,7 +1720,7 @@ export default function App() {
             let newItems = parsed.filter((i: RecItem) => i.name);
             const seen = new Set(seenKeys.current);
             const filtered = newItems.filter((i: RecItem) => !seen.has(itemSeenKey(i)));
-            newItems = filtered.length ? filtered : newItems;
+            newItems = filtered.length >= 3 ? filtered : newItems;
 
             const newKeys = newItems.map(itemSeenKey).filter(Boolean);
             seenKeys.current = [...seenKeys.current, ...newKeys];
@@ -1731,18 +1743,18 @@ export default function App() {
           console.warn('Claude API call failed:', claudeErr);
           setInfo(
             lang === 'no'
-              ? 'AI-foresp├©rsel feilet ÔÇö viser demo-forslag.'
+              ? 'AI-forespørsel feilet — viser demo-forslag.'
               : lang === 'sv'
-                ? 'AI-f├Ârfr├Ñgan misslyckades ÔÇö visar demo-f├Ârslag.'
-                : 'AI request failed ÔÇö showing demo suggestions.'
+                ? 'AI-förfrågan misslyckades — visar demo-förslag.'
+                : 'AI request failed — showing demo suggestions.'
           );
         }
       } else {
         setInfo(
           lang === 'no'
-            ? 'Legg til en API-n├©kkel for AI-drevne forslag.'
+            ? 'Legg til en API-nøkkel for AI-drevne forslag.'
             : lang === 'sv'
-              ? 'L├ñgg till en API-nyckel f├Âr AI-drivna f├Ârslag.'
+              ? 'Lägg till en API-nyckel för AI-drivna förslag.'
               : 'Add an API key for AI-powered suggestions.'
         );
       }
@@ -1759,12 +1771,12 @@ export default function App() {
           name: lang === 'no'
             ? `Forslag (lokal) for ${dest}`
             : lang === 'sv'
-              ? `F├Ârslag (lokalt) f├Âr ${dest}`
+              ? `Förslag (lokalt) för ${dest}`
               : `Local suggestions for ${dest}`,
           cat: mode === 'restaurants'
             ? (lang === 'no' ? 'Restauranter' : 'Restaurants')
             : (lang === 'no' ? 'Opplevelser' : 'Experiences'),
-          why: lang === 'no' ? `Basert p├Ñ profilen din (${top}).` : `Based on your profile (${top}).`,
+          why: lang === 'no' ? `Basert på profilen din (${top}).` : `Based on your profile (${top}).`,
           match: 70,
           url: '',
         },
@@ -1885,7 +1897,7 @@ export default function App() {
           onClick={() => setPage('landing')}
           style={{ fontWeight: F.weight.black, color: T.gold, letterSpacing: 0.2, cursor: 'pointer' }}
         >
-          Ô£ê´©Å Travel-Swish
+          ✈️ Travel-Swish
         </div>
         <div className="row" style={{ position: 'relative' }}>
           <select
@@ -1913,7 +1925,7 @@ export default function App() {
                   fontSize: 18, padding: `${S.xxs}px ${S.xs}px`,
                 }}
               >
-                ÔÜÖ´©Å
+                ⚙️
               </button>
               {showSettings && (
                 <SettingsMenu
@@ -2001,7 +2013,7 @@ export default function App() {
 
           {/* Mode hint */}
           <div style={{ color: T.dim, fontSize: F.size.sm, marginTop: S.xl }}>
-            ­ƒì¢´©Å {MODE_LABELS.restaurants[lang]}   ­ƒÄ¡ {MODE_LABELS.experiences[lang]}
+            🍽️ {MODE_LABELS.restaurants[lang]}   🎭 {MODE_LABELS.experiences[lang]}
           </div>
         </div>
       )}
@@ -2024,7 +2036,7 @@ export default function App() {
                 if (!destination.trim()) { setError(UI.destinationMissing[lang]); destinationInputRef.current?.focus(); return; }
                 setPage('swipe');
               }}
-              placeholder={lang === 'no' ? 'Barcelona, Oslo, TokyoÔÇª' : lang === 'sv' ? 'Barcelona, Stockholm, TokyoÔÇª' : 'Barcelona, Oslo, TokyoÔÇª'}
+              placeholder={lang === 'no' ? 'Barcelona, Oslo, Tokyo…' : lang === 'sv' ? 'Barcelona, Stockholm, Tokyo…' : 'Barcelona, Oslo, Tokyo…'}
               style={{ width: '100%', padding: S.sm2, borderRadius: R.md, border: `1px solid ${T.border}`, background: T.card, color: T.txt }}
             />
           </div>
@@ -2037,9 +2049,9 @@ export default function App() {
             }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: S.xs2 }}>
                 <div style={{ fontWeight: F.weight.bold, fontSize: F.size.base }}>
-                  {lang === 'no' ? `­ƒôî Forrige funn i ${lastResults.dest}` :
-                   lang === 'sv' ? `­ƒôî Tidigare fynd i ${lastResults.dest}` :
-                   `­ƒôî Previous finds in ${lastResults.dest}`}
+                  {lang === 'no' ? `📌 Forrige funn i ${lastResults.dest}` :
+                   lang === 'sv' ? `📌 Tidigare fynd i ${lastResults.dest}` :
+                   `📌 Previous finds in ${lastResults.dest}`}
                   <span style={{ color: T.dim, fontSize: F.size.sm, marginLeft: S.xs2 }}>
                     {relativeTime(lastResults.ts, lang)}
                   </span>
@@ -2206,8 +2218,8 @@ export default function App() {
               color: T.dim,
               fontSize: '0.8rem',
             }}>
-              <span>ÔåÉ PASS</span>
-              <span>ÔÖÑ LOVE ÔåÆ</span>
+              <span>← PASS</span>
+              <span>♥ LOVE →</span>
             </div>
           )}
 
@@ -2484,7 +2496,7 @@ export default function App() {
       </div>
 
       <div style={{ padding: `${S.lg}px ${S.lg}px`, color: T.dim, fontSize: F.size.sm, borderTop: `1px solid ${T.border}` }}>
-        {APP_VERSION} ÔÇó {mode} ÔÇó {lang} ÔÇó backend: {BACKEND_DISPLAY || 'off'}
+        {APP_VERSION} • {mode} • {lang} • backend: {BACKEND_DISPLAY || 'off'}
       </div>
     </div>
   );
