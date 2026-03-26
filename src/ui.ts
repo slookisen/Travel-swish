@@ -114,6 +114,7 @@ export const globalCss = `
 
   *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
   html,body,#root{ height:100%; margin:0; background:var(--bg); font-family:var(--font); }
+  button{ min-height: 48px; min-width: 48px; }
 
   @keyframes fadeUp { from { opacity: 0; transform: translateY(10px);} to { opacity: 1; transform: translateY(0);} }
   @keyframes pop { 0%{ transform: scale(0.98);} 100%{ transform: scale(1);} }
@@ -168,8 +169,8 @@ export const globalCss = `
     to { opacity: 0; transform: translateX(-50%) translateY(12px); }
   }
 
-  .container{ max-width: 860px; margin: 0 auto; padding: var(--s-xl); }
-  .page{ max-width: 760px; margin: 0 auto; padding: var(--s-page); }
+  .container{ max-width: 860px; margin: 0 auto; padding: var(--s-xl); padding-bottom: 32px; width: 100%; }
+  .page{ max-width: 760px; margin: 0 auto; padding: var(--s-page); padding-bottom: 32px; width: 100%; }
   .card{ background:var(--card); border:1px solid var(--border-soft); border-radius: var(--r-lg); box-shadow:var(--shadow); }
 
   .btn{ display:inline-flex; align-items:center; justify-content:center; gap: 8px; border-radius: var(--r-md); padding: 12px 16px; font-weight: ${F.weight.bold}; cursor:pointer; border:1px solid var(--border-soft); background: transparent; color:var(--txt); }
@@ -192,8 +193,9 @@ export const globalCss = `
   .noticeWarn{ border-color: rgba(212,165,116,0.28); background: rgba(212,165,116,0.06); }
   .noticeActions{ display:flex; gap: var(--s-sm); flex-wrap:wrap; margin-top: var(--s-sm); }
 
-  .btnPill{ display:inline-flex; align-items:center; justify-content:center; gap: 8px; border-radius: var(--r-pill); padding: 10px 14px; font-weight: ${F.weight.black}; cursor:pointer; border:1px solid var(--border-soft); background: transparent; color:var(--txt); }
+  .btnPill{ display:inline-flex; align-items:center; justify-content:center; gap: 8px; border-radius: var(--r-pill); min-height: 48px; padding: 10px 14px; font-weight: ${F.weight.black}; cursor:pointer; border:1px solid var(--border-soft); background: transparent; color:var(--txt); }
   .btnPillPrimary{ border: none; background: linear-gradient(135deg, ${T.gold}, ${T.teal}); color: var(--bg); }
+  .btnFull{ width:100%; justify-content:center; min-height: 48px; }
 
   /* Text clamp helpers */
   .clamp2{ display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
@@ -204,7 +206,6 @@ export const globalCss = `
     .container{ padding: var(--s-md2); }
     .page{ padding: var(--s-md2); }
 
-    .btnFull{ width:100%; justify-content:center; }
     .noticeActions .btnPill{ width:100%; }
 
     /* Slightly tighter empty-state buttons on tiny screens */
