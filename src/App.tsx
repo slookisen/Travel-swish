@@ -1438,6 +1438,15 @@ export default function App() {
       .catch(() => {});
   }, []);
 
+  // Keep-alive ping — prevent Render cold starts by pinging every 9 minutes
+  useEffect(() => {
+    if (!BACKEND_URL) return;
+    const ping = () => fetch(`${BACKEND_URL}/health`, { method: 'GET' }).catch(() => {});
+    ping(); // ping immediately on load
+    const id = setInterval(ping, 9 * 60 * 1000);
+    return () => clearInterval(id);
+  }, []);
+
   useEffect(() => {
     const mem = loadMemory(mode);
     seenKeys.current = mem.seen;
@@ -1572,8 +1581,8 @@ export default function App() {
       if (BACKEND_URL) {
         try {
           const warm = backendRetryCount.current > 0;
-          const prefsTimeoutMs = warm ? 20000 : 8000;
-          const recsTimeoutMs = warm ? 45000 : 20000;
+          const prefsTimeoutMs = warm ? 20000 : 12000;
+          const recsTimeoutMs = warm ? 60000 : 45000;
 
           await fetchJson(`${BACKEND_URL}/prefs`, {
             method: 'POST',
@@ -1640,6 +1649,17 @@ export default function App() {
 
           const emsg = String(e?.message || '');
           const isTimeout = /timeout/i.test(emsg);
+
+          // Auto-retry once on first timeout (Render cold start)
+          if (isTimeout && backendRetryCount.current === 0) {
+            backendRetryCount.current = 1;
+            setBackendNotice({ kind: 'cold', msg: UI.backendColdStart[lang] });
+            setLoading(false);
+            // Auto-retry after 3 seconds
+            setTimeout(() => { findItems(); }, 3000);
+            return;
+          }
+
           if (isTimeout) backendRetryCount.current = Math.min(3, backendRetryCount.current + 1);
 
           if (apiKey) {
