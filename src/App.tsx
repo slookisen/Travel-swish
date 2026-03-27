@@ -1090,30 +1090,7 @@ function SwipeStack({
         outline: 'none',
       }}
     >
-      {totalSwipes < MIN_SWIPES && (
-        <div style={{ marginBottom: S.sm2 }}>
-          <div style={{
-            width: '100%',
-            maxWidth: 400,
-            height: 4,
-            borderRadius: 4,
-            background: T.borderSoft,
-            overflow: 'hidden',
-            margin: '0 auto',
-          }}>
-            <div style={{
-              width: `${minProgressPct}%`,
-              height: '100%',
-              borderRadius: 4,
-              background: `linear-gradient(135deg, ${T.gold}, ${T.teal})`,
-              transition: `width ${M.snap}ms ${M.ease}`,
-            }} />
-          </div>
-          <div style={{ marginTop: S.xs2, textAlign: 'center', color: T.dim, fontSize: F.size.sm }}>
-            {Math.min(totalSwipes, MIN_SWIPES)} / {MIN_SWIPES}
-          </div>
-        </div>
-      )}
+      {/* progress bar moved outside SwipeStack — see swipe page */}
 
       {top && (
         <div
@@ -2172,6 +2149,26 @@ export default function App() {
           </div>
 
           {/* Swipe deck */}
+          {/* Progress bar — shown until 20 swipes */}
+          {swipeCount < MIN_SWIPES && (
+            <div style={{ padding: `0 ${S.page}px`, marginBottom: S.sm }}>
+              <div style={{
+                width: '100%', maxWidth: 400, height: 4, borderRadius: 4,
+                background: T.borderSoft, overflow: 'hidden', margin: '0 auto',
+              }}>
+                <div style={{
+                  width: `${Math.min(100, (swipeCount / MIN_SWIPES) * 100)}%`,
+                  height: '100%', borderRadius: 4,
+                  background: `linear-gradient(135deg, ${T.gold}, ${T.teal})`,
+                  transition: 'width 200ms ease',
+                }} />
+              </div>
+              <div style={{ marginTop: S.xs2, textAlign: 'center', color: T.dim, fontSize: F.size.sm }}>
+                {Math.min(swipeCount, MIN_SWIPES)} / {MIN_SWIPES}
+              </div>
+            </div>
+          )}
+
           <div style={{ position: 'relative', flex: 1, minHeight: 0, display: 'flex' }}>
             {deckIndex >= deck.length ? (
               <div className="emptyState" style={{ marginTop: S.page, width: '100%' }}>
@@ -2221,6 +2218,11 @@ export default function App() {
               <span>← PASS</span>
               <span>♥ LOVE →</span>
             </div>
+          )}
+
+          {/* Profile summary — collapsible, shown after enough swipes */}
+          {swipeCount >= 5 && (
+            <ProfileSummary swipes={swipes} cards={cards} lang={lang} totalSwipes={swipeCount} />
           )}
 
           {error && <div style={{ marginTop: S.md, color: T.red }}>{error}</div>}
