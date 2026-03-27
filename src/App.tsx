@@ -836,6 +836,23 @@ function PreferenceRadarModal({
   totalSwipes: number;
   profile: Record<string, number>;
 }) {
+  useEffect(() => {
+    if (!open) return;
+
+    const prevOverflow = document.body.style.overflow;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+
+    document.body.style.overflow = 'hidden';
+    window.addEventListener('keydown', onKeyDown);
+
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      window.removeEventListener('keydown', onKeyDown);
+    };
+  }, [open, onClose]);
+
   if (!open) return null;
   const labels = Object.fromEntries(DIMS.map((d) => [d, tData(lang, `dims.${d}`)])) as Record<string, string>;
   const meaningful = DIMS
@@ -845,7 +862,13 @@ function PreferenceRadarModal({
   const topTwo = meaningful.slice(0, 2).map((x) => x.dim);
 
   return (
-    <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 9200, background: 'rgba(0,0,0,0.68)', display: 'grid', placeItems: 'center', padding: S.md2 }}>
+    <div
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="preference-radar-title"
+      style={{ position: 'fixed', inset: 0, zIndex: 9200, background: 'rgba(0,0,0,0.68)', display: 'grid', placeItems: 'center', padding: S.md2 }}
+    >
       <div
         onClick={(e) => e.stopPropagation()}
         style={{
@@ -864,7 +887,7 @@ function PreferenceRadarModal({
             ✕
           </button>
         </div>
-        <h2 style={{ margin: `0 0 ${S.xs2}px 0` }}>{UI.radarTitle[lang]}</h2>
+        <h2 id="preference-radar-title" style={{ margin: `0 0 ${S.xs2}px 0` }}>{UI.radarTitle[lang]}</h2>
         <div style={{ color: T.dim, marginBottom: S.sm }}>{UI.radarSubtitle[lang](totalSwipes)}</div>
 
         <div style={{ display: 'grid', placeItems: 'center', margin: `${S.md}px 0` }}>
