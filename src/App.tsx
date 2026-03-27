@@ -276,6 +276,18 @@ const UI: Record<string, any> = {
 
   // TS3: Profile
   profileTitle: { no: '🧠 Din smaksprofil så langt', en: '🧠 Your taste profile so far', sv: '🧠 Din smaksprofil hittills' },
+  myTaste: { no: '🧭 Min smak', en: '🧭 My taste', sv: '🧭 Min smak' },
+  radarTitle: { no: 'Din smaksprofil', en: 'Your taste profile', sv: 'Din smakprofil' },
+  radarSubtitle: {
+    no: (n: number) => `Basert på ${n} sveip`,
+    en: (n: number) => `Based on ${n} swipes`,
+    sv: (n: number) => `Baserat på ${n} svajp`,
+  },
+  radarFooter: {
+    no: 'Jo mer du sveiper, jo bedre treff 🎯',
+    en: 'The more you swipe, the better the matches 🎯',
+    sv: 'Ju mer du svajpar, desto bättre träffar 🎯',
+  },
 
   // TS4: Loading
   loadingCancel: { no: 'Avbryt', en: 'Cancel', sv: 'Avbryt' },
@@ -498,25 +510,6 @@ function describeProfile(dims: Record<string, number>, lang: Lang) {
     parts.push(`${level}${dir} ${label.toLowerCase()} (${k}:${Math.round(v)})`);
   }
 
-  return parts.join(', ') || (lang === 'no' ? 'balansert reisende' : lang === 'sv' ? 'balanserad resenär' : 'balanced traveler');
-}
-
-// Clean version of describeProfile for UI display (strips dim keys)
-function describeProfileClean(dims: Record<string, number>, lang: Lang) {
-  const labels = Object.fromEntries(DIMS.map((d) => [d, tData(lang, `dims.${d}`)])) as Record<string, string>;
-  const parts: string[] = [];
-  for (const [k, v] of Object.entries(dims)) {
-    if (Math.abs(v) <= 10) continue;
-    const abs = Math.abs(v);
-    const level = abs > 70
-      ? (lang === 'no' ? 'svært' : lang === 'sv' ? 'väldigt' : 'very')
-      : abs > 40
-        ? (lang === 'no' ? 'ganske' : lang === 'sv' ? 'ganska' : 'moderately')
-        : (lang === 'no' ? 'litt' : lang === 'sv' ? 'lite' : 'somewhat');
-    const dir = v > 0 ? '' : (lang === 'no' ? ' ikke' : lang === 'sv' ? ' inte' : ' not');
-    const label = labels[k] || k;
-    parts.push(`${level}${dir} ${label.toLowerCase()}`);
-  }
   return parts.join(', ') || (lang === 'no' ? 'balansert reisende' : lang === 'sv' ? 'balanserad resenär' : 'balanced traveler');
 }
 
@@ -759,90 +752,178 @@ function ModeTabBar({ mode, lang, onChange }: { mode: Mode; lang: Lang; onChange
   );
 }
 
-// --- TS3: ProfileSummary
-function ProfileSummary({ swipes, cards, lang, totalSwipes }: {
-  swipes: Record<string, number>; cards: Card[]; lang: Lang; totalSwipes: number;
-}) {
-  const [open, setOpen] = useState(false);
-  const minForProfile = 10;
-  const remaining = Math.max(0, minForProfile - totalSwipes);
+function RadarChart({ profile, labels }: { profile: Record<string, number>; labels: Record<string, string> }) {
+  const size = 220;
+  const cx = size / 2;
+  const cy = size / 2;
+  const maxR = 80;
+  const normalize = (v: number) => Math.max(0, Math.min(1, (v + 1) / 2));
+  const point = (index: number, value01: number) => {
+    const angle = (index / DIMS.length) * 2 * Math.PI - Math.PI / 2;
+    const r = value01 * maxR;
+    return { x: cx + r * Math.cos(angle), y: cy + r * Math.sin(angle), angle };
+  };
 
-  if (totalSwipes < minForProfile) {
-    return (
-      <div style={{ color: T.dim, fontSize: F.size.sm, marginTop: S.md, textAlign: 'center' }}>
-        {lang === 'no' ? `Sveip ${remaining} til for å se smaksprofilen din` :
-         lang === 'sv' ? `Svajpa ${remaining} till för att se din smakprofil` :
-         `Swipe ${remaining} more to see your taste profile`}
-      </div>
-    );
-  }
-
-  const dims = calcProfile(swipes, cards);
-  const topDims = Object.entries(dims)
-    .sort((a, b) => Math.abs(b[1]) - Math.abs(a[1]))
-    .slice(0, 5)
-    .filter(([, v]) => Math.abs(v) > 10);
-
-  const cleanDesc = describeProfileClean(dims, lang);
+  const polygonPoints = DIMS
+    .map((dim, index) => point(index, normalize(profile[dim] ?? 0)))
+    .map(({ x, y }) => `${x},${y}`)
+    .join(' ');
 
   return (
-    <div style={{ marginTop: S.md }}>
-      <button
-        onClick={() => setOpen(!open)}
+    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} role="img" aria-label="Preference radar chart">
+      {[0.33, 0.66, 1].map((level) => (
+        <circle
+          key={level}
+          cx={cx}
+          cy={cy}
+          r={maxR * level}
+          fill="none"
+          stroke={T.borderSoft}
+          strokeWidth={0.5}
+          strokeDasharray="3 3"
+        />
+      ))}
+
+      {DIMS.map((dim, index) => {
+        const axisTip = point(index, 1);
+        const labelTip = point(index, 1.18);
+        return (
+          <g key={dim}>
+            <line x1={cx} y1={cy} x2={axisTip.x} y2={axisTip.y} stroke={T.borderSoft} strokeWidth={1} />
+            <text
+              x={labelTip.x}
+              y={labelTip.y}
+              fill={T.dim}
+              fontSize="10"
+              textAnchor="middle"
+              dominantBaseline="middle"
+            >
+              {labels[dim] || dim}
+            </text>
+          </g>
+        );
+      })}
+
+      <polygon points={polygonPoints} fill="rgba(52, 211, 153, 0.25)" stroke={T.teal} strokeWidth={2} />
+    </svg>
+  );
+}
+
+function profileArchetype(topA: string | undefined, topB: string | undefined, lang: Lang) {
+  const pair = [topA, topB].sort().join('|');
+  const map: Record<string, { no: string; en: string; sv: string }> = {
+    'cul|nat': { no: '🏛️🌿 Kulturell naturentusiast', en: '🏛️🌿 Cultural nature enthusiast', sv: '🏛️🌿 Kulturell naturentusiast' },
+    'adv|spont': { no: '⚡🎲 Eventyrlysten villstyring', en: '⚡🎲 Spontaneous thrill seeker', sv: '⚡🎲 Spontan äventyrsjägare' },
+    'food|lux': { no: '✨🍽️ Luksuriøs matelsker', en: '✨🍽️ Luxurious foodie', sv: '✨🍽️ Lyxig matälskare' },
+    'act|adv': { no: '🏃⛰️ Aktiv oppdager', en: '🏃⛰️ Active explorer', sv: '🏃⛰️ Aktiv upptäckare' },
+    'night|soc': { no: '🌙👥 Sosial natteravn', en: '🌙👥 Social night owl', sv: '🌙👥 Social nattuggla' },
+    'food|soc': { no: '🍜🥂 Sosial matentusiast', en: '🍜🥂 Social food enthusiast', sv: '🍜🥂 Social matentusiast' },
+    'lux|night': { no: '🌃✨ Glam-utforsker', en: '🌃✨ Glam explorer', sv: '🌃✨ Glam-utforskare' },
+  };
+  return map[pair]?.[lang] || (lang === 'no' ? '🌍 Fri sjel' : lang === 'sv' ? '🌍 Fri själ' : '🌍 Free spirit');
+}
+
+function PreferenceRadarModal({
+  open,
+  onClose,
+  lang,
+  totalSwipes,
+  profile,
+}: {
+  open: boolean;
+  onClose: () => void;
+  lang: Lang;
+  totalSwipes: number;
+  profile: Record<string, number>;
+}) {
+  useEffect(() => {
+    if (!open) return;
+
+    const prevOverflow = document.body.style.overflow;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+
+    document.body.style.overflow = 'hidden';
+    window.addEventListener('keydown', onKeyDown);
+
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      window.removeEventListener('keydown', onKeyDown);
+    };
+  }, [open, onClose]);
+
+  if (!open) return null;
+  const labels = Object.fromEntries(DIMS.map((d) => [d, tData(lang, `dims.${d}`)])) as Record<string, string>;
+  const meaningful = DIMS
+    .map((dim) => ({ dim, value: profile[dim] ?? 0 }))
+    .filter(({ value }) => Math.abs(value) > 0.15)
+    .sort((a, b) => Math.abs(b.value) - Math.abs(a.value));
+  const topTwo = meaningful.slice(0, 2).map((x) => x.dim);
+
+  return (
+    <div
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="preference-radar-title"
+      style={{ position: 'fixed', inset: 0, zIndex: 9200, background: 'rgba(0,0,0,0.68)', display: 'grid', placeItems: 'center', padding: S.md2 }}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
         style={{
-          display: 'flex', alignItems: 'center', gap: S.xs2, width: '100%',
-          background: 'transparent', border: 'none', cursor: 'pointer', color: T.txt,
-          fontWeight: F.weight.bold, fontSize: F.size.base, padding: `${S.xs2}px 0`,
+          width: 'min(640px, 100%)',
+          maxHeight: '90vh',
+          overflowY: 'auto',
+          background: T.card,
+          border: `1px solid ${T.borderSoft}`,
+          borderRadius: R.lg,
+          boxShadow: T.shadow,
+          padding: S.page,
         }}
       >
-        {UI.profileTitle[lang]} <span style={{ color: T.dim, fontSize: F.size.sm }}>{open ? '▴' : '▾'}</span>
-      </button>
-
-      {open && (
-        <div style={{ padding: S.sm2, background: T.glassHi, borderRadius: R.lg, border: `1px solid ${T.borderSoft}`, marginTop: S.xs2 }}>
-          <div style={{
-            padding: `${S.sm}px ${S.md}px`, background: T.glassLo, borderRadius: R.md,
-            color: T.txt, lineHeight: 1.6, fontSize: F.size.base,
-          }}>
-            {lang === 'no' ? `Du virker som en ${cleanDesc} 🗺️` :
-             lang === 'sv' ? `Du verkar vara en ${cleanDesc} resenär 🗺️` :
-             `You seem like a ${cleanDesc} traveler 🗺️`}
-          </div>
-
-          <div style={{ display: 'flex', gap: S.xs2, flexWrap: 'wrap', marginTop: S.sm }}>
-            {topDims.map(([k, v]) => {
-              const positive = v > 0;
-              const label = tData(lang, `dims.${k}`) || k;
-              return (
-                <span key={k} style={{
-                  padding: `${S.xxs}px ${S.sm}px`, borderRadius: R.pill, fontSize: F.size.sm, fontWeight: F.weight.bold,
-                  border: `1px solid ${positive ? T.green : T.red}`,
-                  background: positive ? 'rgba(52,211,153,0.08)' : 'rgba(248,113,113,0.08)',
-                  color: positive ? T.green : T.red,
-                }}>
-                  {DIM_EMOJI[k] || '📊'} {label} {positive ? '+' : ''}{Math.round(v)}
-                </span>
-              );
-            })}
-          </div>
-
-          <div style={{ color: T.dim, fontSize: F.size.sm, marginTop: S.sm }}>
-            {lang === 'no' ? `Basert på ${totalSwipes} av ${cards.length} kort` :
-             lang === 'sv' ? `Baserat på ${totalSwipes} av ${cards.length} kort` :
-             `Based on ${totalSwipes} of ${cards.length} cards`}
-            <div style={{
-              width: '100%', height: 3, borderRadius: R.pill, background: T.borderSoft, marginTop: S.xs2, overflow: 'hidden',
-            }}>
-              <div style={{
-                width: `${Math.min(100, (totalSwipes / cards.length) * 100)}%`,
-                height: '100%', borderRadius: R.pill,
-                background: `linear-gradient(135deg, ${T.gold}, ${T.teal})`,
-                transition: `width 300ms ease`,
-              }} />
-            </div>
-          </div>
+        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+          <button onClick={onClose} aria-label="Close" className="btnPill" style={{ minHeight: 40, background: 'transparent', color: T.dim, border: `1px solid ${T.borderSoft}` }}>
+            ✕
+          </button>
         </div>
-      )}
+        <h2 id="preference-radar-title" style={{ margin: `0 0 ${S.xs2}px 0` }}>{UI.radarTitle[lang]}</h2>
+        <div style={{ color: T.dim, marginBottom: S.sm }}>{UI.radarSubtitle[lang](totalSwipes)}</div>
+
+        <div style={{ display: 'grid', placeItems: 'center', margin: `${S.md}px 0` }}>
+          <RadarChart profile={profile} labels={labels} />
+        </div>
+
+        <div style={{ marginBottom: S.sm2, fontWeight: F.weight.bold, color: T.teal }}>
+          {profileArchetype(topTwo[0], topTwo[1], lang)}
+        </div>
+
+        <div style={{ display: 'grid', gap: S.xs2 }}>
+          {meaningful.length === 0 && (
+            <div style={{ color: T.dim, fontSize: F.size.sm }}>
+              {lang === 'no' ? 'Sveip litt mer for tydeligere mønster.' : lang === 'sv' ? 'Svajpa lite mer för tydligare mönster.' : 'Swipe a bit more for a clearer pattern.'}
+            </div>
+          )}
+          {meaningful.map(({ dim, value }) => {
+            const pct = Math.round(((value + 1) / 2) * 100);
+            return (
+              <div key={dim} style={{ display: 'grid', gridTemplateColumns: 'minmax(110px, 160px) 1fr auto', gap: S.sm, alignItems: 'center' }}>
+                <div style={{ color: T.txt, fontSize: F.size.sm }}>
+                  {DIM_EMOJI[dim] || '📊'} {labels[dim]}
+                </div>
+                <div style={{ width: '100%', height: 6, borderRadius: 3, background: T.borderSoft, overflow: 'hidden' }}>
+                  <div style={{ width: `${pct}%`, height: '100%', borderRadius: 3, background: `linear-gradient(90deg, ${T.gold}, ${T.teal})` }} />
+                </div>
+                <div style={{ color: T.dim, fontSize: F.size.sm, minWidth: 36, textAlign: 'right' }}>{pct}%</div>
+              </div>
+            );
+          })}
+        </div>
+
+        <div style={{ marginTop: S.md2, color: T.dim, fontSize: F.size.sm }}>
+          {UI.radarFooter[lang]}
+        </div>
+      </div>
     </div>
   );
 }
@@ -1403,6 +1484,7 @@ export default function App() {
 
   // TS6: results view tab
   const [resultsTab, setResultsTab] = useState<'list' | 'map'>('list');
+  const [showRadar, setShowRadar] = useState(false);
 
   function showToast(msg: string) {
     setToastMsg(msg);
@@ -1509,6 +1591,10 @@ export default function App() {
   const swipeCount = Math.max(totalSwipes, Object.keys(swipes).length);
   const canSearch = swipeCount >= MIN_SWIPES;
   const swipeRemaining = Math.max(0, MIN_SWIPES - swipeCount);
+  const radarProfile = useMemo(() => {
+    const raw = calcProfile(swipes, cards);
+    return Object.fromEntries(DIMS.map((d) => [d, (raw[d] || 0) / 100])) as Record<string, number>;
+  }, [swipes, cards]);
 
   // TS1: last results for home page
   const lastResults = useMemo(() => {
@@ -1886,6 +1972,14 @@ export default function App() {
         />
       )}
 
+      <PreferenceRadarModal
+        open={showRadar}
+        onClose={() => setShowRadar(false)}
+        lang={lang}
+        totalSwipes={swipeCount}
+        profile={radarProfile}
+      />
+
 
 
       {/* Top bar */}
@@ -2131,13 +2225,24 @@ export default function App() {
 
           <div style={{ display: 'flex', justifyContent: 'space-between', gap: S.sm, alignItems: 'center', marginTop: S.sm, marginBottom: S.sm }}>
             <h2 style={{ margin: 0 }}>{labels}: {destination}</h2>
-            <button
-              onClick={() => setPage('home')}
-              className="btnPill"
-              style={{ minHeight: 48, background: 'transparent', border: `1px solid ${T.border}`, color: T.txt }}
-            >
-              {UI.back[lang]}
-            </button>
+            <div style={{ display: 'flex', gap: S.xs2, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+              {swipeCount >= 5 && (
+                <button
+                  onClick={() => setShowRadar(true)}
+                  className="btnPill"
+                  style={{ minHeight: 48, background: 'transparent', border: `1px solid ${T.borderSoft}`, color: T.txt }}
+                >
+                  {UI.myTaste[lang]}
+                </button>
+              )}
+              <button
+                onClick={() => setPage('home')}
+                className="btnPill"
+                style={{ minHeight: 48, background: 'transparent', border: `1px solid ${T.border}`, color: T.txt }}
+              >
+                {UI.back[lang]}
+              </button>
+            </div>
           </div>
 
           <div
@@ -2240,11 +2345,6 @@ export default function App() {
             </div>
           )}
 
-          {/* Profile summary — collapsible, shown after enough swipes */}
-          {swipeCount >= 5 && (
-            <ProfileSummary swipes={swipes} cards={cards} lang={lang} totalSwipes={swipeCount} />
-          )}
-
           {error && <div style={{ marginTop: S.md, color: T.red }}>{error}</div>}
           {info && <div style={{ marginTop: S.sm, color: T.dim }}>{info}</div>}
         </div>
@@ -2299,6 +2399,19 @@ export default function App() {
               >
                 {loading ? UI.loading[lang] : UI.findMore[lang]}
               </button>
+
+              {swipeCount >= 5 && (
+                <button
+                  onClick={() => setShowRadar(true)}
+                  style={{
+                    padding: `${S.sm}px ${S.md}px`, borderRadius: R.pill,
+                    border: `1px solid ${T.borderSoft}`, background: 'transparent',
+                    color: T.txt, fontWeight: F.weight.bold, cursor: 'pointer',
+                  }}
+                >
+                  {UI.myTaste[lang]}
+                </button>
+              )}
             </div>
           </div>
 
