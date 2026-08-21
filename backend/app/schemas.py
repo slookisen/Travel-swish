@@ -8,7 +8,7 @@ from pydantic import BaseModel, Field
 class Health(BaseModel):
     ok: bool = True
     service: str
-    version: str = "0.5.0"
+    version: str = "0.5.1"
     database: str = "ok"
     providers: List[str] = Field(default_factory=list)
 
