@@ -39,6 +39,27 @@ CAT_TO_PLACE_TYPES: dict[str, list[str]] = {
     "mediterranean": ["mediterranean_restaurant", "greek_restaurant", "turkish_restaurant", "lebanese_restaurant"],
 }
 
+FOOD_VENUE_TYPES = {
+    "bakery", "cafe", "coffee_shop", "food_court", "meal_delivery", "meal_takeaway",
+    "restaurant", "fine_dining_restaurant", "bar_and_grill",
+}
+
+EXPERIENCE_PAIR_OVERRIDES: dict[str, list[str]] = {
+    "food+lux": ["premium food tour {dest}", "private cooking class {dest}"],
+    "food+spont": ["hidden food tour {dest}", "local food market {dest}"],
+}
+
+
+def _place_types_for_mode(place_types: list[str], mode: str) -> list[str]:
+    """Keep food taste useful without turning the Experiences tab into a venue list."""
+    copied = list(place_types)
+    if mode != "experiences":
+        return copied
+    return [
+        place_type for place_type in copied
+        if place_type not in FOOD_VENUE_TYPES and not place_type.endswith("_restaurant")
+    ]
+
 DIM_PAIR_QUERIES: dict[str, list[str]] = {
     "adv+nat": ["outdoor adventure {dest}", "nature adventure {dest}"],
     "adv+act": ["extreme sports {dest}", "adventure activities {dest}"],
@@ -107,7 +128,7 @@ def build_queries(
             key=lambda x: -x[1],
         )
         for cat, score in cat_scores[:4]:
-            place_types = CAT_TO_PLACE_TYPES.get(cat, [])
+            place_types = _place_types_for_mode(CAT_TO_PLACE_TYPES.get(cat, []), mode)
             if not place_types:
                 continue
             rng.shuffle(place_types)
@@ -125,7 +146,11 @@ def build_queries(
     if taste and taste.get("topPairs"):
         for pair_info in taste["topPairs"][:3]:
             pair_key = pair_info.get("pair", "")
-            pair_templates = DIM_PAIR_QUERIES.get(pair_key, [])
+            pair_templates = (
+                EXPERIENCE_PAIR_OVERRIDES.get(pair_key, DIM_PAIR_QUERIES.get(pair_key, []))
+                if mode == "experiences"
+                else DIM_PAIR_QUERIES.get(pair_key, [])
+            )
             if pair_templates:
                 template = rng.choice(pair_templates)
                 queries.append(
@@ -153,7 +178,7 @@ def build_queries(
             "spont": ["tourist_attraction"],
         }
         for dim, score in pos_dims:
-            types = dim_to_types.get(dim, [])
+            types = _place_types_for_mode(dim_to_types.get(dim, []), mode)
             if types:
                 place_type = rng.choice(types)
                 queries.append(

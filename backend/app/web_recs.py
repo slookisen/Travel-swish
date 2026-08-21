@@ -429,6 +429,21 @@ def _is_junk_result(item: Mapping[str, Any]) -> bool:
     return False
 
 
+FOOD_VENUE_TITLE_TERMS = (
+    "bakery", "bakeri", "cafe", "café", "coffee shop", "restaurant", "brunch",
+    "patisserie", "pastry shop", "fine dining", "steakhouse", "pizzeria",
+)
+EXPERIENCE_FOOD_TERMS = ("tour", "class", "course", "market", "festival", "workshop", "tasting")
+
+
+def _is_food_venue_web_result(item: Mapping[str, Any]) -> bool:
+    """Reject venue-only food pages from Experiences while retaining food activities."""
+    title = str(item.get("name") or "").lower()
+    return any(term in title for term in FOOD_VENUE_TITLE_TERMS) and not any(
+        term in title for term in EXPERIENCE_FOOD_TERMS
+    )
+
+
 SearchFn = Callable[..., Tuple[List[Dict[str, Any]], bool]]
 
 
@@ -532,6 +547,8 @@ def rank_web_recs(
 
     # remove known junk (scam/warning/listicle pages) before scoring
     raw = [item for item in raw if not _is_junk_result(item)]
+    if mode == "experiences":
+        raw = [item for item in raw if not _is_food_venue_web_result(item)]
 
     # de-dup by canonical URL
     deduped: Dict[str, Dict[str, Any]] = {}
@@ -635,7 +652,7 @@ def rank_web_recs(
         "cached": False,
         "provider": "brave",
         "items": final,
-        "model_version": "v3-context-profile",
+        "model_version": "v4-mode-safe-diverse",
         "queries": [
             {
                 "query": to_search_string(gq),

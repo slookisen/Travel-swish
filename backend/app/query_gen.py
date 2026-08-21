@@ -405,6 +405,9 @@ NEGATIVE_KEYWORDS: Dict[Mode, List[str]] = {
         "tourist trap",
         "overpriced souvenir",
         "chain restaurant",
+        "bakery",
+        "coffee shop",
+        "restaurant list",
         "airport transfer only",
     ],
     "restaurants": [
@@ -456,10 +459,10 @@ _RESTAURANT_TEMPLATES: List[str] = [
 DIM_QUERIES: Dict[str, List[str]] = {
     "cul": ["{dest} museum", "{dest} art gallery", "{dest} historic site"],
     "nat": ["{dest} hiking trail", "{dest} national park", "{dest} viewpoint"],
-    "food": ["{dest} food market", "{dest} local restaurant", "{dest} street food"],
+    "food": ["{dest} food tour", "{dest} cooking class", "{dest} local food market"],
     "night": ["{dest} live music venue", "{dest} jazz bar", "{dest} rooftop bar"],
     "act": ["{dest} cycling route", "{dest} kayaking", "{dest} climbing wall"],
-    "lux": ["{dest} spa", "{dest} boutique hotel", "{dest} fine dining"],
+    "lux": ["{dest} spa experience", "{dest} private cultural tour", "{dest} premium day experience"],
     "adv": ["{dest} adventure tour", "{dest} rock climbing", "{dest} paragliding"],
     "soc": ["{dest} walking tour", "{dest} cooking class", "{dest} local event"],
     "spont": ["{dest} hidden gem", "{dest} off the beaten path", "{dest} local secret"],

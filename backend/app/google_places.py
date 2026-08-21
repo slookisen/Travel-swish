@@ -34,7 +34,17 @@ TYPE_TO_CAT = {
     "national_park": "nature",
     "beach": "nature",
     "restaurant": "restaurants",
+    "bakery": "bakery",
     "cafe": "coffee",
+    "coffee_shop": "coffee",
+    "brunch_restaurant": "brunch",
+    "breakfast_restaurant": "brunch",
+    "fast_food_restaurant": "streetfood",
+    "food_court": "food",
+    "meal_delivery": "restaurants",
+    "meal_takeaway": "restaurants",
+    "fine_dining_restaurant": "fine",
+    "bar_and_grill": "restaurants",
     "bar": "nightlife",
     "night_club": "nightlife",
     "spa": "wellness",
@@ -135,6 +145,9 @@ def _normalize(place: dict[str, Any]) -> dict[str, Any] | None:
         for t in types:
             if t in TYPE_TO_CAT:
                 cat = TYPE_TO_CAT[t]
+                break
+            if t.endswith("_restaurant"):
+                cat = "restaurants"
                 break
 
         summary = place.get("editorialSummary", {}).get("text", "")

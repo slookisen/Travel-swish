@@ -1,12 +1,18 @@
-# Travel Swish — V0.4.0 PWA + Capacitor
+# Travel Swipe — V0.5.0 PWA + Capacitor
 
-En forskningsinformert videreutvikling av Travel Swish. Konseptet er fortsatt kortbasert reiseoppdagelse, men profileringen er bygget om rundt tre separate lag:
+En forskningsinformert videreutvikling av Travel Swipe. Konseptet er fortsatt kortbasert reiseoppdagelse, men profileringen er bygget om rundt tre separate lag:
 
 1. **Turbrief** — følge, tempo, budsjett og ønsket grad av oppdagelse for akkurat denne turen.
 2. **Smaksprofil** — preferanser lært over tid, med usikkerhet per akse og asymmetrisk behandling av positive og negative signaler.
 3. **Kandidatvalg og rangering** — adaptive kort velges der modellen vet minst; anbefalinger bruker både smak og turkontekst.
 
 Testbygget inkluderer responsiv frontend, lagret norsk/engelsk språkvalg, migrerbar lokal profil, lagrede tips, eksplisitt resultatfeedback, Google Places-/Brave-integrasjon og kuraterte starttips med kilder og kartlenker når livesøk ikke svarer.
+
+V0.5 gir i tillegg en mobiltilpasset swipeflate som holder kort, svar og treffknapp på én skjerm. Stedstyper valideres mot valgt modus før personlig rangering, slik at matsteder ikke presenteres som opplevelser. Se [RELEASE_NOTES_V0.5.md](RELEASE_NOTES_V0.5.md).
+
+## Lagring og læringsdata
+
+Kortvalg og den varige profilen lagres lokalt i nettleseren/PWA-en. Når brukeren ber om tips, sendes den beregnede søkeprofilen og turbriefen til backend, som lagrer søkekjøringen. Uttrykkelig tilbakemelding på anbefalinger lagres også. Enkelt-swipes strømmes ikke fortløpende til en felles database.
 
 V0.4 legger til en installasjonsklar PWA med offline appskall, appikoner og mobiltilpassede safe areas. Det samme webbygget er konfigurert som native iOS- og Android-prosjekter med Capacitor. En bruker kan dele ett treff eller hele kortlisten gjennom telefonens delingsmeny. Delingen inneholder en markedsføringstekst, offentlig applenke med UTM-parametere og en egen sosial forhåndsvisning. Ingenting publiseres uten at brukeren selv velger app og bekrefter delingen.
 

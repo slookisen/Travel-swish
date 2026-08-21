@@ -24,6 +24,21 @@ def test_trip_budget_overrides_durable_luxury_for_places_queries() -> None:
     assert all("local hidden gem" in q.text_query for q in queries)
 
 
+def test_experience_queries_keep_food_taste_but_exclude_food_venues() -> None:
+    queries = build_queries(
+        destination="Oslo",
+        mode="experiences",
+        prefs={"food": 0.9, "lux": 0.8},
+        taste={"cats": {"food": 0.9, "luxury": 0.8}, "context": {}},
+        max_queries=6,
+        seed=3,
+    )
+
+    assert queries
+    assert all(q.included_type not in {"bakery", "cafe", "restaurant", "fine_dining_restaurant"} for q in queries)
+    assert all("restaurant" not in q.text_query.lower() for q in queries)
+
+
 def test_hidden_gem_context_changes_score_and_explanation() -> None:
     item = {
         "types": ["museum"],

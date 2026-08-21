@@ -10,7 +10,7 @@ export const UI_COPY = {
     nav: { home: 'Gå til start', saved: 'Lagret', profile: 'Smaksprofil' },
     pwa: {
       install: 'Installer app', installed: 'Appen er installert', installDismissed: 'Installasjonen ble avbrutt',
-      iosTitle: 'Legg Travel Swish på hjemskjermen', iosHelp: 'Trykk Del i Safari og velg «Legg til på Hjem-skjerm». Profilen og lagrede tips blir på denne enheten.',
+      iosTitle: 'Legg Travel Swipe på hjemskjermen', iosHelp: 'Trykk Del i Safari og velg «Legg til på Hjem-skjerm». Profilen og lagrede tips blir på denne enheten.',
     },
     landing: {
       saved: 'Lagret', profile: 'Min profil', kicker: 'ADAPTIV PROFIL · FÆRRE, BEDRE SPØRSMÅL',
@@ -53,6 +53,9 @@ export const UI_COPY = {
       deckDoneDesc: 'Profilen kan fortsatt justeres manuelt.', keyboard: 'Tastatur: ← ikke meg · ↓ usikker · ↑ ja · → elsker',
       dragHint: 'dra for å svare', verdictNo: 'IKKE MEG', verdictLove: 'ELSKER', answerAria: 'Svar på kortet',
       dislike: 'Ikke meg', unsure: 'Usikker', like: 'Ja', love: 'Elsker',
+      promptKicker: 'PROFILEN ER KLAR NOK', promptTitle: 'Vil du se treffene dine nå?',
+      promptLead: (destination: string) => `Du har gitt nok varierte svar til et godt første utvalg${destination ? ` i ${destination}` : ''}. Du kan alltid finjustere senere.`,
+      keepSwiping: 'Fortsett å finjustere', promptAction: 'Vis treffene nå',
     },
     profile: {
       kicker: 'TRANSPARENT PROFIL', title: 'Din smak, med rom for å endre mening.',
@@ -64,7 +67,7 @@ export const UI_COPY = {
       delete: 'Slett alle lokale data', moreCards: 'Svar på flere kort', find: 'Finn treff',
       confirmDelete: 'Vil du slette profil, lagrede tips og tilbakemeldinger på denne enheten?',
       panelKicker: 'LEVENDE PROFIL', learning: 'Dette lærer vi', areas: 'områder', strongest: 'Sterkeste kategorier',
-      open: 'Se og juster hele profilen →', privacy: 'Profilen ligger på denne enheten. Bare søkeprofilen sendes når du ber om tips.',
+      open: 'Se og juster hele profilen →', privacy: 'Kort-svarene blir på enheten. Søkeprofil og frivillig tilbakemelding sendes når du ber om tips.',
       empty: 'Svar på noen kort, så vokser profilen frem her.', adjustAxis: 'Juster', learnedAxis: 'Bruk lærte data for', confidence: 'sikker',
       confidenceStrong: 'tydelig signal', confidenceGrowing: 'på vei', confidenceExploring: 'utforsker',
     },
@@ -82,7 +85,7 @@ export const UI_COPY = {
       feedbackAria: 'Tilbakemelding på', helped: 'Hjalp tipset?', useful: 'Bra tips', irrelevant: 'Ikke relevant', visited: 'Har vært', wrong: 'Feil/stengt',
       shareResult: 'Del treff', shareResultAria: 'Del', shareList: 'Del mine treff', shareDialog: 'Del med venner',
       shareShared: 'Delingsvinduet er åpnet', shareCopied: 'Delingsteksten er kopiert',
-      shareManualTitle: 'Del Travel Swish', shareManualHelp: 'Kopier teksten og lim den inn der du vil dele.', copyShare: 'Kopier tekst', copied: 'Kopiert', close: 'Lukk',
+      shareManualTitle: 'Del Travel Swipe', shareManualHelp: 'Kopier teksten og lim den inn der du vil dele.', copyShare: 'Kopier tekst', copied: 'Kopiert', close: 'Lukk',
       matchExcellent: 'Svært sterkt treff', matchStrong: 'Sterkt treff', matchGood: 'Godt alternativ', matchExplore: 'Verdt å utforske',
     },
   },
@@ -91,7 +94,7 @@ export const UI_COPY = {
     nav: { home: 'Go to home', saved: 'Saved', profile: 'Taste profile' },
     pwa: {
       install: 'Install app', installed: 'The app is installed', installDismissed: 'Installation was dismissed',
-      iosTitle: 'Add Travel Swish to your Home Screen', iosHelp: 'Tap Share in Safari and choose “Add to Home Screen”. Your profile and saved tips stay on this device.',
+      iosTitle: 'Add Travel Swipe to your Home Screen', iosHelp: 'Tap Share in Safari and choose “Add to Home Screen”. Your profile and saved tips stay on this device.',
     },
     landing: {
       saved: 'Saved', profile: 'My profile', kicker: 'ADAPTIVE PROFILE · FEWER, BETTER QUESTIONS',
@@ -134,6 +137,9 @@ export const UI_COPY = {
       deckDoneDesc: 'You can still adjust the profile manually.', keyboard: 'Keyboard: ← not me · ↓ unsure · ↑ yes · → love it',
       dragHint: 'drag to answer', verdictNo: 'NOT ME', verdictLove: 'LOVE IT', answerAria: 'Answer the card',
       dislike: 'Not me', unsure: 'Unsure', like: 'Yes', love: 'Love it',
+      promptKicker: 'YOUR PROFILE IS READY', promptTitle: 'See your matches now?',
+      promptLead: (destination: string) => `You have given enough varied answers for a useful first selection${destination ? ` in ${destination}` : ''}. You can always refine it later.`,
+      keepSwiping: 'Keep refining', promptAction: 'Show matches now',
     },
     profile: {
       kicker: 'TRANSPARENT PROFILE', title: 'Your taste, with room to change your mind.',
@@ -145,7 +151,7 @@ export const UI_COPY = {
       delete: 'Delete all local data', moreCards: 'Answer more cards', find: 'Find matches',
       confirmDelete: 'Delete the profile, saved tips and feedback stored on this device?',
       panelKicker: 'LIVE PROFILE', learning: 'What we are learning', areas: 'areas', strongest: 'Strongest categories',
-      open: 'View and adjust the full profile →', privacy: 'The profile stays on this device. Only the search profile is sent when you request recommendations.',
+      open: 'View and adjust the full profile →', privacy: 'Card answers stay on this device. Your search profile and optional feedback are sent when you request recommendations.',
       empty: 'Answer a few cards and your profile will grow here.', adjustAxis: 'Adjust', learnedAxis: 'Use learned data for', confidence: 'confidence',
       confidenceStrong: 'clear signal', confidenceGrowing: 'taking shape', confidenceExploring: 'exploring',
     },
@@ -163,7 +169,7 @@ export const UI_COPY = {
       feedbackAria: 'Feedback on', helped: 'Was this useful?', useful: 'Good tip', irrelevant: 'Not relevant', visited: 'Visited', wrong: 'Wrong/closed',
       shareResult: 'Share match', shareResultAria: 'Share', shareList: 'Share my matches', shareDialog: 'Share with friends',
       shareShared: 'The share sheet is open', shareCopied: 'Share text copied',
-      shareManualTitle: 'Share Travel Swish', shareManualHelp: 'Copy the text and paste it wherever you want to share.', copyShare: 'Copy text', copied: 'Copied', close: 'Close',
+      shareManualTitle: 'Share Travel Swipe', shareManualHelp: 'Copy the text and paste it wherever you want to share.', copyShare: 'Copy text', copied: 'Copied', close: 'Close',
       matchExcellent: 'Excellent match', matchStrong: 'Strong match', matchGood: 'Good option', matchExplore: 'Worth exploring',
     },
   },
