@@ -77,6 +77,13 @@ test('swipe card fits the viewport and is visibly thrown aside', async ({ page }
 
 test('mobile swipe locks to the intended axis and surfaces results without scrolling', async ({ page }, testInfo) => {
   await page.setViewportSize({ width: 390, height: 844 });
+  await page.route('**/sessions', async (route) => route.fulfill({ status: 200, contentType: 'application/json', body: '{}' }));
+  await page.route('**/prefs', async (route) => route.fulfill({ status: 200, contentType: 'application/json', body: '{}' }));
+  await page.route('**/recs/web', async (route) => route.fulfill({
+    status: 200,
+    contentType: 'application/json',
+    body: JSON.stringify({ items: [{ id: 'mobile-1', name: 'Mobiltreff i Malaga', cat: 'culture', match: 88, why: 'Passer profilen.', source: 'google_places' }] }),
+  }));
   await openBrief(page);
   await page.getByPlaceholder('For eksempel Lisboa').fill('Malaga');
   await page.getByRole('button', { name: /Start kortene/ }).click();
@@ -113,6 +120,9 @@ test('mobile swipe locks to the intended axis and surfaces results without scrol
   await expect(page.getByRole('heading', { name: 'Vil du se treffene dine nå?' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Vis treffene nå' })).toBeVisible();
   await page.screenshot({ path: testInfo.outputPath('swipe-mobile-ready-prompt.png'), fullPage: true });
+  await page.getByRole('button', { name: 'Vis treffene nå' }).click();
+  await expect(page.getByText('Mobiltreff i Malaga')).toBeVisible();
+  await expect(page.locator('.app-modal--results')).toBeHidden();
 });
 
 test('ready profile remains balanced on a tall desktop', async ({ page }, testInfo) => {

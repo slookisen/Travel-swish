@@ -23,6 +23,6 @@ Vi har bevisst ikke slått på skjult analyseinnsamling. En senere analysefunksj
 
 ## Kvalitetskontroll
 
-- 60 backendtester
+- 61 backendtester
 - 11 Playwright-flyttester, inkludert 390 × 844 mobilvisning og gestens akselås
 - TypeScript typekontroll, kortaudit, profilkontroll, produksjonsbygg og PWA-kontroll

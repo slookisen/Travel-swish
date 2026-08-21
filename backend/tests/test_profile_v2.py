@@ -39,6 +39,20 @@ def test_experience_queries_keep_food_taste_but_exclude_food_venues() -> None:
     assert all("restaurant" not in q.text_query.lower() for q in queries)
 
 
+def test_supported_destination_gets_a_country_hint() -> None:
+    queries = build_queries(
+        destination="Malaga",
+        mode="experiences",
+        prefs={"nat": 0.8},
+        taste={"cats": {"nature": 0.8}, "context": {}},
+        max_queries=2,
+        seed=2,
+    )
+
+    assert queries
+    assert all("Málaga, Spain" in query.text_query for query in queries)
+
+
 def test_hidden_gem_context_changes_score_and_explanation() -> None:
     item = {
         "types": ["museum"],
