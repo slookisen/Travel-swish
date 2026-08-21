@@ -49,7 +49,7 @@ export function formatContext(context: TripContext, language: AppLanguage) {
 }
 
 export function Brand({ compact = false }: { compact?: boolean }) {
-  return <div className={`brand ${compact ? 'brand--compact' : ''}`}><span className="brand__mark">S</span><span>TRAVEL SWISH</span>{!compact && <em>V0.3 TEST</em>}</div>;
+  return <div className={`brand ${compact ? 'brand--compact' : ''}`}><span className="brand__mark">S</span><span>TRAVEL SWIPE</span>{!compact && <em>V0.5 TEST</em>}</div>;
 }
 
 export function LanguageSwitch({ dark = false }: { dark?: boolean }) {
@@ -162,8 +162,11 @@ export function SwipeCard({ card, onReact }: { card: Card; onReact: (reaction: R
   const cardRef = useRef<HTMLElement>(null);
   const startX = useRef(0);
   const startY = useRef(0);
+  const startTime = useRef(0);
   const dragXRef = useRef(0);
   const dragYRef = useRef(0);
+  const activePointer = useRef<number | null>(null);
+  const gestureAxis = useRef<'pending' | 'horizontal' | 'vertical'>('pending');
   const exitTimer = useRef<number | null>(null);
 
   useEffect(() => {
@@ -171,6 +174,8 @@ export function SwipeCard({ card, onReact }: { card: Card; onReact: (reaction: R
     setDragY(0);
     dragXRef.current = 0;
     dragYRef.current = 0;
+    activePointer.current = null;
+    gestureAxis.current = 'pending';
     setDragging(false);
     setExitDirection(null);
     return () => {
@@ -182,23 +187,42 @@ export function SwipeCard({ card, onReact }: { card: Card; onReact: (reaction: R
     if (exitDirection) return;
     startX.current = event.clientX;
     startY.current = event.clientY;
-    setDragging(true);
-    event.currentTarget.setPointerCapture(event.pointerId);
+    startTime.current = event.timeStamp;
+    activePointer.current = event.pointerId;
+    gestureAxis.current = 'pending';
   }
 
   function pointerMove(event: React.PointerEvent<HTMLElement>) {
-    if (!dragging || exitDirection) return;
+    if (activePointer.current !== event.pointerId || exitDirection || gestureAxis.current === 'vertical') return;
+    const deltaX = event.clientX - startX.current;
+    const deltaY = event.clientY - startY.current;
+
+    if (gestureAxis.current === 'pending') {
+      if (Math.hypot(deltaX, deltaY) < 10) return;
+      if (Math.abs(deltaY) > Math.abs(deltaX) * 1.08) {
+        resetDrag('vertical');
+        return;
+      }
+      if (Math.abs(deltaX) <= Math.abs(deltaY) * 1.08) return;
+      gestureAxis.current = 'horizontal';
+      setDragging(true);
+      event.currentTarget.setPointerCapture(event.pointerId);
+    }
+
+    if (gestureAxis.current !== 'horizontal') return;
+    event.preventDefault();
     const horizontalLimit = Math.max(300, window.innerWidth * .62);
-    const nextX = Math.max(-horizontalLimit, Math.min(horizontalLimit, event.clientX - startX.current));
-    const nextY = Math.max(-52, Math.min(52, (event.clientY - startY.current) * .34));
+    const nextX = Math.max(-horizontalLimit, Math.min(horizontalLimit, deltaX));
+    const nextY = Math.max(-42, Math.min(42, deltaY * .22));
     dragXRef.current = nextX;
     dragYRef.current = nextY;
     setDragX(nextX);
     setDragY(nextY);
   }
 
-  function resetDrag() {
+  function resetDrag(axis: 'pending' | 'vertical' = 'pending') {
     setDragging(false);
+    gestureAxis.current = axis;
     dragXRef.current = 0;
     dragYRef.current = 0;
     setDragX(0);
@@ -218,15 +242,25 @@ export function SwipeCard({ card, onReact }: { card: Card; onReact: (reaction: R
   }
 
   function pointerUp(event: React.PointerEvent<HTMLElement>) {
-    if (!dragging || exitDirection) return;
+    if (activePointer.current !== event.pointerId || exitDirection) return;
+    activePointer.current = null;
     if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId);
-    const threshold = Math.min(145, Math.max(86, (cardRef.current?.offsetWidth ?? 560) * .16));
-    if (dragXRef.current > threshold) throwCard('right');
-    else if (dragXRef.current < -threshold) throwCard('left');
+    if (gestureAxis.current !== 'horizontal') {
+      resetDrag();
+      return;
+    }
+    const cardWidth = cardRef.current?.offsetWidth ?? 560;
+    const threshold = Math.min(132, Math.max(68, cardWidth * .14));
+    const elapsed = Math.max(1, event.timeStamp - startTime.current);
+    const velocity = dragXRef.current / elapsed;
+    const fastThrow = Math.abs(dragXRef.current) > 34 && Math.abs(velocity) > .48;
+    if (dragXRef.current > threshold || (fastThrow && velocity > 0)) throwCard('right');
+    else if (dragXRef.current < -threshold || (fastThrow && velocity < 0)) throwCard('left');
     else resetDrag();
   }
 
   function pointerCancel() {
+    activePointer.current = null;
     if (!exitDirection) resetDrag();
   }
 

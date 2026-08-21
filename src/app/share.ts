@@ -17,18 +17,18 @@ export function resultSharePayload(item: ResultItem, destination: string, langua
   const appUrl = campaignUrl('result');
   const place = item.url ? `\n${language === 'en' ? 'Place' : 'Sted'}: ${item.url}` : '';
   const text = language === 'en'
-    ? `✨ ${item.name} is one of my Travel Swish matches in ${destination}.\n${item.why}${place}\n\nSwipe your way to personal travel, experience and food ideas:`
-    : `✨ ${item.name} er et av mine Travel Swish-treff i ${destination}.\n${item.why}${place}\n\nSveip deg frem til personlige tips om reiser, opplevelser og mat:`;
-  return { title: `Travel Swish · ${destination}`, text, url: appUrl };
+    ? `✨ ${item.name} is one of my Travel Swipe matches in ${destination}.\n${item.why}${place}\n\nSwipe your way to personal travel, experience and food ideas:`
+    : `✨ ${item.name} er et av mine Travel Swipe-treff i ${destination}.\n${item.why}${place}\n\nSveip deg frem til personlige tips om reiser, opplevelser og mat:`;
+  return { title: `Travel Swipe · ${destination}`, text, url: appUrl };
 }
 
 export function listSharePayload(items: ResultItem[], destination: string, language: AppLanguage) {
   const appUrl = campaignUrl('list');
   const list = items.slice(0, 6).map((item, index) => `${index + 1}. ${item.name}`).join('\n');
   const text = language === 'en'
-    ? `🗺️ My personal Travel Swish picks in ${destination}:\n\n${list}\n\nFind trips, experiences and food that feel like you:`
-    : `🗺️ Mine personlige Travel Swish-treff i ${destination}:\n\n${list}\n\nFinn reiser, opplevelser og mat som føles som deg:`;
-  return { title: `Travel Swish · ${destination}`, text, url: appUrl };
+    ? `🗺️ My personal Travel Swipe picks in ${destination}:\n\n${list}\n\nFind trips, experiences and food that feel like you:`
+    : `🗺️ Mine personlige Travel Swipe-treff i ${destination}:\n\n${list}\n\nFinn reiser, opplevelser og mat som føles som deg:`;
+  return { title: `Travel Swipe · ${destination}`, text, url: appUrl };
 }
 
 function wasCancelled(error: unknown) {

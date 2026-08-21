@@ -34,6 +34,8 @@ export default function App() {
   const [manualShareText, setManualShareText] = useState('');
   const [showInstallHelp, setShowInstallHelp] = useState(false);
   const [manualCopied, setManualCopied] = useState(false);
+  const [showResultsPrompt, setShowResultsPrompt] = useState(false);
+  const [dismissedPromptAt, setDismissedPromptAt] = useState(0);
   const pwaInstall = usePwaInstall();
 
   const cards = useMemo(() => getDeckCards(mode, language), [mode, language]);
@@ -58,6 +60,18 @@ export default function App() {
     const timer = window.setTimeout(() => setToast(''), 3200);
     return () => window.clearTimeout(timer);
   }, [toast]);
+
+  useEffect(() => {
+    document.body.classList.toggle('is-swipe-screen', screen === 'swipe');
+    return () => document.body.classList.remove('is-swipe-screen');
+  }, [screen]);
+
+  useEffect(() => {
+    if (screen !== 'swipe' || !profile.ready || profile.informativeCount < 6 || showResultsPrompt) return;
+    if (dismissedPromptAt === 0 || profile.informativeCount - dismissedPromptAt >= 6) {
+      setShowResultsPrompt(true);
+    }
+  }, [dismissedPromptAt, profile.informativeCount, profile.ready, screen, showResultsPrompt]);
 
   useEffect(() => {
     function onKey(event: KeyboardEvent) {
@@ -105,6 +119,7 @@ export default function App() {
     const cleanDestination = destination.trim();
     if (!cleanDestination) { setScreen('brief'); return; }
     setLoading(true);
+    setShowResultsPrompt(false);
     setResultNotice('');
     try {
       const response = await fetchRecommendations({ identity, mode, destination: cleanDestination, context, profile, language });
@@ -189,6 +204,7 @@ export default function App() {
     {toast && <div className="toast" role="status">{toast}</div>}
     {showInstallHelp && <div className="app-modal" role="dialog" aria-modal="true" aria-labelledby="install-help-title"><div className="app-modal__card"><h2 id="install-help-title">{copy.pwa.iosTitle}</h2><p>{copy.pwa.iosHelp}</p><div className="app-modal__actions"><button className="primary-button" onClick={() => setShowInstallHelp(false)}>{copy.results.close}</button></div></div></div>}
     {manualShareText && <div className="app-modal" role="dialog" aria-modal="true" aria-labelledby="share-manual-title"><div className="app-modal__card"><h2 id="share-manual-title">{copy.results.shareManualTitle}</h2><p>{copy.results.shareManualHelp}</p><textarea readOnly value={manualShareText} aria-label={copy.results.shareManualTitle} /><div className="app-modal__actions"><button className="secondary-button" onClick={() => setManualShareText('')}>{copy.results.close}</button><button className="primary-button" onClick={copyManualShare}>{manualCopied ? copy.results.copied : copy.results.copyShare}</button></div></div></div>}
+    {showResultsPrompt && <div className="app-modal app-modal--results" role="dialog" aria-modal="true" aria-labelledby="results-ready-title"><div className="app-modal__card"><p className="panel-kicker">{copy.swipe.promptKicker}</p><h2 id="results-ready-title">{copy.swipe.promptTitle}</h2><p>{copy.swipe.promptLead(destination)}</p><div className="app-modal__actions"><button className="secondary-button" onClick={() => { setDismissedPromptAt(profile.informativeCount); setShowResultsPrompt(false); }}>{copy.swipe.keepSwiping}</button><button className="primary-button" onClick={findMatches}>{copy.swipe.promptAction} <span>→</span></button></div></div></div>}
   </>;
 
   if (screen === 'landing') {
@@ -219,7 +235,7 @@ export default function App() {
   }
 
   return (
-    <><main className="app-shell">
+    <><main className={`app-shell ${screen === 'swipe' ? 'app-shell--swipe' : ''}`}>
       <AppHeader screen={screen} destination={destination} savedCount={savedItems.length} onHome={() => setScreen('landing')} onProfile={() => setScreen('profile')} onSaved={() => setScreen('saved')} canInstall={pwaInstall.canInstall} onInstall={handleInstall} />
 
       {screen === 'brief' && (
@@ -248,6 +264,7 @@ export default function App() {
             <div className="swipe-heading"><div><p className="eyebrow">{copy.swipe.kicker}</p><h1>{profile.ready ? copy.swipe.readyTitle : copy.swipe.questionTitle}</h1></div><div className="swipe-count"><b>{profile.informativeCount}</b><span>{copy.swipe.signals}</span></div></div>
             <div className="readiness-progress"><div><span style={{ width: `${Math.max(4, profile.readiness * 100)}%` }} /></div><p>{profile.ready ? copy.swipe.readyProgress : copy.swipe.learningProgress}</p></div>
             {currentCard ? <><SwipeCard key={`${language}-${currentCard.id}`} card={currentCard} onReact={recordReaction} /><ReactionControls onReact={recordReaction} /><p className="keyboard-hint">{copy.swipe.keyboard}</p></> : <div className="deck-finished panel"><span>✓</span><h2>{copy.swipe.deckDone}</h2><p>{copy.swipe.deckDoneDesc}</p></div>}
+            {profile.ready && <button className="mobile-results-cta" disabled={loading} onClick={findMatches}>{loading ? copy.swipe.searching : copy.swipe.seeMatches} <span>→</span></button>}
           </div>
           <div className="swipe-side">
             <LiveProfile profile={profile} onOpen={() => setScreen('profile')} />

@@ -76,7 +76,7 @@ export async function fetchRecommendations(input: {
     destination,
     context,
     profile_version: 2,
-    client_version: '0.3.0',
+    client_version: '0.5.0',
     ts: now,
   }), 9000).catch(() => undefined);
 

@@ -47,8 +47,8 @@ Velg team og bundle-ID i Xcode, og test først i simulator og deretter på fysis
 
 ## Deling som vekstmekanisme
 
-- **Del treff** deler navn, begrunnelse, eventuell stedlenke og Travel Swish-lenken.
-- **Del mine treff** deler inntil seks navn og Travel Swish-lenken.
+- **Del treff** deler navn, begrunnelse, eventuell stedlenke og Travel Swipe-lenken.
+- **Del mine treff** deler inntil seks navn og Travel Swipe-lenken.
 - Lenken bruker `utm_source=user_share`, `utm_medium=social` og egen campaign for enkeltresultat/kortliste.
 - På iOS/Android åpnes systemets delingsark. Bare apper brukeren har installert og som godtar innholdet vises.
 - Web Share brukes i støttede nettlesere; ellers kopieres teksten, med manuell kopi som siste sikkerhetsnett.

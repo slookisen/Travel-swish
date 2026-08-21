@@ -134,13 +134,13 @@ export function saveAppState(state: LocalAppState): void {
   if (typeof window === 'undefined') return;
   const parsed = appStateSchema.safeParse(state);
   if (!parsed.success) {
-    console.warn('Travel Swish: refused to persist invalid local state', parsed.error.issues);
+    console.warn('Travel Swipe: refused to persist invalid local state', parsed.error.issues);
     return;
   }
   try {
     localStorage.setItem(APP_STATE_KEY, JSON.stringify(parsed.data));
   } catch (error) {
-    console.warn('Travel Swish: local state could not be saved', error);
+    console.warn('Travel Swipe: local state could not be saved', error);
   }
 }
 

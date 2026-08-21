@@ -10,6 +10,27 @@ from .scorer import build_why, score_item
 
 log = logging.getLogger(__name__)
 
+FOOD_ONLY_TYPES = {
+    "bakery", "cafe", "coffee_shop", "food_court", "meal_delivery", "meal_takeaway",
+    "restaurant", "fine_dining_restaurant", "bar_and_grill",
+}
+FOOD_CATEGORIES = {"restaurants", "bakery", "coffee", "food", "streetfood", "fine", "brunch"}
+
+
+def _is_food_venue(item: Mapping[str, Any]) -> bool:
+    types = {str(place_type) for place_type in item.get("types", [])}
+    return bool(
+        types.intersection(FOOD_ONLY_TYPES)
+        or any(place_type.endswith("_restaurant") for place_type in types)
+        or str(item.get("cat") or "") in FOOD_CATEGORIES
+    )
+
+
+def _is_mode_appropriate(item: Mapping[str, Any], mode: str) -> bool:
+    if mode == "restaurants":
+        return _is_food_venue(item) or str(item.get("cat") or "") == "nightlife"
+    return not _is_food_venue(item)
+
 
 def rank_places_recs(
     *,
@@ -60,10 +81,7 @@ def rank_places_recs(
         except Exception as e:
             log.warning("places query failed: %s — %s", pq.text_query, e)
 
-    if mode == "restaurants":
-        all_items = [i for i in all_items if i.get("cat") in ("restaurants", "coffee", "food", "streetfood", "fine")]
-    else:
-        all_items = [i for i in all_items if i.get("cat") not in ("restaurants", "coffee")]
+    all_items = [item for item in all_items if _is_mode_appropriate(item, mode)]
 
     scored: list[dict[str, Any]] = []
     for item in all_items:
@@ -89,15 +107,13 @@ def rank_places_recs(
         "items": final,
         "cached": False,
         "provider": "google_places",
-        "model_version": "v5-context-profile",
+        "model_version": "v6-mode-safe-diverse",
         "queries": [q.to_dict() for q in queries],
     }
 
 
 def _diversify(items: list[dict[str, Any]], limit: int) -> list[dict[str, Any]]:
-    """Round-robin across categories to ensure diversity."""
-    if len(items) <= limit:
-        return items
+    """Round-robin categories and cap repeated venue types in the visible slate."""
 
     by_cat: dict[str, list[dict[str, Any]]] = {}
     for item in items:
@@ -106,6 +122,8 @@ def _diversify(items: list[dict[str, Any]], limit: int) -> list[dict[str, Any]]:
 
     result: list[dict[str, Any]] = []
     seen_ids: set[str] = set()
+    type_counts: dict[str, int] = {}
+    category_counts: dict[str, int] = {}
     cats = list(by_cat.keys())
 
     idx = 0
@@ -114,9 +132,17 @@ def _diversify(items: list[dict[str, Any]], limit: int) -> list[dict[str, Any]]:
         if by_cat.get(cat):
             item = by_cat[cat].pop(0)
             iid = item.get("id", "")
-            if iid not in seen_ids:
+            types = item.get("types") if isinstance(item.get("types"), list) else []
+            narrow_type = str(types[0] if types else item.get("primary_type") or cat)
+            if (
+                iid not in seen_ids
+                and type_counts.get(narrow_type, 0) < 2
+                and category_counts.get(cat, 0) < 3
+            ):
                 seen_ids.add(iid)
                 result.append(item)
+                type_counts[narrow_type] = type_counts.get(narrow_type, 0) + 1
+                category_counts[cat] = category_counts.get(cat, 0) + 1
         idx += 1
         if idx > limit * 10:
             break

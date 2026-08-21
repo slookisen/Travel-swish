@@ -1,4 +1,4 @@
-# Test Travel Swish V0.4.0
+# Test Travel Swipe V0.5.0
 
 ## Start appen
 
@@ -28,7 +28,7 @@ Deretter:
 8. Bytt til **Oslo** og **Mat og drikke**. Svar på noen kort og vurder om resultatene faktisk endrer karakter.
 9. Åpne **Smaksprofil**, flytt én akse manuelt, og lag et nytt utvalg.
 10. Bytt til **EN**. Kontroller landing, turbrief, kort, profil og resultater, og last siden på nytt for å sjekke at English huskes.
-11. Trykk **Del treff** på ett resultat. Kontroller at telefonens/nettleserens delingsvindu åpnes, og at teksten inneholder treffet og en Travel Swish-lenke.
+11. Trykk **Del treff** på ett resultat. Kontroller at telefonens/nettleserens delingsvindu åpnes, og at teksten inneholder treffet og en Travel Swipe-lenke.
 12. Trykk **Del mine treff** og kontroller at inntil seks resultater er med. Avbryt delingen og sjekk at ingenting blir publisert automatisk.
 13. Trykk **Delete all local data** til slutt dersom du vil starte neste test helt rent.
 

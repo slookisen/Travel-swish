@@ -210,7 +210,7 @@ const POPULAR_DESTS = Object.keys(DEST_DB_COORDS).map(k => DEST_DB_COORDS[k].nam
 
 const STRINGS = {
   no: {
-    title: 'Travel Swish',
+    title: 'Travel Swipe',
     landing: {
       hero: 'Finn opplevelser som handler om DEG',
       tagline: 'Sveip gjennom kort for å vise oss hvem du er. Få AI-drevne opplevelser perfekt personalisert.',
@@ -228,8 +228,8 @@ const STRINGS = {
       step2desc: '30 kort som avslører hvem du er',
       step3: 'Få resultater',
       step3desc: 'AI finner dine perfekte opplevelser',
-      about: 'Om Travel Swish',
-      aboutdesc: 'Travel Swish bruker kunstig intelligens og personlighetsanalyse for å finne opplevelser som virkelig passer DEG. Vi tror reiser handler om å bli kjent med seg selv gjennom nye opplevelser.',
+      about: 'Om Travel Swipe',
+      aboutdesc: 'Travel Swipe bruker kunstig intelligens og personlighetsanalyse for å finne opplevelser som virkelig passer DEG. Vi tror reiser handler om å bli kjent med seg selv gjennom nye opplevelser.',
       cta2: 'Start din reise nå',
     },
     home: {
@@ -305,7 +305,7 @@ const STRINGS = {
     }
   },
   en: {
-    title: 'Travel Swish',
+    title: 'Travel Swipe',
     landing: {
       hero: 'Find experiences that are about YOU',
       tagline: 'Swipe through cards to show us who you are. Get AI-powered experiences perfectly personalized.',
@@ -323,8 +323,8 @@ const STRINGS = {
       step2desc: '30 cards that reveal who you are',
       step3: 'Get results',
       step3desc: 'AI finds your perfect experiences',
-      about: 'About Travel Swish',
-      aboutdesc: 'Travel Swish uses artificial intelligence and personality analysis to find experiences that truly fit YOU. We believe travel is about discovering yourself through new experiences.',
+      about: 'About Travel Swipe',
+      aboutdesc: 'Travel Swipe uses artificial intelligence and personality analysis to find experiences that truly fit YOU. We believe travel is about discovering yourself through new experiences.',
       cta2: 'Start your journey now',
     },
     home: {
@@ -886,7 +886,7 @@ function LandingPage({ onStart, lang, onLangChange }) {
 
       {/* Footer */}
       <div style={{ padding: 'clamp(1rem, 3vh, 1.5rem)', textAlign: 'center', borderTop: `1px solid ${T.border}`, color: T.dim, fontSize: '0.8rem' }}>
-        Made with ❤️ by Travel Swish
+        Made with ❤️ by Travel Swipe
       </div>
     </div>
   );

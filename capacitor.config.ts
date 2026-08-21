@@ -2,7 +2,7 @@ import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
   appId: 'com.travelswish.app',
-  appName: 'Travel Swish',
+  appName: 'Travel Swipe',
   webDir: 'docs',
   backgroundColor: '#103f3b',
   server: { androidScheme: 'https' },

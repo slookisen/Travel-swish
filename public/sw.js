@@ -1,4 +1,4 @@
-const CACHE_NAME = 'travel-swish-v0.4.0';
+const CACHE_NAME = 'travel-swipe-v0.5.0';
 const APP_SHELL = [
   './',
   './manifest.webmanifest',

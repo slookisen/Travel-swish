@@ -75,6 +75,46 @@ test('swipe card fits the viewport and is visibly thrown aside', async ({ page }
   await page.screenshot({ path: testInfo.outputPath('swipe-mobile.png'), fullPage: true });
 });
 
+test('mobile swipe locks to the intended axis and surfaces results without scrolling', async ({ page }, testInfo) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await openBrief(page);
+  await page.getByPlaceholder('For eksempel Lisboa').fill('Malaga');
+  await page.getByRole('button', { name: /Start kortene/ }).click();
+
+  const card = page.locator('.swipe-card:not(.swipe-card--behind)');
+  const firstQuestion = await card.locator('.swipe-card__copy h1').innerText();
+  const cardBox = await card.boundingBox();
+  const centerX = cardBox!.x + cardBox!.width / 2;
+  const centerY = cardBox!.y + cardBox!.height / 2;
+
+  await page.mouse.move(centerX, centerY);
+  await page.mouse.down();
+  await page.mouse.move(centerX + 5, centerY + 110, { steps: 6 });
+  await page.mouse.up();
+  await expect(card.locator('.swipe-card__copy h1')).toHaveText(firstQuestion);
+  await expect(card).not.toHaveClass(/is-dragging/);
+
+  await page.mouse.move(centerX, centerY);
+  await page.mouse.down();
+  await page.mouse.move(centerX + 145, centerY + 10, { steps: 7 });
+  await page.mouse.up();
+  await expect.poll(() => card.locator('.swipe-card__copy h1').innerText()).not.toBe(firstQuestion);
+
+  for (let index = 0; index < 4; index += 1) await page.getByRole('button', { name: 'Ja' }).click();
+  const resultsButton = page.locator('.mobile-results-cta');
+  await expect(resultsButton).toBeVisible();
+  const controlsBox = await page.locator('.reaction-controls').boundingBox();
+  const resultsBox = await resultsButton.boundingBox();
+  expect(controlsBox!.y + controlsBox!.height).toBeLessThanOrEqual(844);
+  expect(resultsBox!.y + resultsBox!.height).toBeLessThanOrEqual(844);
+  expect(await page.evaluate(() => ({ scrollY: window.scrollY, overflow: getComputedStyle(document.body).overflow }))).toEqual({ scrollY: 0, overflow: 'hidden' });
+
+  await page.getByRole('button', { name: 'Ja' }).click();
+  await expect(page.getByRole('heading', { name: 'Vil du se treffene dine nå?' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Vis treffene nå' })).toBeVisible();
+  await page.screenshot({ path: testInfo.outputPath('swipe-mobile-ready-prompt.png'), fullPage: true });
+});
+
 test('ready profile remains balanced on a tall desktop', async ({ page }, testInfo) => {
   await page.setViewportSize({ width: 1577, height: 937 });
   await openBrief(page);
@@ -218,7 +258,7 @@ test('a result is shared with a trackable marketing link', async ({ page }) => {
 
   await expect(page.getByText(/Delingsvinduet er åpnet/)).toBeVisible();
   const shared = await page.evaluate(() => (window as typeof window & { __shared?: ShareData }).__shared);
-  expect(shared?.title).toContain('Travel Swish');
+  expect(shared?.title).toContain('Travel Swipe');
   expect(shared?.text).toContain('Solnedgang over Alfama');
   expect(shared?.text).toContain('Sveip deg frem');
   expect(shared?.url).toContain('utm_source=user_share');
