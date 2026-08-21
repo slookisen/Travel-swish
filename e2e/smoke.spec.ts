@@ -1,157 +1,244 @@
 import { test, expect } from '@playwright/test';
 
-test('loads landing without blank screen', async ({ page }) => {
-  await page.goto('/?mock=1');
-  await expect(page.getByText('Swipe → plan → book')).toBeVisible();
-  await expect(page.getByRole('button', { name: /Kom i gang|Get started|Kom igång/i })).toBeVisible();
-});
+async function openBrief(page: import('@playwright/test').Page) {
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Finn min reisestil' }).click();
+}
 
-test('home guard rails: cannot start without destination', async ({ page }) => {
-  await page.goto('/?mock=1');
-  await page.getByRole('button', { name: /Kom i gang|Get started|Kom igång/i }).click();
-
-  await expect(page.getByPlaceholder(/Barcelona|Stockholm|Tokyo/i)).toBeVisible();
-
-  // Start button is disabled until destination is provided; verify the guard message appears.
-  const startBtn = page.getByRole('button', { name: /^Start\b/i }).first();
-  await expect(startBtn).toBeDisabled();
-
-  // App shows an inline validation hint.
-  await expect(
-    page.getByText(/Destinasjon mangler|Destination required|Destination krävs|Enter a destination to get started/i)
-  ).toBeVisible();
-});
-
-test('swipe -> find suggestions -> results render (mock mode)', async ({ page }) => {
-  await page.goto('/?mock=1');
-  await page.getByRole('button', { name: /Kom i gang|Get started|Kom igång/i }).click();
-
-  // Destination (label isn't associated with input via for/id)
-  await expect(page.getByPlaceholder(/Barcelona|Stockholm|Tokyo/i)).toBeVisible();
-  await page.getByPlaceholder(/Barcelona|Stockholm|Tokyo/i).fill('Oslo');
-
-  // Start selected mode (avoid matching "Get started")
-  await page.getByRole('button', { name: /^Start\b/i }).first().click();
-
-  // Swipe 10 cards quickly (keyboard is more reliable than clicking during animations)
-  await page.getByText(/Dra ←\/→|Drag ←\/→/i).click();
-  for (let i = 0; i < 10; i++) {
+async function buildReadyProfile(page: import('@playwright/test').Page) {
+  await page.getByPlaceholder('For eksempel Lisboa').fill('Lisboa');
+  await page.getByRole('button', { name: /Start kortene/ }).click();
+  for (let index = 0; index < 12; index += 1) {
+    const ready = page.getByRole('button', { name: /Se mine treff/ });
+    if (await ready.isEnabled().catch(() => false)) return;
     await page.keyboard.press('ArrowRight');
-    await page.waitForTimeout(350);
   }
+}
 
-  const findBtn = page.getByRole('button', { name: /Finn forslag|Find suggestions|Hitta förslag/i });
-  await expect(findBtn).toBeEnabled({ timeout: 30_000 });
-  await findBtn.click();
-
-  // Results page should contain mock items and "Hvorfor" expandable.
-  await expect(page.getByText(/Mock mode/i).first()).toBeVisible();
-  await expect(page.getByText(/Mock:/i).first()).toBeVisible();
-  await expect(page.getByRole('button', { name: /Finn flere|Find more|Hitta fler/i })).toBeVisible();
-  await expect(page.getByText(/Hvorfor|Why|Varför/i).first()).toBeVisible();
+test('landing presents the V2 value proposition', async ({ page }) => {
+  await page.goto('/');
+  await expect(page.getByText('Reiser som føles')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Finn min reisestil' })).toBeVisible();
+  await expect(page.getByText('Turbrief først')).toBeVisible();
 });
 
-test('backend timeout -> cold-start notice + retry recovers', async ({ page }) => {
-  // App default BACKEND_URL on localhost is http://127.0.0.1:8787.
-  // We mock CORS + responses here so we can deterministically hit the client-side "timeout" path.
-  const backendHostRe = /\/\/(127\.0\.0\.1|localhost):8787\//;
+test('trip brief keeps destination as a guard rail', async ({ page }) => {
+  await openBrief(page);
+  await expect(page.getByPlaceholder('For eksempel Lisboa')).toBeVisible();
+  await expect(page.getByRole('button', { name: /Start kortene/ })).toBeDisabled();
+  await page.getByPlaceholder('For eksempel Lisboa').fill('Oslo');
+  await expect(page.getByRole('button', { name: /Start kortene/ })).toBeEnabled();
+});
 
-  const corsHeaders = {
-    'access-control-allow-origin': '*',
-    'access-control-allow-methods': 'POST, OPTIONS',
-    'access-control-allow-headers': '*',
-  };
+test('swipe card fits the viewport and is visibly thrown aside', async ({ page }, testInfo) => {
+  await openBrief(page);
+  await page.getByPlaceholder('For eksempel Lisboa').fill('Lisboa');
+  await page.getByRole('button', { name: /Start kortene/ }).click();
 
-  let prefsPosts = 0;
-  await page.route('**/prefs', async (route) => {
-    const req = route.request();
-    const url = req.url();
-    if (!backendHostRe.test(url)) return route.continue();
+  const card = page.locator('.swipe-card:not(.swipe-card--behind)');
+  const firstQuestion = await card.locator('.swipe-card__copy h1').innerText();
+  const cardBox = await card.boundingBox();
+  const viewport = page.viewportSize();
+  expect(cardBox).not.toBeNull();
+  expect(viewport).not.toBeNull();
+  expect(cardBox!.x).toBeGreaterThanOrEqual(0);
+  expect(cardBox!.x + cardBox!.width).toBeLessThanOrEqual(viewport!.width);
+  expect(cardBox!.y + cardBox!.height).toBeLessThanOrEqual(viewport!.height);
 
-    if (req.method() === 'OPTIONS') {
-      return route.fulfill({ status: 204, headers: corsHeaders, body: '' });
-    }
+  const meta = card.locator('.swipe-card__meta');
+  const metaBox = await meta.boundingBox();
+  expect(metaBox!.x).toBeGreaterThan(cardBox!.x + 20);
+  expect(metaBox!.x + metaBox!.width).toBeLessThan(cardBox!.x + cardBox!.width - 20);
 
-    prefsPosts += 1;
+  await page.screenshot({ path: testInfo.outputPath('swipe-desktop.png'), fullPage: true });
+  await page.mouse.move(cardBox!.x + cardBox!.width / 2, cardBox!.y + cardBox!.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(cardBox!.x + cardBox!.width / 2 + 260, cardBox!.y + cardBox!.height / 2 + 24, { steps: 8 });
+  await expect(card).toHaveClass(/is-dragging/);
+  await page.mouse.up();
+  await expect(card).toHaveClass(/is-exiting/);
+  await page.waitForTimeout(140);
+  const exitBox = await card.boundingBox();
+  expect(exitBox!.x).toBeGreaterThan(cardBox!.x + 250);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(viewport!.width);
+  await page.screenshot({ path: testInfo.outputPath('swipe-throw.png'), fullPage: true });
+  await expect.poll(() => card.locator('.swipe-card__copy h1').innerText()).not.toBe(firstQuestion);
+  await expect(card).not.toHaveClass(/is-exiting/);
 
-    // First /prefs POST: return an explicit "Timeout" error so the app treats it as cold-start.
-    if (prefsPosts === 1) {
-      return route.fulfill({
-        status: 504,
-        headers: { ...corsHeaders, 'content-type': 'application/json' },
-        body: JSON.stringify({ detail: 'Timeout' }),
-      });
-    }
+  await page.setViewportSize({ width: 390, height: 667 });
+  const mobileBox = await card.boundingBox();
+  expect(mobileBox!.x).toBeGreaterThanOrEqual(0);
+  expect(mobileBox!.x + mobileBox!.width).toBeLessThanOrEqual(390);
+  expect(mobileBox!.y + mobileBox!.height).toBeLessThanOrEqual(667);
+  const mobileControls = await page.locator('.reaction-controls').boundingBox();
+  expect(mobileControls!.y + mobileControls!.height).toBeLessThanOrEqual(667);
+  await page.screenshot({ path: testInfo.outputPath('swipe-mobile.png'), fullPage: true });
+});
 
-    // Retry /prefs: succeed.
-    return route.fulfill({
-      status: 200,
-      headers: { ...corsHeaders, 'content-type': 'application/json' },
-      body: JSON.stringify({ ok: true }),
-    });
+test('ready profile remains balanced on a tall desktop', async ({ page }, testInfo) => {
+  await page.setViewportSize({ width: 1577, height: 937 });
+  await openBrief(page);
+  await page.getByPlaceholder('For eksempel Lisboa').fill('Malaga');
+  await page.getByRole('button', { name: /Start kortene/ }).click();
+  for (let index = 0; index < 14; index += 1) await page.keyboard.press('ArrowRight');
+
+  const heading = page.getByRole('heading', { name: 'Profilen er klar.' });
+  await expect(heading).toBeVisible();
+  const headingBox = await heading.boundingBox();
+  expect(headingBox!.height).toBeLessThan(70);
+
+  const card = page.locator('.swipe-card:not(.swipe-card--behind)');
+  const cardBox = await card.boundingBox();
+  const controlsBox = await page.locator('.reaction-controls').boundingBox();
+  const emojiBox = await card.locator('.swipe-card__emoji').boundingBox();
+  const copyBox = await card.locator('.swipe-card__copy').boundingBox();
+  expect(cardBox!.y + cardBox!.height).toBeLessThan(827);
+  expect(controlsBox!.y + controlsBox!.height).toBeLessThanOrEqual(920);
+  expect(copyBox!.y - (emojiBox!.y + emojiBox!.height)).toBeLessThan(55);
+
+  const lastHeaderAction = page.locator('.app-header__right').locator('button').last();
+  const lastHeaderBox = await lastHeaderAction.boundingBox();
+  expect(lastHeaderBox!.x + lastHeaderBox!.width).toBeLessThanOrEqual(1577);
+  expect(await page.evaluate(() => ({ scrollX: window.scrollX, width: document.documentElement.scrollWidth }))).toEqual({ scrollX: 0, width: 1577 });
+  await page.screenshot({ path: testInfo.outputPath('swipe-ready-desktop.png'), fullPage: true });
+});
+
+test('adaptive profiling sends V2 taste and renders live results', async ({ page }) => {
+  let recsBody: Record<string, unknown> | null = null;
+  await page.route('**/sessions', async (route) => {
+    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true }) });
   });
-
-  let recsPosts = 0;
+  await page.route('**/prefs', async (route) => {
+    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true }) });
+  });
   await page.route('**/recs/web', async (route) => {
-    const req = route.request();
-    const url = req.url();
-    if (!backendHostRe.test(url)) return route.continue();
-
-    if (req.method() === 'OPTIONS') {
-      return route.fulfill({ status: 204, headers: corsHeaders, body: '' });
-    }
-
-    recsPosts += 1;
-    return route.fulfill({
+    recsBody = route.request().postDataJSON();
+    await route.fulfill({
       status: 200,
-      headers: { ...corsHeaders, 'content-type': 'application/json' },
+      contentType: 'application/json',
       body: JSON.stringify({
-        items: [
-          {
-            id: 'live_1',
-            name: 'Live: Backend suggestion',
-            url: 'https://example.com/live',
-            cat: 'Experience',
-            match: 91,
-            why: 'Injected by Playwright route (retry success).',
-            source: 'e2e',
-            snippet: 'Live payload from mocked backend.',
-            domain: 'example.com',
-            query_source: 'playwright',
-          },
-        ],
+        items: [{
+          id: 'live-1',
+          name: 'Live: Alfama morning walk',
+          cat: 'culture',
+          match: 91,
+          why: 'Culture · fits your hidden-gem brief',
+          url: 'https://example.com/alfama',
+        }],
       }),
     });
   });
 
-  // Run the real (non-mock) flow to trigger backend calls.
+  await openBrief(page);
+  await page.getByRole('button', { name: 'Skjulte funn' }).click();
+  await buildReadyProfile(page);
+  const findButton = page.getByRole('button', { name: /Se mine treff/ });
+  await expect(findButton).toBeEnabled();
+  await findButton.click();
+
+  await expect(page.getByText('Live: Alfama morning walk')).toBeVisible();
+  expect(recsBody).not.toBeNull();
+  const taste = recsBody?.taste as Record<string, unknown>;
+  expect(taste.version).toBe(2);
+  expect((taste.context as Record<string, unknown>).discovery).toBe('hidden');
+});
+
+test('failed live search falls back to sourced, actionable starter tips', async ({ page }) => {
+  await page.route('**/sessions', async (route) => route.abort());
+  await page.route('**/prefs', async (route) => route.abort());
+  await page.route('**/recs/web', async (route) => route.abort());
+  await openBrief(page);
+  await buildReadyProfile(page);
+  await page.getByRole('button', { name: /Se mine treff/ }).click();
+
+  await expect(page.getByText(/Livesøket svarte ikke/)).toBeVisible();
+  await expect(page.getByText('Kurert starttips').first()).toBeVisible();
+  await expect(page.getByRole('link', { name: /Søk i kart/ }).first()).toHaveAttribute('href', /google\.com\/maps/);
+});
+
+test('English changes the full interface and persists after reload', async ({ page }) => {
   await page.goto('/');
-  await page.getByRole('button', { name: /Kom i gang|Get started|Kom igång/i }).click();
+  await page.getByRole('group', { name: 'Språk' }).getByRole('button', { name: 'EN' }).click();
+  await expect(page.getByRole('button', { name: 'Find my travel style' })).toBeVisible();
+  await expect(page.locator('html')).toHaveAttribute('lang', 'en');
 
-  await expect(page.getByPlaceholder(/Barcelona|Stockholm|Tokyo/i)).toBeVisible();
-  await page.getByPlaceholder(/Barcelona|Stockholm|Tokyo/i).fill('Oslo');
-  await page.getByRole('button', { name: /^Start\b/i }).first().click();
+  await page.reload();
+  await expect(page.getByRole('button', { name: 'Find my travel style' })).toBeVisible();
+  await page.getByRole('button', { name: 'Find my travel style' }).click();
+  await expect(page.getByPlaceholder('For example Lisbon')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Start the cards' })).toBeDisabled();
+  await page.getByPlaceholder('For example Lisbon').fill('Lisbon');
+  await page.getByRole('button', { name: 'Start the cards' }).click();
+  await expect(page.getByText('ADAPTIVE PROFILING')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Love it' })).toBeVisible();
+  await expect(page.locator('.swipe-card__copy h1')).not.toContainText(/[æøå]/i);
+});
 
-  await page.getByText(/Dra ←\/→|Drag ←\/→/i).click();
-  for (let i = 0; i < 10; i++) {
-    await page.keyboard.press('ArrowRight');
-    await page.waitForTimeout(350);
-  }
+test('saved result and explicit feedback survive a reload', async ({ page }) => {
+  await page.route('**/sessions', async (route) => route.fulfill({ status: 200, contentType: 'application/json', body: '{}' }));
+  await page.route('**/prefs', async (route) => route.fulfill({ status: 200, contentType: 'application/json', body: '{}' }));
+  await page.route('**/feedback', async (route) => route.fulfill({ status: 200, contentType: 'application/json', body: '{}' }));
+  await page.route('**/recs/web', async (route) => route.fulfill({
+    status: 200,
+    contentType: 'application/json',
+    body: JSON.stringify({ run_id: 'run-save', provider: 'google_places', items: [{ id: 'save-1', name: 'Teststed i Oslo', cat: 'culture', match: 84, why: 'Passer kulturprofilen.', url: 'https://example.com/place', source: 'google_places' }] }),
+  }));
+  await openBrief(page);
+  await buildReadyProfile(page);
+  await page.getByRole('button', { name: /Se mine treff/ }).click();
+  await page.getByRole('button', { name: 'Lagre Teststed i Oslo' }).click();
+  await page.getByRole('button', { name: 'Bra tips' }).click();
+  await expect(page.getByRole('button', { name: 'Bra tips' })).toHaveAttribute('aria-pressed', 'true');
 
-  const findBtn = page.getByRole('button', { name: /Finn forslag|Find suggestions|Hitta förslag/i });
-  await expect(findBtn).toBeEnabled({ timeout: 30_000 });
-  await findBtn.click();
+  await page.reload();
+  await page.getByRole('button', { name: /Lagret \(1\)/ }).click();
+  await expect(page.getByText('Teststed i Oslo')).toBeVisible();
+});
 
-  // After the forced timeout, the app should show a cold-start notice and still render demo results.
-  await expect(page.getByText(/cold start/i)).toBeVisible({ timeout: 30_000 });
-  const tryAgainBtn = page.getByRole('button', { name: /Prøv igjen|Try again|Försök igen/i });
-  await expect(tryAgainBtn).toBeVisible();
+test('a result is shared with a trackable marketing link', async ({ page }) => {
+  await page.addInitScript(() => {
+    Object.defineProperty(navigator, 'canShare', { configurable: true, value: () => true });
+    Object.defineProperty(navigator, 'share', {
+      configurable: true,
+      value: async (payload: ShareData) => { (window as typeof window & { __shared?: ShareData }).__shared = payload; },
+    });
+  });
+  await page.route('**/sessions', async (route) => route.fulfill({ status: 200, contentType: 'application/json', body: '{}' }));
+  await page.route('**/prefs', async (route) => route.fulfill({ status: 200, contentType: 'application/json', body: '{}' }));
+  await page.route('**/recs/web', async (route) => route.fulfill({
+    status: 200,
+    contentType: 'application/json',
+    body: JSON.stringify({ items: [{ id: 'share-1', name: 'Solnedgang over Alfama', cat: 'culture', match: 93, why: 'Passer oppdagelsesprofilen din.', url: 'https://example.com/alfama', source: 'google_places' }] }),
+  }));
 
-  // Retry should succeed and show the mocked live item, with the notice cleared.
-  await tryAgainBtn.click();
-  await expect(page.getByText('Live: Backend suggestion')).toBeVisible({ timeout: 30_000 });
-  await expect(page.getByText(/cold start/i)).toHaveCount(0);
+  await openBrief(page);
+  await buildReadyProfile(page);
+  await page.getByRole('button', { name: /Se mine treff/ }).click();
+  await page.getByRole('button', { name: 'Del Solnedgang over Alfama' }).click();
 
-  expect(prefsPosts).toBeGreaterThanOrEqual(2);
-  expect(recsPosts).toBe(1);
+  await expect(page.getByText(/Delingsvinduet er åpnet/)).toBeVisible();
+  const shared = await page.evaluate(() => (window as typeof window & { __shared?: ShareData }).__shared);
+  expect(shared?.title).toContain('Travel Swish');
+  expect(shared?.text).toContain('Solnedgang over Alfama');
+  expect(shared?.text).toContain('Sveip deg frem');
+  expect(shared?.url).toContain('utm_source=user_share');
+  expect(shared?.url).toContain('utm_campaign=shared_result');
+});
+
+test('the PWA install action uses the browser install prompt', async ({ page }) => {
+  await page.goto('/');
+  await page.evaluate(() => {
+    const installEvent = new Event('beforeinstallprompt') as Event & {
+      prompt: () => Promise<void>;
+      userChoice: Promise<{ outcome: 'accepted'; platform: string }>;
+    };
+    installEvent.prompt = async () => { (window as typeof window & { __installPrompted?: boolean }).__installPrompted = true; };
+    installEvent.userChoice = Promise.resolve({ outcome: 'accepted', platform: 'web' });
+    window.dispatchEvent(installEvent);
+  });
+
+  const installButton = page.getByRole('button', { name: /Installer app/ });
+  await expect(installButton).toBeVisible();
+  await installButton.click();
+  await expect.poll(() => page.evaluate(() => (window as typeof window & { __installPrompted?: boolean }).__installPrompted)).toBe(true);
 });

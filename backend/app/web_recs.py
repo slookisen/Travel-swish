@@ -73,6 +73,7 @@ def _cache_key(
     search_lang: str | None,
     freshness: str | None,
     safesearch: str,
+    taste: Mapping[str, Any] | None = None,
 ) -> str:
     raw = "\n".join(
         [
@@ -88,9 +89,50 @@ def _cache_key(
             f"lang={search_lang}",
             f"fresh={freshness}",
             f"safe={safesearch}",
+            f"taste={_prefs_hash(taste or {})}",
         ]
     )
     return _sha1(raw)
+
+
+def _apply_trip_context(
+    queries: List[GeneratedQuery],
+    taste: Mapping[str, Any] | None,
+) -> List[GeneratedQuery]:
+    context = taste.get("context", {}) if isinstance(taste, Mapping) else {}
+    if not isinstance(context, Mapping):
+        return queries
+
+    terms: List[str] = []
+    extra_negatives: List[str] = []
+    if context.get("party") == "family":
+        terms.append("family friendly")
+        extra_negatives.extend(["adults only", "nightclub"])
+    elif context.get("party") == "couple":
+        terms.append("good for couples")
+    if context.get("pace") == "slow":
+        terms.append("relaxed")
+    if context.get("budget") == "value":
+        terms.append("good value")
+    elif context.get("budget") == "premium":
+        terms.append("premium")
+    if context.get("discovery") == "hidden":
+        terms.append("local hidden gem")
+    elif context.get("discovery") == "icons":
+        terms.append("iconic")
+
+    if not terms and not extra_negatives:
+        return queries
+    prefix = " ".join(terms)
+    return [
+        GeneratedQuery(
+            query=f"{prefix} {query.query}".strip(),
+            weight=query.weight,
+            source=query.source,
+            negatives=list(dict.fromkeys(list(query.negatives) + extra_negatives)),
+        )
+        for query in queries
+    ]
 
 
 _TRACKING_QS_KEYS = {
@@ -396,6 +438,7 @@ def rank_web_recs(
     mode: str,
     destination: str,
     prefs: Mapping[str, Any],
+    taste: Mapping[str, Any] | None = None,
     limit: int = 20,
     max_queries: int = 5,
     per_query: int = 7,
@@ -435,6 +478,7 @@ def rank_web_recs(
         search_lang,
         freshness,
         safesearch,
+        taste,
     )
     now = time.time()
     ent = _WEB_RECS_CACHE.get(ck)
@@ -459,6 +503,7 @@ def rank_web_recs(
         max_queries=max_queries,
         seed=seed,
     )
+    gqs = _apply_trip_context(gqs, taste)
 
     # collect raw results (annotated by query source)
     raw: List[Dict[str, Any]] = []
@@ -588,8 +633,9 @@ def rank_web_recs(
     payload = {
         "ok": True,
         "cached": False,
+        "provider": "brave",
         "items": final,
-        "model_version": "v2-web-ranker",
+        "model_version": "v3-context-profile",
         "queries": [
             {
                 "query": to_search_string(gq),

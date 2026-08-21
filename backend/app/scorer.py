@@ -80,6 +80,50 @@ def _cosine_sim(a: dict[str, float], b: dict[str, float]) -> float:
     return dot / (mag_a * mag_b)
 
 
+def _context_adjustment(item: Mapping[str, Any], taste: dict[str, Any] | None) -> float:
+    """Small, bounded trip-level adjustment kept separate from durable taste."""
+    if not taste or not isinstance(taste.get("context"), dict):
+        return 0.0
+
+    context = taste["context"]
+    types = {str(value) for value in item.get("types", [])}
+    rating_count = int(item.get("rating_count") or 0)
+    price_level = str(item.get("price_level") or "")
+    adjustment = 0.0
+
+    discovery = context.get("discovery")
+    if discovery == "hidden":
+        if 30 <= rating_count <= 600:
+            adjustment += 0.09
+        elif rating_count > 5000:
+            adjustment -= 0.05
+    elif discovery == "icons" and rating_count >= 1500:
+        adjustment += 0.06
+
+    budget = context.get("budget")
+    expensive = price_level in {"PRICE_LEVEL_EXPENSIVE", "PRICE_LEVEL_VERY_EXPENSIVE"}
+    inexpensive = price_level in {"PRICE_LEVEL_FREE", "PRICE_LEVEL_INEXPENSIVE", "PRICE_LEVEL_MODERATE"}
+    if budget == "value" and expensive:
+        adjustment -= 0.12
+    elif budget == "value" and inexpensive:
+        adjustment += 0.05
+    elif budget == "premium" and expensive:
+        adjustment += 0.07
+
+    if context.get("party") == "family":
+        if types & {"amusement_park", "park", "museum", "aquarium", "zoo"}:
+            adjustment += 0.05
+        if types & {"night_club", "bar"}:
+            adjustment -= 0.12
+
+    if context.get("pace") == "slow" and types & {"spa", "park", "botanical_garden", "museum"}:
+        adjustment += 0.04
+    elif context.get("pace") == "full" and types & {"hiking_area", "adventure_sports_center", "sports_center"}:
+        adjustment += 0.04
+
+    return max(-0.16, min(0.14, adjustment))
+
+
 def score_item(item: Mapping[str, Any], prefs: dict[str, float], taste: dict[str, Any] | None = None) -> float:
     item_vec = _item_vector(item)
     cos = _cosine_sim(item_vec, prefs)
@@ -116,17 +160,25 @@ def score_item(item: Mapping[str, Any], prefs: dict[str, float], taste: dict[str
         elif rating_count < 30 and rating >= 4.5:
             novelty = spont_score * 0.4
 
-    final = cos * 0.45 + cat_boost * 0.20 + quality * 0.20 + novelty * 0.15
+    context_adjustment = _context_adjustment(item, taste)
+    final = cos * 0.45 + cat_boost * 0.20 + quality * 0.20 + novelty * 0.15 + context_adjustment
     return max(0.0, min(1.0, final))
 
 
-def build_why(item: Mapping[str, Any], prefs: dict[str, float], taste: dict[str, Any] | None = None) -> str:
+def build_why(
+    item: Mapping[str, Any],
+    prefs: dict[str, float],
+    taste: dict[str, Any] | None = None,
+    *,
+    language: str = "en",
+) -> str:
     parts: list[str] = []
 
     rating = item.get("rating")
     rating_count = item.get("rating_count", 0)
     if rating and rating_count:
-        parts.append(f"⭐ {float(rating):.1f} ({int(rating_count):,} reviews)")
+        review_label = "omtaler" if language == "no" else "reviews"
+        parts.append(f"⭐ {float(rating):.1f} ({int(rating_count):,} {review_label})")
 
     item_vec = _item_vector(item)
     matching_dims = sorted(
@@ -138,17 +190,15 @@ def build_why(item: Mapping[str, Any], prefs: dict[str, float], taste: dict[str,
         key=lambda x: -x[1],
     )[:2]
 
-    dim_labels = {
-        "adv": "adventure",
-        "soc": "social",
-        "lux": "high-end",
-        "act": "active",
-        "cul": "cultural",
-        "nat": "nature",
-        "food": "gastronomy",
-        "night": "nightlife",
-        "spont": "hidden gem",
-    }
+    dim_labels = ({
+        "adv": "eventyr", "soc": "sosialt", "lux": "komfort", "act": "aktivt",
+        "cul": "kultur", "nat": "natur", "food": "matopplevelser",
+        "night": "uteliv", "spont": "skjult perle",
+    } if language == "no" else {
+        "adv": "adventure", "soc": "social", "lux": "high-end", "act": "active",
+        "cul": "cultural", "nat": "nature", "food": "gastronomy",
+        "night": "nightlife", "spont": "hidden gem",
+    })
     for dim, _ in matching_dims:
         parts.append(dim_labels.get(dim, dim))
 
@@ -165,6 +215,16 @@ def build_why(item: Mapping[str, Any], prefs: dict[str, float], taste: dict[str,
         }
         card_cat = internal_to_card.get(item_cat, item_cat)
         if float(taste["cats"].get(card_cat, 0)) > 0.5:
-            parts.append("matches your taste")
+            parts.append("treffer smaken din" if language == "no" else "matches your taste")
 
-    return " · ".join(parts) if parts else "Recommended for you"
+    context = taste.get("context", {}) if isinstance(taste, dict) else {}
+    if isinstance(context, dict):
+        if context.get("discovery") == "hidden":
+            parts.append("passer ønsket om lokale funn" if language == "no" else "fits your hidden-gem brief")
+        elif context.get("discovery") == "icons":
+            parts.append("passer ønsket om klassikere" if language == "no" else "fits your iconic-sights brief")
+        if context.get("party") == "family":
+            parts.append("vurdert for familietur" if language == "no" else "screened for a family trip")
+
+    fallback = "Anbefalt for deg" if language == "no" else "Recommended for you"
+    return " · ".join(parts) if parts else fallback

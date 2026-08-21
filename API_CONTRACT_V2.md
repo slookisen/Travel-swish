@@ -1,8 +1,13 @@
 # Travel-Swish API Contract v2
 
-> **Version:** 0.1.0  
-> **Last updated:** 2026-03-15  
-> **Status:** Development — no auth, no rate limiting yet
+> V0.2 additions: `POST /sessions` records the active trip context, `POST /feedback`
+> records explicit result feedback, and `POST /recs/web` accepts `session_id` and returns
+> `run_id` plus `provider`. The numbered SQLite migrations are the schema source of truth.
+
+> **Version:** 0.2.0
+>
+> **Last updated:** 2026-08-19
+> **Status:** Test build — origin/API-key guard and process-local rate limits enabled
 
 ---
 

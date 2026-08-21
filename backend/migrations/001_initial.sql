@@ -1,8 +1,7 @@
 -- 001_initial.sql
 -- Baseline migration for Travel-Swish v2 backend.
--- This mirrors init_db() in backend/app/db.py.
--- Not executed by a migration runner — init_db() handles creation at startup.
--- Kept here for documentation and change tracking.
+-- Executed once by backend/app/migrations.py. Statements are idempotent so an
+-- existing pre-migration database can be adopted without data loss.
 
 CREATE TABLE IF NOT EXISTS users (
   id TEXT PRIMARY KEY,
@@ -65,8 +64,19 @@ CREATE TABLE IF NOT EXISTS pois (
   updated_ts INTEGER NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS kv_cache (
+  namespace TEXT NOT NULL,
+  key TEXT NOT NULL,
+  payload_json TEXT NOT NULL,
+  expires_ts INTEGER NOT NULL,
+  created_ts INTEGER NOT NULL,
+  PRIMARY KEY(namespace, key)
+);
+
 -- Indexes for common query patterns
 CREATE INDEX IF NOT EXISTS idx_events_user_ts ON events(user_id, ts);
 CREATE INDEX IF NOT EXISTS idx_events_session_ts ON events(session_id, ts);
 CREATE INDEX IF NOT EXISTS idx_cards_mode_id ON cards(mode, id);
 CREATE INDEX IF NOT EXISTS idx_pois_mode_dest ON pois(mode, lower(destination));
+CREATE INDEX IF NOT EXISTS idx_kv_cache_expires ON kv_cache(expires_ts);
+CREATE INDEX IF NOT EXISTS idx_kv_cache_ns_created ON kv_cache(namespace, created_ts);

@@ -18,7 +18,7 @@ PLACES_URL = "https://places.googleapis.com/v1/places:searchText"
 FIELD_MASK = (
     "places.id,places.displayName,places.formattedAddress,places.types,"
     "places.rating,places.priceLevel,places.userRatingCount,"
-    "places.location,places.websiteUri,places.editorialSummary,"
+    "places.location,places.googleMapsUri,places.websiteUri,places.editorialSummary,"
     "places.primaryTypeDisplayName"
 )
 
@@ -56,11 +56,12 @@ def _get_api_key() -> str | None:
 def _cache_key(
     query: str,
     max_results: int,
+    language: str = "en",
     included_type: str | None = None,
     min_rating: float | None = None,
     price_levels: list[str] | None = None,
 ) -> str:
-    raw = f"{query}|{max_results}|{included_type}|{min_rating}|{price_levels}"
+    raw = f"{query}|{max_results}|{language}|{included_type}|{min_rating}|{price_levels}"
     return hashlib.sha1(raw.encode("utf-8")).hexdigest()
 
 
@@ -68,6 +69,7 @@ def google_places_search(
     query: str,
     *,
     max_results: int = 10,
+    language: str = "en",
     cache_ttl_s: int = 3600,
     included_type: str | None = None,
     min_rating: float | None = None,
@@ -78,7 +80,8 @@ def google_places_search(
     if not api_key:
         raise RuntimeError("GOOGLE_PLACES_API_KEY not set")
 
-    ck = _cache_key(query, max_results, included_type, min_rating, price_levels)
+    language_code = "en" if language == "en" else "no"
+    ck = _cache_key(query, max_results, language_code, included_type, min_rating, price_levels)
     now = int(time.time())
 
     cached = cache_get(namespace="google_places", key=ck, now=now)
@@ -96,7 +99,7 @@ def google_places_search(
     body = {
         "textQuery": query,
         "maxResultCount": min(max_results, 20),
-        "languageCode": "en",
+        "languageCode": language_code,
     }
     if included_type:
         body["includedType"] = included_type
@@ -146,11 +149,9 @@ def _normalize(place: dict[str, Any]) -> dict[str, Any] | None:
         rating_count = place.get("userRatingCount", 0)
         price_level = place.get("priceLevel", "")
 
-        url = place.get("websiteUri", "")
-        if not url:
-            place_id = place.get("id", "")
-            if place_id:
-                url = f"https://maps.google.com/?cid={place_id}"
+        # A Place ID is not a numeric Maps CID. Ask Google for the canonical Maps
+        # URI instead of synthesizing a link that may not resolve.
+        url = place.get("googleMapsUri", "") or place.get("websiteUri", "")
 
         return {
             "id": place.get("id", ""),
@@ -167,6 +168,7 @@ def _normalize(place: dict[str, Any]) -> dict[str, Any] | None:
             "price_level": price_level,
             "types": types,
             "primary_type": primary_type,
+            "website_url": place.get("websiteUri", ""),
         }
     except Exception as e:
         log.warning("_normalize failed: %s", e)
