@@ -67,11 +67,11 @@ export default function App() {
   }, [screen]);
 
   useEffect(() => {
-    if (screen !== 'swipe' || !profile.ready || profile.informativeCount < 6 || showResultsPrompt) return;
+    if (screen !== 'swipe' || loading || !profile.ready || profile.informativeCount < 6 || showResultsPrompt) return;
     if (dismissedPromptAt === 0 || profile.informativeCount - dismissedPromptAt >= 6) {
       setShowResultsPrompt(true);
     }
-  }, [dismissedPromptAt, profile.informativeCount, profile.ready, screen, showResultsPrompt]);
+  }, [dismissedPromptAt, loading, profile.informativeCount, profile.ready, screen, showResultsPrompt]);
 
   useEffect(() => {
     function onKey(event: KeyboardEvent) {

@@ -49,6 +49,22 @@ EXPERIENCE_PAIR_OVERRIDES: dict[str, list[str]] = {
     "food+spont": ["hidden food tour {dest}", "local food market {dest}"],
 }
 
+DESTINATION_SEARCH_HINTS = {
+    "malaga": "Málaga, Spain",
+    "málaga": "Málaga, Spain",
+    "lisboa": "Lisbon, Portugal",
+    "lisbon": "Lisbon, Portugal",
+    "oslo": "Oslo, Norway",
+    "barcelona": "Barcelona, Spain",
+    "tokyo": "Tokyo, Japan",
+    "new york": "New York City, USA",
+}
+
+
+def _search_destination(destination: str) -> str:
+    clean = destination.strip()
+    return DESTINATION_SEARCH_HINTS.get(clean.casefold(), clean)
+
 
 def _place_types_for_mode(place_types: list[str], mode: str) -> list[str]:
     """Keep food taste useful without turning the Experiences tab into a venue list."""
@@ -118,6 +134,7 @@ def build_queries(
     """Build structured queries from multi-layer profile."""
     rng = random.Random(seed)
     queries: list[PlacesQuery] = []
+    search_destination = _search_destination(destination)
     context = taste.get("context", {}) if isinstance(taste, dict) else {}
     if not isinstance(context, dict):
         context = {}
@@ -136,7 +153,7 @@ def build_queries(
             for place_type in place_types[:n_types]:
                 queries.append(
                     PlacesQuery(
-                        text_query=f"{place_type.replace('_', ' ')} in {destination}",
+                        text_query=f"{place_type.replace('_', ' ')} in {search_destination}",
                         included_type=place_type,
                         weight=score,
                         source=f"cat:{cat}",
@@ -155,7 +172,7 @@ def build_queries(
                 template = rng.choice(pair_templates)
                 queries.append(
                     PlacesQuery(
-                        text_query=template.format(dest=destination),
+                        text_query=template.format(dest=search_destination),
                         weight=1.2,
                         source=f"pair:{pair_key}",
                     )
@@ -183,7 +200,7 @@ def build_queries(
                 place_type = rng.choice(types)
                 queries.append(
                     PlacesQuery(
-                        text_query=f"{place_type.replace('_', ' ')} in {destination}",
+                        text_query=f"{place_type.replace('_', ' ')} in {search_destination}",
                         included_type=place_type,
                         weight=score,
                         source=f"dim:{dim}",
@@ -193,10 +210,10 @@ def build_queries(
     if not queries:
         if mode == "restaurants":
             for text in ["best restaurants", "popular cafe", "local food"]:
-                queries.append(PlacesQuery(text_query=f"{text} {destination}", weight=0.5, source="cold_start"))
+                queries.append(PlacesQuery(text_query=f"{text} {search_destination}", weight=0.5, source="cold_start"))
         else:
             for text in ["top attractions", "things to do", "popular experiences"]:
-                queries.append(PlacesQuery(text_query=f"{text} {destination}", weight=0.5, source="cold_start"))
+                queries.append(PlacesQuery(text_query=f"{text} {search_destination}", weight=0.5, source="cold_start"))
 
     # Session context is deliberately applied after long-term taste. A budget or
     # party choice for this trip may override a general preference without
