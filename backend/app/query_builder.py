@@ -95,10 +95,11 @@ def build_queries(
     seed: int = 42,
 ) -> list[PlacesQuery]:
     """Build structured queries from multi-layer profile."""
-    _ = mode
-
     rng = random.Random(seed)
     queries: list[PlacesQuery] = []
+    context = taste.get("context", {}) if isinstance(taste, dict) else {}
+    if not isinstance(context, dict):
+        context = {}
 
     if taste and taste.get("cats"):
         cat_scores = sorted(
@@ -172,12 +173,41 @@ def build_queries(
             for text in ["top attractions", "things to do", "popular experiences"]:
                 queries.append(PlacesQuery(text_query=f"{text} {destination}", weight=0.5, source="cold_start"))
 
+    # Session context is deliberately applied after long-term taste. A budget or
+    # party choice for this trip may override a general preference without
+    # rewriting the user's durable profile.
+    context_terms: list[str] = []
+    if context.get("party") == "family":
+        context_terms.append("family friendly")
+    elif context.get("party") == "couple":
+        context_terms.append("good for couples")
+    if context.get("pace") == "slow":
+        context_terms.append("relaxed")
+    elif context.get("pace") == "full":
+        context_terms.append("highly rated")
+    if context.get("discovery") == "hidden":
+        context_terms.append("local hidden gem")
+    elif context.get("discovery") == "icons":
+        context_terms.append("iconic")
+
+    if context_terms:
+        prefix = " ".join(context_terms)
+        for query in queries:
+            query.text_query = f"{prefix} {query.text_query}"
+
     lux_score = float(prefs.get("lux", 0))
     if lux_score > 0.5:
         for q in queries:
             if q.min_rating is None:
                 q.min_rating = 4.0 + (lux_score * 0.5)
-    if lux_score > 0.7:
+    budget = context.get("budget")
+    if budget == "premium":
+        for q in queries:
+            q.price_levels = ["PRICE_LEVEL_EXPENSIVE", "PRICE_LEVEL_VERY_EXPENSIVE"]
+    elif budget == "value":
+        for q in queries:
+            q.price_levels = ["PRICE_LEVEL_INEXPENSIVE", "PRICE_LEVEL_MODERATE"]
+    elif lux_score > 0.7:
         for q in queries:
             if q.price_levels is None:
                 q.price_levels = ["PRICE_LEVEL_EXPENSIVE", "PRICE_LEVEL_VERY_EXPENSIVE"]

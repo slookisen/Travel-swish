@@ -6,6 +6,7 @@ import os
 import sqlite3
 import time
 import uuid
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -39,16 +40,27 @@ from .schemas import (
     EventOut,
     EventsResponse,
     Health,
+    FeedbackIn,
     PrefsUpsert,
     RecsRequest,
     RecsResponse,
+    SessionIn,
     TaxonomyResponse,
     WebSearchResponse,
     WebRecsRequest,
     WebRecsResponse,
 )
 
-app = FastAPI(title="Travel-Swish API", version="0.1.0")
+
+@asynccontextmanager
+async def lifespan(_: FastAPI):
+    init_db()
+    seed_if_empty()
+    log.info("travel-swish backend ready db=%s", os.getenv("TS_DB_PATH", "default"))
+    yield
+
+
+app = FastAPI(title="Travel-Swish API", version="0.2.0", lifespan=lifespan)
 
 # CORS: local dev defaults; override with TS_CORS_ORIGINS for public deploys.
 _allow_origins, _allow_credentials = cors_config()
@@ -61,15 +73,119 @@ app.add_middleware(
 )
 
 
-@app.on_event("startup")
-def _startup() -> None:
-    init_db()
-    seed_if_empty()
-
-
 @app.get("/health", response_model=Health)
 def health() -> Health:
-    return Health(ok=True, service="travel-swish-backend")
+    con = connect()
+    try:
+        con.execute("SELECT 1").fetchone()
+    finally:
+        con.close()
+    providers = []
+    if os.getenv("GOOGLE_PLACES_API_KEY"):
+        providers.append("google_places")
+    if any(os.getenv(key) for key in ("BRAVE_SEARCH_API_KEY", "BRAVE_API_KEY", "OPENCLAW_BRAVE_API_KEY", "TS_BRAVE_API_KEY")):
+        providers.append("brave")
+    return Health(service="travel-swish-backend", providers=providers)
+
+
+@app.post("/sessions")
+def upsert_session(session: SessionIn, request: Request) -> dict:
+    require_demo_auth(request)
+    try:
+        api_consume_or_raise(key=api_rate_limit_key(request=request, user_id=session.user_id), cost=1)
+    except RateLimitError as e:
+        raise HTTPException(status_code=429, detail="rate_limited", headers={"Retry-After": str(e.retry_after_s)})
+
+    con = connect()
+    try:
+        con.execute(
+            "INSERT OR IGNORE INTO users(id, created_ts) VALUES(?, ?)",
+            (session.user_id, session.ts),
+        )
+        con.execute(
+            """
+            INSERT INTO sessions(id, user_id, created_ts, last_ts, mode, destination, context_json, profile_version, client_version)
+            VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(id) DO UPDATE SET
+              last_ts=excluded.last_ts,
+              mode=excluded.mode,
+              destination=excluded.destination,
+              context_json=excluded.context_json,
+              profile_version=excluded.profile_version,
+              client_version=excluded.client_version
+            """,
+            (
+                session.session_id,
+                session.user_id,
+                session.ts,
+                session.ts,
+                session.mode,
+                session.destination.strip(),
+                json.dumps(session.context, ensure_ascii=False),
+                session.profile_version,
+                session.client_version,
+            ),
+        )
+        con.commit()
+        return {"ok": True, "session_id": session.session_id}
+    finally:
+        con.close()
+
+
+@app.post("/feedback")
+def ingest_feedback(feedback: FeedbackIn, request: Request) -> dict:
+    require_demo_auth(request)
+    try:
+        api_consume_or_raise(key=api_rate_limit_key(request=request, user_id=feedback.user_id), cost=1)
+    except RateLimitError as e:
+        raise HTTPException(status_code=429, detail="rate_limited", headers={"Retry-After": str(e.retry_after_s)})
+
+    con = connect()
+    try:
+        con.execute(
+            "INSERT OR IGNORE INTO users(id, created_ts) VALUES(?, ?)",
+            (feedback.user_id, feedback.ts),
+        )
+        session_exists = con.execute(
+            "SELECT 1 FROM sessions WHERE id=? AND user_id=?",
+            (feedback.session_id, feedback.user_id),
+        ).fetchone()
+        run_exists = con.execute(
+            "SELECT 1 FROM recommendation_runs WHERE id=? AND user_id=?",
+            (feedback.run_id, feedback.user_id),
+        ).fetchone()
+        session_id = feedback.session_id if session_exists else None
+        run_id = feedback.run_id if run_exists else None
+        feedback_id = str(uuid.uuid4())
+        con.execute(
+            """
+            INSERT INTO result_feedback(
+              id, user_id, session_id, run_id, item_id, item_name, feedback,
+              mode, destination, payload_json, ts
+            ) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(run_id, item_id, user_id) DO UPDATE SET
+              feedback=excluded.feedback,
+              payload_json=excluded.payload_json,
+              ts=excluded.ts
+            """,
+            (
+                feedback_id,
+                feedback.user_id,
+                session_id,
+                run_id,
+                feedback.item_id,
+                feedback.item_name,
+                feedback.feedback,
+                feedback.mode,
+                feedback.destination.strip(),
+                json.dumps(feedback.payload, ensure_ascii=False),
+                feedback.ts,
+            ),
+        )
+        con.commit()
+        return {"ok": True, "id": feedback_id}
+    finally:
+        con.close()
 
 
 
@@ -206,6 +322,7 @@ def ingest_event(ev: EventIn, request: Request) -> dict:
 
 @app.get("/events", response_model=EventsResponse)
 def list_events(
+    request: Request,
     user_id: str | None = None,
     session_id: str | None = None,
     mode: str | None = None,
@@ -213,6 +330,7 @@ def list_events(
     limit: int = 50,
 ) -> EventsResponse:
     """List recent events with optional filters."""
+    require_demo_auth(request)
     limit = max(1, min(200, limit))
     clauses: list[str] = []
     params: list[object] = []
@@ -254,7 +372,8 @@ def list_events(
 
 
 @app.get("/prefs")
-def get_prefs(user_id: str, mode: str) -> dict:
+def get_prefs(user_id: str, mode: str, request: Request) -> dict:
+    require_demo_auth(request)
     con = connect()
     try:
         row = con.execute(
@@ -404,6 +523,7 @@ def recs_web(req: WebRecsRequest, request: Request) -> WebRecsResponse:
     except RateLimitError as e:
         raise HTTPException(status_code=429, detail="rate_limited", headers={"Retry-After": str(e.retry_after_s)})
 
+    started = time.monotonic()
     con = connect()
     try:
         prow = con.execute(
@@ -425,6 +545,7 @@ def recs_web(req: WebRecsRequest, request: Request) -> WebRecsResponse:
                     limit=req.limit,
                     max_queries=req.max_queries,
                     seed=req.seed,
+                    language=req.language,
                 )
             else:
                 rl_key = brave_rate_limit_key(request=request, user_id=req.user_id)
@@ -433,6 +554,7 @@ def recs_web(req: WebRecsRequest, request: Request) -> WebRecsResponse:
                     mode=req.mode,
                     destination=req.destination,
                     prefs=prefs,
+                    taste=taste,
                     limit=req.limit,
                     max_queries=req.max_queries,
                     per_query=req.per_query,
@@ -447,6 +569,53 @@ def recs_web(req: WebRecsRequest, request: Request) -> WebRecsResponse:
             log.warning("recs_web rate_limited key=%s retry_after_s=%s", e.key, e.retry_after_s)
             raise HTTPException(status_code=429, detail="rate_limited", headers={"Retry-After": str(e.retry_after_s)})
 
+        run_id = str(uuid.uuid4())
+        provider = str(payload.get("provider") or ("google_places" if google_key else "brave"))
+        model_version = str(payload.get("model_version") or "unknown")
+        items = payload.get("items") if isinstance(payload.get("items"), list) else []
+        result_ids = [str(item.get("id") or "") for item in items if isinstance(item, dict)]
+        con.execute(
+            "INSERT OR IGNORE INTO users(id, created_ts) VALUES(?, ?)",
+            (req.user_id, int(time.time())),
+        )
+        session_id = None
+        if req.session_id:
+            session_exists = con.execute(
+                "SELECT 1 FROM sessions WHERE id=? AND user_id=?",
+                (req.session_id, req.user_id),
+            ).fetchone()
+            session_id = req.session_id if session_exists else None
+        con.execute(
+            """
+            INSERT INTO recommendation_runs(
+              id, user_id, session_id, mode, destination, provider, model_version,
+              request_json, result_ids_json, created_ts
+            ) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                run_id,
+                req.user_id,
+                session_id,
+                req.mode,
+                req.destination.strip(),
+                provider,
+                model_version,
+                json.dumps(req.model_dump(), ensure_ascii=False),
+                json.dumps(result_ids, ensure_ascii=False),
+                int(time.time()),
+            ),
+        )
+        con.commit()
+        payload["run_id"] = run_id
+        payload["provider"] = provider
+        log.info(
+            "recommendations complete run_id=%s provider=%s mode=%s items=%s duration_ms=%s",
+            run_id,
+            provider,
+            req.mode,
+            len(result_ids),
+            round((time.monotonic() - started) * 1000),
+        )
         return WebRecsResponse(**payload)
     finally:
         con.close()

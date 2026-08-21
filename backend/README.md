@@ -1,4 +1,4 @@
-# Travel‑Swish Backend (v2 foundation)
+# Travel‑Swish Backend (V0.2 test foundation)
 
 Goal: move the preference engine + destination-aware recommendations out of the browser.
 
@@ -46,11 +46,17 @@ Notes:
 | GET | `/events` | List recent events (filters: `user_id`, `session_id`, `mode`, `destination`, `limit` 1‑200) |
 | GET | `/prefs` | Get user prefs for a mode |
 | POST | `/prefs` | Upsert user prefs |
+| POST | `/sessions` | Upsert a profiling/recommendation session |
+| POST | `/feedback` | Store explicit feedback on a result |
 | GET | `/cards` | List cards by mode |
 | GET | `/taxonomy` | Get taxonomy |
 | POST | `/recs` | Get ranked recommendations (local POIs DB) |
 | POST | `/recs/web` | Live web recs (Brave -> ranker) |
 | GET | `/search/brave` | Brave web search proxy (server-side key) |
+
+## Database lifecycle
+
+`app.db.init_db()` applies numbered SQL files from `backend/migrations/` once and records them in `schema_migrations`. SQLite uses foreign keys, a five-second busy timeout, WAL journaling and `PRAGMA optimize`. Migration 002 adds sessions, recommendation exposure runs and result feedback so ranking improvements can be evaluated from explicit signals instead of clicks alone.
 
 ## Brave Search (server-side)
 
@@ -145,6 +151,8 @@ Env:
 - `TS_API_RL_MAX_COST` (default 120)
 
 Protected endpoints:
+- `POST /sessions` (cost 1)
+- `POST /feedback` (cost 1)
 - `POST /events` (cost 1)
 - `POST /prefs` (cost 2)
 - `POST /recs` (cost 2)

@@ -21,6 +21,7 @@ def rank_places_recs(
     limit: int = 10,
     max_queries: int = 8,
     seed: int = 42,
+    language: str = "no",
 ) -> dict[str, Any]:
     """Fetch and rank Google Places results using multi-layer matching."""
     _ = user_id
@@ -44,6 +45,7 @@ def rank_places_recs(
             items, _cached = google_places_search(
                 pq.text_query,
                 max_results=10,
+                language=language,
                 included_type=pq.included_type,
                 min_rating=pq.min_rating,
                 price_levels=pq.price_levels,
@@ -70,7 +72,7 @@ def rank_places_recs(
         boosted = raw_score * (0.8 + 0.2 * min(query_weight, 2.0))
 
         item["match"] = round(min(95, max(30, boosted * 100)), 1)
-        item["why"] = build_why(item, prefs_dict, taste)
+        item["why"] = build_why(item, prefs_dict, taste, language=language)
         scored.append(item)
 
     scored.sort(
@@ -86,7 +88,8 @@ def rank_places_recs(
         "ok": True,
         "items": final,
         "cached": False,
-        "model_version": "v4-multi-layer",
+        "provider": "google_places",
+        "model_version": "v5-context-profile",
         "queries": [q.to_dict() for q in queries],
     }
 
