@@ -8,11 +8,19 @@ const expectedBase = (import.meta as any).env?.BASE_URL ?? '/';
 const loc = window.location.pathname;
 if (!loc.startsWith(expectedBase.replace(/\/$/, ''))) {
   console.warn(
-    `[Travel-Swish] basepath mismatch: expected "${expectedBase}", got "${loc}". ` +
+    `[Travel Swipe] basepath mismatch: expected "${expectedBase}", got "${loc}". ` +
     `This may cause blank screens on GitHub Pages.`
   );
 }
-console.info(`[Travel-Swish] ${BUILD_META.version} loaded at ${loc} (base=${expectedBase})`);
+console.info(`[Travel Swipe] ${BUILD_META.version} loaded at ${loc} (base=${expectedBase})`);
+
+if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register(`${expectedBase}sw.js`, { scope: expectedBase }).catch((error) => {
+      console.warn('[Travel Swipe] service worker registration failed', error);
+    });
+  });
+}
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

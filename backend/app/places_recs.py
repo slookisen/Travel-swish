@@ -2,13 +2,15 @@
 from __future__ import annotations
 
 import logging
-from typing import Any, Mapping
+from concurrent.futures import ThreadPoolExecutor
+from typing import Any, Callable, Mapping
 
 from .google_places import google_places_search
 from .query_builder import build_queries
 from .scorer import build_why, score_item
 
 log = logging.getLogger(__name__)
+PlacesSearchFn = Callable[..., tuple[list[dict[str, Any]], bool]]
 
 
 def rank_places_recs(
@@ -21,6 +23,11 @@ def rank_places_recs(
     limit: int = 10,
     max_queries: int = 8,
     seed: int = 42,
+    search_kind: str | None = None,
+    query_text: str = "",
+    exclude_ids: list[str] | None = None,
+    language_code: str = "en",
+    search_fn: PlacesSearchFn = google_places_search,
 ) -> dict[str, Any]:
     """Fetch and rank Google Places results using multi-layer matching."""
     _ = user_id
@@ -34,20 +41,33 @@ def rank_places_recs(
         taste=taste,
         max_queries=max_queries,
         seed=seed,
+        search_kind=search_kind,
+        query_text=query_text,
     )
 
     all_items: list[dict[str, Any]] = []
     seen_ids: set[str] = set()
 
-    for pq in queries:
-        try:
-            items, _cached = google_places_search(
+    def fetch_query(pq):
+        return search_fn(
                 pq.text_query,
                 max_results=10,
                 included_type=pq.included_type,
                 min_rating=pq.min_rating,
                 price_levels=pq.price_levels,
+                language_code=language_code,
             )
+
+    # Text Search calls are independent. Running a small bounded fan-out makes
+    # the result set wait for the slowest query instead of the sum of all queries.
+    with ThreadPoolExecutor(max_workers=max(1, min(4, len(queries)))) as executor:
+        futures = [executor.submit(fetch_query, pq) for pq in queries]
+        for pq, future in zip(queries, futures):
+            try:
+                items, _cached = future.result()
+            except Exception as e:
+                log.warning("places query failed: %s — %s", pq.text_query, e)
+                continue
             for item in items:
                 pid = item.get("id", "")
                 if pid and pid not in seen_ids:
@@ -55,13 +75,17 @@ def rank_places_recs(
                     item["_query"] = pq.text_query
                     item["_query_weight"] = pq.weight
                     all_items.append(item)
-        except Exception as e:
-            log.warning("places query failed: %s — %s", pq.text_query, e)
+    excluded = {str(value) for value in (exclude_ids or []) if value}
+    if excluded:
+        all_items = [item for item in all_items if str(item.get("id") or "") not in excluded]
 
-    if mode == "restaurants":
+    kind = search_kind or mode
+    if kind == "restaurants":
         all_items = [i for i in all_items if i.get("cat") in ("restaurants", "coffee", "food", "streetfood", "fine")]
+    elif kind == "hotels":
+        all_items = [i for i in all_items if i.get("cat") == "hotels"]
     else:
-        all_items = [i for i in all_items if i.get("cat") not in ("restaurants", "coffee")]
+        all_items = [i for i in all_items if i.get("cat") not in ("restaurants", "coffee", "food", "hotels")]
 
     scored: list[dict[str, Any]] = []
     for item in all_items:
@@ -87,6 +111,7 @@ def rank_places_recs(
         "items": final,
         "cached": False,
         "model_version": "v4-multi-layer",
+        "provider": "google_places",
         "queries": [q.to_dict() for q in queries],
     }
 

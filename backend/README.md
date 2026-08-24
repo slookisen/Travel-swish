@@ -49,7 +49,8 @@ Notes:
 | GET | `/cards` | List cards by mode |
 | GET | `/taxonomy` | Get taxonomy |
 | POST | `/recs` | Get ranked recommendations (local POIs DB) |
-| POST | `/recs/web` | Live web recs (Brave -> ranker) |
+| POST | `/recs/web` | Profile-ranked places, hotels, organized trips and custom discovery |
+| GET | `/recs/prefetch/{token}` | Status for a transient next-selection job |
 | GET | `/search/brave` | Brave web search proxy (server-side key) |
 
 ## Brave Search (server-side)
@@ -60,18 +61,38 @@ Env (first one found wins):
 - `OPENCLAW_BRAVE_API_KEY`
 - `TS_BRAVE_API_KEY` (Travel‑Swish fallback)
 
-Cost control:
+Cost control and provider policy:
 - **Rate limit** (process-local, fixed-window):
   - `TS_BRAVE_RL_WINDOW_S` (default 60)
   - `TS_BRAVE_RL_MAX_CALLS` (default 25)
 - **Caching**
-  - In-memory TTL caches (fast, reset on reload)
-  - SQLite-backed KV cache (`kv_cache` table) so results can survive reloads:
+  - In-memory TTL caches only by default (fast and reset on reload)
+  - SQLite-backed Brave cache is disabled unless the active Brave plan explicitly grants storage rights. Enable only then with `TS_BRAVE_STORAGE_RIGHTS=1`.
+  - When enabled, these settings apply:
     - `TS_BRAVE_CACHE_TTL_S` (default 300)
     - `TS_WEB_RECS_CACHE_TTL_S` (default 120)
     - `TS_BRAVE_CACHE_MAX_ROWS` (default 1500)
     - `TS_WEB_RECS_CACHE_MAX_ROWS` (default 800)
     - `TS_CACHE_MAX_ROWS` (global cap, default 2000)
+
+Google Places content is neither persisted nor prefetched. Independent Google
+queries run in a bounded parallel fan-out. When Brave is configured,
+`POST /recs/web` also creates a one-use, process-local next selection that
+expires after three minutes. The response returns `next_token`, `next_status`
+and `next_seed`; poll `GET /recs/prefetch/{token}` and submit the token on the
+next request.
+
+Discovery fields on `POST /recs/web`:
+
+- `search_kind`: `experiences`, `restaurants`, `hotels`, `tours`, or `custom`
+- `query_text`: optional hotel/tour intent; required for `custom`
+- `trip_context`: optional `party`, `age_band`, `duration`, and `budget`
+- `exclude_ids`: results that must not repeat
+- `prefetch_token`: one-use token for an already prepared next selection
+
+Hotel and custom discovery combine the two separately stored swipe profiles at
+read time. Tour context is request-scoped and is not added to the lasting
+profile.
 
 Quick smoke (after starting uvicorn):
 

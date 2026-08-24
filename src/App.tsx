@@ -29,7 +29,7 @@ const MOCK_MODE =
     }
   })();
 
-const MIN_SWIPES = 20;
+const MIN_SWIPES = 10;
 const nowS = () => Math.floor(Date.now() / 1000);
 
 
@@ -43,6 +43,15 @@ function displayWhy(why: string | undefined): string | null {
 function googleMapsSearchUrl(placeName: string, destination: string) {
   const q = `${String(placeName || '').trim()} ${String(destination || '').trim()}`.trim();
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(q)}`;
+}
+
+function safeExternalUrl(value: string | undefined): string {
+  try {
+    const parsed = new URL(String(value || '').trim());
+    return parsed.protocol === 'https:' || parsed.protocol === 'http:' ? parsed.toString() : '';
+  } catch {
+    return '';
+  }
 }
 
 async function fetchJson(
@@ -91,9 +100,9 @@ const UI: Record<string, any> = {
     sv: 'Bygg en smakprofil på sekunder. Få förslag som faktiskt passar dig.',
   },
   landingTip: {
-    no: 'Tips: Velg modus, skriv inn sted, sveip 20 kort og få forslag.',
-    en: 'Tip: Pick a mode, enter a destination, swipe 20 cards, get suggestions.',
-    sv: 'Tips: Välj läge, skriv in plats, svajpa 20 kort och få förslag.',
+    no: 'Tips: Velg modus, skriv inn sted, sveip 10 kort og få forslag.',
+    en: 'Tip: Pick a mode, enter a destination, swipe 10 cards, get suggestions.',
+    sv: 'Tips: Välj läge, skriv in plats, svajpa 10 kort och få förslag.',
   },
   howItWorksTitle: {
     no: 'Slik fungerer det',
@@ -223,8 +232,43 @@ const UI: Record<string, any> = {
     sv: (dest: string) => `Här är dina träffar i ${dest} 🎯`,
   },
   deckEmptyTitle: { no: 'Ingen flere kort', en: 'No more cards', sv: 'Inga fler kort' },
-  openLink: { no: 'Åpne lenke', en: 'Open link', sv: 'Öppna länk' },
+  openLink: { no: 'Åpne kilden', en: 'Open source', sv: 'Öppna källan' },
+  openWebsite: { no: 'Åpne hjemmeside', en: 'Open website', sv: 'Öppna webbplats' },
   openMaps: { no: 'Åpne i Maps', en: 'Open in Maps', sv: 'Öppna i Maps' },
+  nextPreparing: {
+    no: 'Neste utvalg forberedes i bakgrunnen',
+    en: 'Preparing your next selection in the background',
+    sv: 'Nästa urval förbereds i bakgrunden',
+  },
+  nextReady: { no: 'Neste utvalg klart', en: 'Next selection ready', sv: 'Nästa urval klart' },
+  profileSearchTitle: {
+    no: 'Finn mer med profilen din',
+    en: 'Discover more with your profile',
+    sv: 'Hitta mer med din profil',
+  },
+  profileSearchIntro: {
+    no: 'Bruk smaken du allerede har bygget opp til hotell, arrangerte turer eller et eget søk.',
+    en: 'Use the taste profile you already built for hotels, organized trips or your own search.',
+    sv: 'Använd smakprofilen du redan byggt för hotell, organiserade resor eller en egen sökning.',
+  },
+  searchHotels: { no: 'Hotell', en: 'Hotels', sv: 'Hotell' },
+  searchTours: { no: 'Arrangerte turer', en: 'Organized trips', sv: 'Organiserade resor' },
+  searchCustom: { no: 'Eget søk', en: 'Custom search', sv: 'Egen sökning' },
+  profileSearchPlaceholder: {
+    no: 'F.eks. lite boutiquehotell med basseng',
+    en: 'E.g. small boutique hotel with a pool',
+    sv: 'T.ex. litet boutiquehotell med pool',
+  },
+  profileSearchAction: { no: 'Søk med profilen', en: 'Search with my profile', sv: 'Sök med min profil' },
+  tripParty: { no: 'Reisefølge', en: 'Travel party', sv: 'Resesällskap' },
+  tripAge: { no: 'Aldersgruppe (valgfritt)', en: 'Age group (optional)', sv: 'Åldersgrupp (valfritt)' },
+  tripDuration: { no: 'Varighet', en: 'Duration', sv: 'Längd' },
+  tripBudget: { no: 'Budsjett', en: 'Budget', sv: 'Budget' },
+  tripPrivacy: {
+    no: 'Disse valgene brukes bare i dette søket og blir ikke lagt til den varige profilen.',
+    en: 'These choices are used only for this search and are not added to your lasting profile.',
+    sv: 'Valen används bara för denna sökning och läggs inte till i din bestående profil.',
+  },
 
   // TS1: Settings / Delete history
   settingsTitle: { no: 'Innstillinger', en: 'Settings', sv: 'Inställningar' },
@@ -256,7 +300,7 @@ const UI: Record<string, any> = {
     en: 'No account. No ads. Just great matches.',
     sv: 'Inget konto. Ingen reklam. Bara bra träffar.',
   },
-  landingStep1: { no: '👆 Sveip 20 kort', en: '👆 Swipe 20 cards', sv: '👆 Svajpa 20 kort' },
+  landingStep1: { no: '👆 Sveip 10 kort', en: '👆 Swipe 10 cards', sv: '👆 Svajpa 10 kort' },
   landingStep2: { no: '🧠 Vi lærer smaken din', en: '🧠 We learn your taste', sv: '🧠 Vi lär oss din smak' },
   landingStep3: { no: '🎯 Treff som passer deg', en: '🎯 Matches that fit you', sv: '🎯 Träffar som passar dig' },
 
@@ -588,6 +632,9 @@ function buildPrompt(mode: Mode, dest: string, profileText: string, lang: Lang, 
 }
 
 type Page = 'landing' | 'home' | 'swipe' | 'results';
+type SearchKind = Mode | 'hotels' | 'tours' | 'custom';
+type ProfileSearchKind = Exclude<SearchKind, Mode>;
+type TripContext = { party: string; age_band: string; duration: string; budget: string };
 
 function shuffleArray<T>(arr: T[]) {
   const result = [...arr];
@@ -605,6 +652,8 @@ type RecItem = {
   match?: number;
   why?: string;
   url?: string;
+  websiteUrl?: string;
+  mapsUrl?: string;
   source?: string;
   snippet?: string;
   domain?: string;
@@ -911,7 +960,7 @@ const FUN_FACTS: Record<Lang, string[]> = {
 };
 
 function FlyLoadingScreen({ destination, lang, mode, onCancel }: {
-  destination: string; lang: Lang; mode: Mode; onCancel: () => void;
+  destination: string; lang: Lang; mode: SearchKind; onCancel: () => void;
 }) {
   const [factIndex, setFactIndex] = useState(0);
   const facts = FUN_FACTS[lang];
@@ -933,7 +982,10 @@ function FlyLoadingScreen({ destination, lang, mode, onCancel }: {
     return () => clearInterval(iv);
   }, [facts.length]);
 
-  const modeLabel = MODE_LABELS[mode][lang].toLowerCase();
+  const modeLabel = mode === 'hotels' ? UI.searchHotels[lang].toLowerCase()
+    : mode === 'tours' ? UI.searchTours[lang].toLowerCase()
+      : mode === 'custom' ? UI.searchCustom[lang].toLowerCase()
+        : MODE_LABELS[mode][lang].toLowerCase();
 
   return (
     <div style={{
@@ -1306,17 +1358,17 @@ async function shareResults(items: RecItem[], destination: string, lang: Lang): 
   );
 
   const header = lang === 'no'
-    ? `🗺️ Mine reisetreff i ${destination} (via Travel-Swish)\n\n`
+    ? `🗺️ Mine reisetreff i ${destination} (via Travel Swipe)\n\n`
     : lang === 'sv'
-      ? `🗺️ Mina resefynd i ${destination} (via Travel-Swish)\n\n`
-      : `🗺️ My travel finds in ${destination} (via Travel-Swish)\n\n`;
+      ? `🗺️ Mina resefynd i ${destination} (via Travel Swipe)\n\n`
+      : `🗺️ My travel finds in ${destination} (via Travel Swipe)\n\n`;
 
   const footer = `\nhttps://slookisen.github.io/Travel-swish`;
   const text = header + lines.join('\n\n') + footer;
 
   if (navigator.share) {
     try {
-      await navigator.share({ title: `Travel-Swish: ${destination}`, text });
+      await navigator.share({ title: `Travel Swipe: ${destination}`, text });
       return 'shared';
     } catch {}
   }
@@ -1342,7 +1394,28 @@ function relativeTime(ts: number, lang: Lang): string {
   return lang === 'no' ? `${days} dager siden` : lang === 'sv' ? `${days} dagar sedan` : `${days} days ago`;
 }
 
+function searchResultsHeadline(kind: SearchKind, destination: string, lang: Lang): string {
+  if (kind === 'hotels') {
+    return lang === 'no' ? `Hotell som passer deg i ${destination} 🛏️`
+      : lang === 'sv' ? `Hotell som passar dig i ${destination} 🛏️`
+        : `Hotels that fit you in ${destination} 🛏️`;
+  }
+  if (kind === 'tours') {
+    return lang === 'no' ? `Arrangerte turer som passer deg 🎒`
+      : lang === 'sv' ? `Organiserade resor som passar dig 🎒`
+        : 'Organized trips that fit you 🎒';
+  }
+  if (kind === 'custom') {
+    return lang === 'no' ? `Profiltilpassede treff i ${destination} ✨`
+      : lang === 'sv' ? `Profilanpassade träffar i ${destination} ✨`
+        : `Profile-powered matches in ${destination} ✨`;
+  }
+  return UI.resultsHeadline[lang](destination);
+}
+
 // ========================= MAIN APP =========================
+
+const EMPTY_TRIP_CONTEXT: TripContext = { party: '', age_band: '', duration: '', budget: '' };
 
 export default function App() {
   const [page, setPage] = useState<Page>('landing');
@@ -1382,6 +1455,15 @@ export default function App() {
   const [cooldownUntil, setCooldownUntil] = useState(0);
   const [cooldownLeft, setCooldownLeft] = useState(0);
   const [items, setItems] = useState<RecItem[]>([]);
+  const [activeSearchKind, setActiveSearchKind] = useState<SearchKind>(mode);
+  const [activeQueryText, setActiveQueryText] = useState('');
+  const [activeTripContext, setActiveTripContext] = useState<TripContext>(EMPTY_TRIP_CONTEXT);
+  const [profileSearchKind, setProfileSearchKind] = useState<ProfileSearchKind>('hotels');
+  const [profileSearchText, setProfileSearchText] = useState('');
+  const [tripContext, setTripContext] = useState<TripContext>(EMPTY_TRIP_CONTEXT);
+  const [nextToken, setNextToken] = useState('');
+  const [nextStatus, setNextStatus] = useState<'unavailable' | 'preparing' | 'ready' | 'failed'>('unavailable');
+  const [nextSeed, setNextSeed] = useState<number | null>(null);
   const [catFilter, setCatFilter] = useState(() => loadCatFilter(mode));
   const seenKeys = useRef<string[]>([]);
   const findMoreCount = useRef(0);
@@ -1454,7 +1536,50 @@ export default function App() {
     setInfo('');
     setBackendNotice(null);
     backendRetryCount.current = 0;
+    setActiveSearchKind(mode);
+    setActiveQueryText('');
+    setActiveTripContext(EMPTY_TRIP_CONTEXT);
+    setNextToken('');
+    setNextStatus('unavailable');
+    setNextSeed(null);
   }, [mode]);
+
+  useEffect(() => {
+    if (page !== 'results' || !BACKEND_URL || !nextToken || nextStatus !== 'preparing') return;
+    let cancelled = false;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+
+    const poll = async () => {
+      try {
+        const data = await fetchJson(`${BACKEND_URL}/recs/prefetch/${encodeURIComponent(nextToken)}`, { timeoutMs: 5000 });
+        if (cancelled) return;
+        const status = String(data?.status || '');
+        if (status === 'ready') {
+          setNextStatus('ready');
+          return;
+        }
+        if (status === 'failed' || status === 'expired') {
+          setNextStatus('failed');
+          return;
+        }
+      } catch {
+        // Status polling is best-effort; a normal live search remains available.
+      }
+      if (!cancelled) timer = setTimeout(poll, 1400);
+    };
+
+    timer = setTimeout(poll, 600);
+    return () => {
+      cancelled = true;
+      if (timer) clearTimeout(timer);
+    };
+  }, [page, nextToken, nextStatus]);
+
+  useEffect(() => {
+    if (resultsTab === 'map' && !items.some(item => typeof item.lat === 'number' && typeof item.lng === 'number')) {
+      setResultsTab('list');
+    }
+  }, [items, resultsTab]);
 
   useEffect(() => {
     if (!cooldownUntil) return;
@@ -1516,7 +1641,7 @@ export default function App() {
     return loadLastResults(mode, destination.trim());
   }, [mode, destination, items]); // re-check when items change
 
-  async function findItems() {
+  async function findItems(options?: { kind?: SearchKind; queryText?: string; tripContext?: TripContext }) {
     if (cooldownUntil && cooldownUntil > Date.now()) {
       setError(UI.cooldownError[lang](cooldownLeft));
       return;
@@ -1529,6 +1654,22 @@ export default function App() {
 
     try {
       findMoreCount.current += 1;
+      const requestedKind = options?.kind || activeSearchKind;
+      const requestedQuery = String(options?.queryText ?? activeQueryText).trim().slice(0, 160);
+      const requestedContext = options?.tripContext || activeTripContext;
+      const sameSearch = requestedKind === activeSearchKind
+        && requestedQuery === activeQueryText
+        && JSON.stringify(requestedContext) === JSON.stringify(activeTripContext);
+      const preparedToken = sameSearch ? nextToken : '';
+      const preparedSeed = sameSearch ? nextSeed : null;
+
+      setActiveSearchKind(requestedKind);
+      setActiveQueryText(requestedQuery);
+      setActiveTripContext(requestedContext);
+      setNextToken('');
+      setNextStatus('unavailable');
+      setNextSeed(null);
+
       const profile = calcProfile(swipes, cards);
       const prefs: Record<string, number> = Object.fromEntries(
         Object.entries(profile).map(([k, v]) => [k, Math.round((v / 100) * 1000) / 1000])
@@ -1542,12 +1683,20 @@ export default function App() {
       }
 
       if (MOCK_MODE) {
+        const mockCat = requestedKind === 'hotels' ? 'Hotels'
+          : requestedKind === 'tours' ? 'Organized tours'
+            : requestedKind === 'custom' ? 'Profile search'
+              : requestedKind === 'restaurants' ? 'Restaurant' : 'Experience';
         const mockItems: RecItem[] = [
           {
-            id: `mock_${mode}_1`,
-            name: mode === 'restaurants' ? 'Mock: Sjømatbistro' : 'Mock: Street food tour',
+            id: `mock_${requestedKind}_1`,
+            name: requestedKind === 'hotels' ? 'Mock: Harbour Boutique Hotel'
+              : requestedKind === 'tours' ? 'Mock: Small group coastal adventure'
+                : requestedKind === 'restaurants' ? 'Mock: Sjømatbistro' : 'Mock: Street food tour',
             url: 'https://example.com',
-            cat: mode === 'restaurants' ? 'Restaurant' : 'Experience',
+            websiteUrl: 'https://example.com',
+            mapsUrl: googleMapsSearchUrl('Mock place', dest),
+            cat: mockCat,
             match: 86,
             why: 'Mock mode: deterministic suggestion for QA/Playwright.',
             source: 'mock',
@@ -1555,10 +1704,14 @@ export default function App() {
             domain: 'example.com',
           },
           {
-            id: `mock_${mode}_2`,
-            name: mode === 'restaurants' ? 'Mock: Ramen' : 'Mock: Museum crawl',
+            id: `mock_${requestedKind}_2`,
+            name: requestedKind === 'hotels' ? 'Mock: Garden Guest House'
+              : requestedKind === 'tours' ? 'Mock: Seven-day culture and food trip'
+                : requestedKind === 'restaurants' ? 'Mock: Ramen' : 'Mock: Museum crawl',
             url: 'https://example.com',
-            cat: mode === 'restaurants' ? 'Restaurant' : 'Experience',
+            websiteUrl: 'https://example.com',
+            mapsUrl: googleMapsSearchUrl('Mock place two', dest),
+            cat: mockCat,
             match: 78,
             why: 'Mock mode: verifies results rendering + why panel.',
             source: 'mock',
@@ -1572,7 +1725,7 @@ export default function App() {
         saveSeen(mode, seenKeys.current);
 
         setItems(mockItems);
-        saveLastResults(mode, dest, mockItems, lang);
+        if (requestedKind === mode) saveLastResults(mode, dest, mockItems, lang);
         setPage('results');
         setInfo(lang === 'no' ? 'Mock mode aktiv (ingen backend-kall).' : 'Mock mode active (no backend calls).');
         return;
@@ -1594,7 +1747,25 @@ export default function App() {
           const j = await fetchJson(`${BACKEND_URL}/recs/web`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ user_id: userId, mode, destination: dest, limit: 20, seed: Date.now() % 100000 }),
+            body: JSON.stringify({
+              user_id: userId,
+              mode,
+              destination: dest,
+              limit: 20,
+              max_queries: 8,
+              per_query: 10,
+              seed: preparedSeed ?? (Date.now() % 100000),
+              search_lang: lang,
+              search_kind: requestedKind,
+              query_text: requestedQuery,
+              trip_context: requestedContext,
+              exclude_ids: seenKeys.current
+                .filter(key => key.startsWith('id:'))
+                .map(key => key.slice(3))
+                .filter(Boolean)
+                .slice(-200),
+              prefetch_token: preparedToken || undefined,
+            }),
             timeoutMs: recsTimeoutMs,
           });
 
@@ -1608,6 +1779,8 @@ export default function App() {
                 id: String(x?.id || ''),
                 name: String(x?.name || ''),
                 url: String(x?.url || ''),
+                websiteUrl: String(x?.website_url || ''),
+                mapsUrl: String(x?.maps_url || ''),
                 cat: String(x?.cat || ''),
                 match: typeof x?.match === 'number' ? x.match : undefined,
                 why: typeof x?.why === 'string' ? x.why : '',
@@ -1629,7 +1802,11 @@ export default function App() {
             saveSeen(mode, seenKeys.current);
 
             setItems(newItems);
-            saveLastResults(mode, dest, newItems, lang);
+            if (requestedKind === mode) saveLastResults(mode, dest, newItems, lang);
+            const token = String(j?.next_token || '');
+            setNextToken(token);
+            setNextStatus(token && j?.next_status === 'preparing' ? 'preparing' : 'unavailable');
+            setNextSeed(typeof j?.next_seed === 'number' ? j.next_seed : null);
             setPage('results');
             return;
           }
@@ -1644,6 +1821,14 @@ export default function App() {
                 ? 'Inga träffar från backend ännu - visar demo-förslag.'
                 : 'No backend hits yet - showing demo suggestions.'
           );
+          if (requestedKind !== mode) {
+            setError(
+              lang === 'no' ? 'Ingen gode treff i dette søket ennå. Prøv en litt bredere formulering.'
+                : lang === 'sv' ? 'Inga bra träffar ännu. Prova en lite bredare sökning.'
+                  : 'No strong matches yet. Try a slightly broader search.'
+            );
+            return;
+          }
         } catch (e: any) {
           console.warn('Backend recs unavailable; trying Claude fallback.', e);
 
@@ -1656,13 +1841,15 @@ export default function App() {
             setBackendNotice({ kind: 'cold', msg: UI.backendColdStart[lang] });
             setLoading(false);
             // Auto-retry after 3 seconds
-            setTimeout(() => { findItems(); }, 3000);
+            setTimeout(() => {
+              findItems({ kind: requestedKind, queryText: requestedQuery, tripContext: requestedContext });
+            }, 3000);
             return;
           }
 
           if (isTimeout) backendRetryCount.current = Math.min(3, backendRetryCount.current + 1);
 
-          if (apiKey) {
+          if (apiKey && requestedKind === mode) {
             try {
               const profileText = describeProfile(profile, lang);
               const excludeList = seenKeys.current.map(k => k.replace(/^(id:|name:)/, '')).slice(-20);
@@ -1705,8 +1892,16 @@ export default function App() {
                 ? 'Backend otillgänglig — visar demo-förslag.'
                 : 'Backend unavailable — showing demo suggestions.'
           );
+          if (requestedKind !== mode) {
+            setError(
+              lang === 'no' ? 'Det utvidede søket er midlertidig utilgjengelig. Treffene du allerede hadde er beholdt.'
+                : lang === 'sv' ? 'Den utökade sökningen är tillfälligt otillgänglig. Dina tidigare träffar är kvar.'
+                  : 'Extended search is temporarily unavailable. Your previous matches are still here.'
+            );
+            return;
+          }
         }
-      } else if (apiKey) {
+      } else if (apiKey && requestedKind === mode) {
         try {
           const profileText = describeProfile(profile, lang);
           const excludeList = seenKeys.current.map(k => k.replace(/^(id:|name:)/, '')).slice(-20);
@@ -1746,14 +1941,21 @@ export default function App() {
                 : 'AI request failed — showing demo suggestions.'
           );
         }
-      } else {
+      } else if (requestedKind === mode) {
         setInfo(
           lang === 'no'
             ? 'Legg til en API-nøkkel for AI-drevne forslag.'
             : lang === 'sv'
               ? 'Lägg till en API-nyckel för AI-drivna förslag.'
-              : 'Add an API key for AI-powered suggestions.'
+                : 'Add an API key for AI-powered suggestions.'
         );
+      } else {
+        setError(
+          lang === 'no' ? 'Hotell og arrangerte turer krever den sikre backend-tjenesten.'
+            : lang === 'sv' ? 'Hotell och organiserade resor kräver den säkra backendtjänsten.'
+              : 'Hotels and organized trips require the secure backend service.'
+        );
+        return;
       }
 
       const top = Object.entries(profile)
@@ -1784,7 +1986,7 @@ export default function App() {
       saveSeen(mode, seenKeys.current);
 
       setItems(newItems);
-      saveLastResults(mode, dest, newItems, lang);
+      if (requestedKind === mode) saveLastResults(mode, dest, newItems, lang);
       setPage('results');
     } catch (e: any) {
       const msg = String(e?.message || 'Unknown error');
@@ -1866,7 +2068,7 @@ export default function App() {
         <FlyLoadingScreen
           destination={destination}
           lang={lang}
-          mode={mode}
+          mode={activeSearchKind}
           onCancel={() => setLoading(false)}
         />
       )}
@@ -1894,7 +2096,7 @@ export default function App() {
           onClick={() => setPage('landing')}
           style={{ fontWeight: F.weight.black, color: T.gold, letterSpacing: 0.2, cursor: 'pointer' }}
         >
-          ✈️ Travel-Swish
+          ✈️ Travel Swipe
         </div>
         <div className="row" style={{ position: 'relative' }}>
           <select
@@ -2151,7 +2353,7 @@ export default function App() {
             }}
           >
             <button
-              onClick={findItems}
+              onClick={() => findItems({ kind: mode, queryText: '', tripContext: EMPTY_TRIP_CONTEXT })}
               disabled={!canSearch || loading}
               className="btnPill btnPillPrimary btnFull"
               style={{
@@ -2169,7 +2371,7 @@ export default function App() {
           </div>
 
           {/* Swipe deck */}
-          {/* Progress bar — shown until 20 swipes */}
+          {/* Progress bar — shown until the first result milestone */}
           {swipeCount < MIN_SWIPES && (
             <div style={{ padding: `0 ${S.page}px`, marginBottom: S.sm }}>
               <div style={{
@@ -2288,7 +2490,7 @@ export default function App() {
               </button>
 
               <button
-                onClick={findItems}
+                onClick={() => findItems()}
                 disabled={loading || (cooldownUntil > 0 && cooldownUntil > Date.now())}
                 style={{
                   padding: `${S.sm}px ${S.md}px`, borderRadius: R.pill, border: 'none',
@@ -2297,13 +2499,23 @@ export default function App() {
                   color: loading ? T.dim : T.bg, fontWeight: F.weight.black,
                 }}
               >
-                {loading ? UI.loading[lang] : UI.findMore[lang]}
+                {loading ? UI.loading[lang] : nextStatus === 'ready' ? UI.nextReady[lang] : UI.findMore[lang]}
               </button>
             </div>
           </div>
 
-          <h2 style={{ margin: `${S.md}px 0 0 0`, letterSpacing: 0.2 }}>{UI.resultsHeadline[lang](destination)}</h2>
+          <h2 style={{ margin: `${S.md}px 0 0 0`, letterSpacing: 0.2 }}>{searchResultsHeadline(activeSearchKind, destination, lang)}</h2>
           <div style={{ color: T.dim, marginTop: S.xs, fontSize: F.size.sm }}>{UI.resultsHint[lang]}</div>
+          {nextStatus === 'preparing' && (
+            <div aria-live="polite" style={{ color: T.teal, marginTop: S.xs2, fontSize: F.size.sm }}>
+              ◌ {UI.nextPreparing[lang]}
+            </div>
+          )}
+          {nextStatus === 'ready' && (
+            <div aria-live="polite" style={{ color: T.gold, marginTop: S.xs2, fontSize: F.size.sm, fontWeight: F.weight.bold }}>
+              ✓ {UI.nextReady[lang]}
+            </div>
+          )}
           {error && <div style={{ marginTop: S.md, color: T.red }}>{error}</div>}
           {info && <div style={{ color: T.dim, marginTop: S.xs2, fontSize: F.size.sm }}>{info}</div>}
 
@@ -2312,7 +2524,7 @@ export default function App() {
               <div className="muted" style={{ lineHeight: 1.55 }}>{backendNotice.msg}</div>
               <div className="noticeActions">
                 <button
-                  onClick={findItems}
+                  onClick={() => findItems()}
                   disabled={loading || (cooldownUntil > 0 && cooldownUntil > Date.now())}
                   className="btnPill btnPillPrimary btnFull"
                 >
@@ -2322,9 +2534,122 @@ export default function App() {
             </div>
           )}
 
+          <details style={{
+            marginTop: S.md,
+            background: T.glassLo,
+            border: `1px solid ${T.borderSoft}`,
+            borderRadius: R.lg,
+            padding: `${S.sm2}px ${S.md}px`,
+          }}>
+            <summary style={{ cursor: 'pointer', fontWeight: F.weight.black, color: T.txt }}>
+              ✦ {UI.profileSearchTitle[lang]}
+            </summary>
+            <div style={{ color: T.dim, lineHeight: 1.5, marginTop: S.sm, fontSize: F.size.sm }}>
+              {UI.profileSearchIntro[lang]}
+            </div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: S.xs2, marginTop: S.sm2 }}>
+              {([
+                ['hotels', UI.searchHotels[lang]],
+                ['tours', UI.searchTours[lang]],
+                ['custom', UI.searchCustom[lang]],
+              ] as [ProfileSearchKind, string][]).map(([kind, label]) => (
+                <button
+                  key={kind}
+                  type="button"
+                  aria-pressed={profileSearchKind === kind}
+                  onClick={() => setProfileSearchKind(kind)}
+                  className="btnPill"
+                  style={{
+                    background: profileSearchKind === kind ? `linear-gradient(135deg, ${T.gold}, ${T.teal})` : T.card,
+                    color: profileSearchKind === kind ? T.bg : T.txt,
+                  }}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+
+            <input
+              value={profileSearchText}
+              onChange={event => setProfileSearchText(event.target.value.slice(0, 160))}
+              placeholder={profileSearchKind === 'tours'
+                ? (lang === 'no' ? 'F.eks. sosial fottur i liten gruppe' : lang === 'sv' ? 'T.ex. social vandring i liten grupp' : 'E.g. social hiking trip in a small group')
+                : profileSearchKind === 'custom'
+                  ? (lang === 'no' ? 'Hva vil du finne?' : lang === 'sv' ? 'Vad vill du hitta?' : 'What would you like to find?')
+                  : UI.profileSearchPlaceholder[lang]}
+              aria-label={profileSearchKind === 'custom' ? UI.searchCustom[lang] : UI.profileSearchTitle[lang]}
+              style={{
+                width: '100%', boxSizing: 'border-box', marginTop: S.sm2,
+                padding: `${S.sm}px ${S.md}px`, borderRadius: R.md,
+                border: `1px solid ${T.border}`, background: T.card, color: T.txt,
+                font: 'inherit',
+              }}
+            />
+
+            {profileSearchKind === 'tours' && (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(145px, 1fr))', gap: S.xs2, marginTop: S.sm }}>
+                {([
+                  ['party', UI.tripParty[lang], [
+                    ['', lang === 'no' ? 'Fleksibelt' : lang === 'sv' ? 'Flexibelt' : 'Flexible'],
+                    ['solo', lang === 'no' ? 'Reiser alene' : lang === 'sv' ? 'Reser ensam' : 'Solo'],
+                    ['couple', lang === 'no' ? 'Par' : lang === 'sv' ? 'Par' : 'Couple'],
+                    ['friends', lang === 'no' ? 'Venner' : lang === 'sv' ? 'Vänner' : 'Friends'],
+                    ['family', lang === 'no' ? 'Familie' : lang === 'sv' ? 'Familj' : 'Family'],
+                  ]],
+                  ['age_band', UI.tripAge[lang], [['', '—'], ['18-29', '18–29'], ['30-49', '30–49'], ['50-64', '50–64'], ['65+', '65+']]],
+                  ['duration', UI.tripDuration[lang], [
+                    ['', lang === 'no' ? 'Fleksibelt' : lang === 'sv' ? 'Flexibelt' : 'Flexible'],
+                    ['weekend', lang === 'no' ? 'Helg' : lang === 'sv' ? 'Helg' : 'Weekend'],
+                    ['week', lang === 'no' ? 'Ca. én uke' : lang === 'sv' ? 'Cirka en vecka' : 'About a week'],
+                    ['two_weeks', lang === 'no' ? '10–14 dager' : lang === 'sv' ? '10–14 dagar' : '10–14 days'],
+                  ]],
+                  ['budget', UI.tripBudget[lang], [
+                    ['', lang === 'no' ? 'Fleksibelt' : lang === 'sv' ? 'Flexibelt' : 'Flexible'],
+                    ['budget', lang === 'no' ? 'Rimelig' : lang === 'sv' ? 'Prisvärt' : 'Budget'],
+                    ['midrange', lang === 'no' ? 'Middels' : lang === 'sv' ? 'Mellan' : 'Mid-range'],
+                    ['premium', 'Premium'],
+                  ]],
+                ] as [keyof TripContext, string, string[][]][]).map(([key, label, options]) => (
+                  <label key={key} style={{ color: T.dim, fontSize: F.size.sm }}>
+                    <span style={{ display: 'block', marginBottom: S.xxs }}>{label}</span>
+                    <select
+                      value={tripContext[key]}
+                      onChange={event => setTripContext(current => ({ ...current, [key]: event.target.value }))}
+                      style={{ width: '100%', padding: `${S.xs2}px ${S.sm}px`, borderRadius: R.md, border: `1px solid ${T.border}`, background: T.card, color: T.txt }}
+                    >
+                      {options.map(([value, text]) => <option key={value || 'any'} value={value}>{text}</option>)}
+                    </select>
+                  </label>
+                ))}
+              </div>
+            )}
+
+            <div style={{ display: 'flex', gap: S.sm, alignItems: 'center', flexWrap: 'wrap', marginTop: S.sm2 }}>
+              <button
+                type="button"
+                className="btnPill btnPillPrimary"
+                disabled={loading || (profileSearchKind === 'custom' && !profileSearchText.trim())}
+                onClick={() => findItems({
+                  kind: profileSearchKind,
+                  queryText: profileSearchText,
+                  tripContext: profileSearchKind === 'tours' ? tripContext : EMPTY_TRIP_CONTEXT,
+                })}
+              >
+                {loading ? UI.loading[lang] : UI.profileSearchAction[lang]}
+              </button>
+              {profileSearchKind === 'tours' && (
+                <span style={{ color: T.dim, fontSize: F.size.sm, lineHeight: 1.4, flex: '1 1 220px' }}>
+                  {UI.tripPrivacy[lang]}
+                </span>
+              )}
+            </div>
+          </details>
+
           {/* TS6: List/Map tab bar */}
           <div style={{ display: 'flex', gap: S.xs2, marginTop: S.md }}>
-            {(['list', 'map'] as const).map(tab => (
+            {(['list', 'map'] as const)
+              .filter(tab => tab === 'list' || items.some(item => typeof item.lat === 'number' && typeof item.lng === 'number'))
+              .map(tab => (
               <button
                 key={tab}
                 onClick={() => setResultsTab(tab)}
@@ -2338,7 +2663,7 @@ export default function App() {
               >
                 {tab === 'list' ? UI.viewList[lang] : UI.viewMap[lang]}
               </button>
-            ))}
+              ))}
           </div>
 
           {/* TS6: Map tab */}
@@ -2408,11 +2733,11 @@ export default function App() {
                           </button>
                         )}
                         <button
-                          onClick={findItems}
+                          onClick={() => findItems()}
                           disabled={loading || (cooldownUntil > 0 && cooldownUntil > Date.now())}
                           className="btnPill btnPillPrimary btnFull"
                         >
-                          {loading ? UI.loading[lang] : UI.findMore[lang]}
+                          {loading ? UI.loading[lang] : nextStatus === 'ready' ? UI.nextReady[lang] : UI.findMore[lang]}
                         </button>
                         <button onClick={() => setPage('swipe')} className="btnPill" style={{ background: 'transparent', color: T.dim }}>
                           {UI.back[lang]}
@@ -2421,6 +2746,8 @@ export default function App() {
                     </div>
                   ) : shown.map((it, idx) => {
                     const pct = Math.round(it.match || 0);
+                    const websiteHref = safeExternalUrl(it.websiteUrl || (it.source !== 'google_places' ? it.url : ''));
+                    const mapsHref = safeExternalUrl(it.mapsUrl) || googleMapsSearchUrl(it.name, destination);
                     return (
                       <div
                         key={it.id || it.name || idx}
@@ -2468,9 +2795,9 @@ export default function App() {
                         </div>
 
                         <div style={{ display: 'flex', gap: S.sm, flexWrap: 'wrap', marginTop: S.sm2 }}>
-                          {it.url && (
+                          {websiteHref && (
                             <a
-                              href={it.url}
+                              href={websiteHref}
                               target="_blank"
                               rel="noreferrer"
                               style={{
@@ -2480,11 +2807,11 @@ export default function App() {
                                 color: T.bg, fontWeight: F.weight.black, fontSize: F.size.base,
                               }}
                             >
-                              {UI.openLink[lang]}
+                              {it.websiteUrl ? UI.openWebsite[lang] : UI.openLink[lang]} ↗
                             </a>
                           )}
                           <a
-                            href={googleMapsSearchUrl(it.name, destination)}
+                            href={mapsHref}
                             target="_blank"
                             rel="noreferrer"
                             style={{
@@ -2493,7 +2820,7 @@ export default function App() {
                               background: 'transparent', color: T.txt, fontWeight: F.weight.bold, fontSize: F.size.base,
                             }}
                           >
-                            {UI.openMaps[lang]}
+                            {UI.openMaps[lang]} ↗
                           </a>
                         </div>
 

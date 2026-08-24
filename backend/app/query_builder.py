@@ -93,12 +93,50 @@ def build_queries(
     taste: dict[str, Any] | None = None,
     max_queries: int = 8,
     seed: int = 42,
+    search_kind: str | None = None,
+    query_text: str = "",
 ) -> list[PlacesQuery]:
     """Build structured queries from multi-layer profile."""
-    _ = mode
-
     rng = random.Random(seed)
     queries: list[PlacesQuery] = []
+    kind = search_kind or mode
+    query_text = " ".join(str(query_text or "").split())[:160]
+
+    if kind == "hotels":
+        hotel_queries: list[tuple[str, str]] = [
+            ("boutique hotel", "hotel"),
+            ("best rated hotel", "hotel"),
+            ("resort hotel", "resort_hotel"),
+            ("hostel", "hostel"),
+            ("bed and breakfast", "bed_and_breakfast"),
+        ]
+        if float(prefs.get("lux", 0)) > 0.35:
+            hotel_queries.insert(0, ("luxury spa hotel", "hotel"))
+        if float(prefs.get("nat", 0)) > 0.35:
+            hotel_queries.insert(0, ("scenic nature hotel", "hotel"))
+        if float(prefs.get("soc", 0)) > 0.35:
+            hotel_queries.insert(0, ("social boutique hotel", "hotel"))
+        if float(prefs.get("food", 0)) > 0.35:
+            hotel_queries.insert(0, ("hotel excellent breakfast", "hotel"))
+        if query_text:
+            hotel_queries.insert(0, (f"{query_text} hotel", "hotel"))
+
+        seen_hotel_queries: set[str] = set()
+        for rank, (phrase, included_type) in enumerate(hotel_queries):
+            text = f"{phrase} in {destination}"
+            key = text.casefold()
+            if key in seen_hotel_queries:
+                continue
+            seen_hotel_queries.add(key)
+            queries.append(
+                PlacesQuery(
+                    text_query=text,
+                    included_type=included_type,
+                    weight=max(0.65, 1.15 - rank * 0.07),
+                    source="profile:hotels",
+                )
+            )
+        return queries[:max_queries]
 
     if taste and taste.get("cats"):
         cat_scores = sorted(
@@ -106,7 +144,7 @@ def build_queries(
             key=lambda x: -x[1],
         )
         for cat, score in cat_scores[:4]:
-            place_types = CAT_TO_PLACE_TYPES.get(cat, [])
+            place_types = list(CAT_TO_PLACE_TYPES.get(cat, []))
             if not place_types:
                 continue
             rng.shuffle(place_types)

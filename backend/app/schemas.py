@@ -118,14 +118,14 @@ class WebSearchResponse(BaseModel):
 
 
 class WebRecsRequest(BaseModel):
-    user_id: str
-    mode: str
-    destination: str
-    limit: int = 20
+    user_id: str = Field(min_length=1, max_length=128)
+    mode: str = Field(min_length=1, max_length=32)
+    destination: str = Field(min_length=1, max_length=160)
+    limit: int = Field(default=20, ge=1, le=50)
 
     # query generation / provider controls
-    max_queries: int = 10
-    per_query: int = 10
+    max_queries: int = Field(default=8, ge=1, le=10)
+    per_query: int = Field(default=10, ge=1, le=20)
     seed: int = 42
 
     # Brave params (optional)
@@ -136,6 +136,16 @@ class WebRecsRequest(BaseModel):
 
     # Multi-layer taste profile from frontend
     taste: dict | None = None
+
+    # Profile-aware discovery. `mode` still selects the stored swipe profile;
+    # `search_kind` controls what the user wants to discover with that profile.
+    search_kind: Optional[str] = Field(default=None, max_length=24)
+    query_text: str = Field(default="", max_length=160)
+    trip_context: Dict[str, str] = Field(default_factory=dict)
+    exclude_ids: List[str] = Field(default_factory=list, max_length=200)
+
+    # Single-use token for a transiently prepared next selection.
+    prefetch_token: Optional[str] = Field(default=None, max_length=80)
 
 
 class WebRecsQuery(BaseModel):
@@ -153,6 +163,8 @@ class WebRecItem(BaseModel):
     match: float = 0
     why: str = ""
     url: str = ""
+    website_url: str = ""
+    maps_url: str = ""
     cat: str = ""
 
     source: str = "brave"
@@ -174,3 +186,8 @@ class WebRecsResponse(BaseModel):
     model_version: str = "v2-web-ranker"
     queries: List[WebRecsQuery] = Field(default_factory=list)
     items: List[WebRecItem]
+    provider: str = ""
+    served_from_prefetch: bool = False
+    next_token: Optional[str] = None
+    next_status: str = "unavailable"
+    next_seed: Optional[int] = None

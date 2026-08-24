@@ -1,0 +1,20 @@
+{
+  "name": "Travel Swipe",
+  "short_name": "Travel Swipe",
+  "description": "Swipe your way to travel, food and experience recommendations that fit your taste.",
+  "lang": "en",
+  "start_url": "/Travel-swish/",
+  "scope": "/Travel-swish/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#0a0d1a",
+  "theme_color": "#0a0d1a",
+  "icons": [
+    {
+      "src": "/Travel-swish/app-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

@@ -2,7 +2,8 @@ import { test, expect } from '@playwright/test';
 
 test('loads landing without blank screen', async ({ page }) => {
   await page.goto('/?mock=1');
-  await expect(page.getByText('Swipe → plan → book')).toBeVisible();
+  await expect(page.getByText(/Travel Swipe/i)).toBeVisible();
+  await expect(page.getByRole('heading', { name: /Vanskelige valg|Hard choices|Svåra val/i })).toBeVisible();
   await expect(page.getByRole('button', { name: /Kom i gang|Get started|Kom igång/i })).toBeVisible();
 });
 
@@ -34,7 +35,8 @@ test('swipe -> find suggestions -> results render (mock mode)', async ({ page })
   await page.getByRole('button', { name: /^Start\b/i }).first().click();
 
   // Swipe 10 cards quickly (keyboard is more reliable than clicking during animations)
-  await page.getByText(/Dra ←\/→|Drag ←\/→/i).click();
+  await expect(page.getByText(/← PASS/i)).toBeVisible();
+  await page.locator('[tabindex="0"]').last().focus();
   for (let i = 0; i < 10; i++) {
     await page.keyboard.press('ArrowRight');
     await page.waitForTimeout(350);
@@ -111,6 +113,8 @@ test('backend timeout -> cold-start notice + retry recovers', async ({ page }) =
             id: 'live_1',
             name: 'Live: Backend suggestion',
             url: 'https://example.com/live',
+            website_url: 'https://example.com/official',
+            maps_url: 'https://maps.google.com/?q=live+backend+suggestion',
             cat: 'Experience',
             match: 91,
             why: 'Injected by Playwright route (retry success).',
@@ -120,6 +124,9 @@ test('backend timeout -> cold-start notice + retry recovers', async ({ page }) =
             query_source: 'playwright',
           },
         ],
+        next_token: 'e2e-ready-token',
+        next_status: 'ready',
+        next_seed: 77,
       }),
     });
   });
@@ -132,7 +139,8 @@ test('backend timeout -> cold-start notice + retry recovers', async ({ page }) =
   await page.getByPlaceholder(/Barcelona|Stockholm|Tokyo/i).fill('Oslo');
   await page.getByRole('button', { name: /^Start\b/i }).first().click();
 
-  await page.getByText(/Dra ←\/→|Drag ←\/→/i).click();
+  await expect(page.getByText(/← PASS/i)).toBeVisible();
+  await page.locator('[tabindex="0"]').last().focus();
   for (let i = 0; i < 10; i++) {
     await page.keyboard.press('ArrowRight');
     await page.waitForTimeout(350);
@@ -142,16 +150,42 @@ test('backend timeout -> cold-start notice + retry recovers', async ({ page }) =
   await expect(findBtn).toBeEnabled({ timeout: 30_000 });
   await findBtn.click();
 
-  // After the forced timeout, the app should show a cold-start notice and still render demo results.
-  await expect(page.getByText(/cold start/i)).toBeVisible({ timeout: 30_000 });
-  const tryAgainBtn = page.getByRole('button', { name: /Prøv igjen|Try again|Försök igen/i });
-  await expect(tryAgainBtn).toBeVisible();
-
-  // Retry should succeed and show the mocked live item, with the notice cleared.
-  await tryAgainBtn.click();
+  // The first timeout triggers the built-in automatic cold-start retry.
+  // The notice can be brief on a fast mocked retry, so assert the outcome.
   await expect(page.getByText('Live: Backend suggestion')).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByRole('link', { name: /Åpne hjemmeside|Open website|Öppna webbplats/i })).toHaveAttribute(
+    'href',
+    'https://example.com/official',
+  );
+  await expect(page.getByRole('link', { name: /Åpne i Maps|Open in Maps|Öppna i Maps/i })).toHaveAttribute(
+    'href',
+    'https://maps.google.com/?q=live+backend+suggestion',
+  );
   await expect(page.getByText(/cold start/i)).toHaveCount(0);
 
   expect(prefsPosts).toBeGreaterThanOrEqual(2);
   expect(recsPosts).toBe(1);
+});
+
+test('profile-aware hotel search sends intent and reuses the learned profile', async ({ page }) => {
+  await page.goto('/?mock=1');
+  await page.getByRole('button', { name: /Kom i gang|Get started|Kom igång/i }).click();
+  await page.getByPlaceholder(/Barcelona|Stockholm|Tokyo/i).fill('Bergen');
+  await page.getByRole('button', { name: /^Start\b/i }).first().click();
+
+  await expect(page.getByText(/← PASS/i)).toBeVisible();
+  await page.locator('[tabindex="0"]').last().focus();
+  for (let i = 0; i < 10; i++) {
+    await page.keyboard.press('ArrowRight');
+    await page.waitForTimeout(350);
+  }
+  await page.getByRole('button', { name: /Finn forslag|Find suggestions|Hitta förslag/i }).click();
+
+  const profileSearch = page.getByText(/Finn mer med profilen din|Discover more with your profile|Hitta mer med din profil/i);
+  await profileSearch.click();
+  await page.getByPlaceholder(/boutiquehotell|boutique hotel|boutiquehotell/i).fill('rolig med basseng');
+  await page.getByRole('button', { name: /Søk med profilen|Search with my profile|Sök med min profil/i }).click();
+
+  await expect(page.getByText('Mock: Harbour Boutique Hotel')).toBeVisible();
+  await expect(page.getByRole('link', { name: /Åpne hjemmeside|Open website|Öppna webbplats/i }).first()).toBeVisible();
 });

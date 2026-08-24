@@ -49,6 +49,14 @@ TYPE_DIM_VECTOR: dict[str, dict[str, float]] = {
     "pub": {"night": 0.6, "soc": 0.5},
     "spa": {"lux": 0.9},
     "resort_hotel": {"lux": 1.0},
+    "hotel": {"lux": 0.4, "soc": 0.2},
+    "lodging": {"lux": 0.25},
+    "boutique_hotel": {"lux": 0.8, "spont": 0.35, "cul": 0.2},
+    "hostel": {"soc": 0.9, "spont": 0.25},
+    "bed_and_breakfast": {"soc": 0.45, "food": 0.35, "spont": 0.25},
+    "guest_house": {"soc": 0.5, "spont": 0.3},
+    "farmstay": {"nat": 0.8, "food": 0.25, "spont": 0.35},
+    "camping_cabin": {"nat": 0.9, "adv": 0.25},
     "wellness_center": {"lux": 0.6},
     "cultural_center": {"soc": 0.7, "cul": 0.4},
     "community_center": {"soc": 0.8},
@@ -97,6 +105,7 @@ def score_item(item: Mapping[str, Any], prefs: dict[str, float], taste: dict[str
             "wellness": "luxury",
             "experiences": "adrenaline",
             "shopping": "shopping",
+            "hotels": "luxury",
         }
         card_cat = internal_to_card_cat.get(item_cat, item_cat)
         cat_sentiment = float(taste["cats"].get(card_cat, 0))

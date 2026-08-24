@@ -57,6 +57,7 @@ def test_brave_web_search_uses_sqlite_cache_across_process_cache_clear(monkeypat
 
     # Provide a dummy key so brave_web_search doesn't fail.
     monkeypatch.setenv("TS_BRAVE_API_KEY", "dummy")
+    monkeypatch.setenv("TS_BRAVE_STORAGE_RIGHTS", "1")
 
     from app import brave_search as bs
 
@@ -93,6 +94,7 @@ def test_brave_web_search_uses_sqlite_cache_across_process_cache_clear(monkeypat
 def test_rank_web_recs_uses_sqlite_cache(monkeypatch: pytest.MonkeyPatch, tmp_path) -> None:
     monkeypatch.setenv("TS_DB_PATH", str(tmp_path / "test.db"))
     init_db()
+    monkeypatch.setenv("TS_BRAVE_STORAGE_RIGHTS", "1")
 
     from app import web_recs as wr
 

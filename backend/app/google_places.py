@@ -1,16 +1,12 @@
 """google_places.py — Google Places API (New) wrapper for Travel-Swish."""
 from __future__ import annotations
 
-import hashlib
-import json
 import logging
 import os
-import time
 from typing import Any
+from urllib.parse import urlencode, urlparse
 
 import httpx
-
-from .db_cache import cache_get, cache_set
 
 log = logging.getLogger(__name__)
 
@@ -19,7 +15,7 @@ FIELD_MASK = (
     "places.id,places.displayName,places.formattedAddress,places.types,"
     "places.rating,places.priceLevel,places.userRatingCount,"
     "places.location,places.websiteUri,places.editorialSummary,"
-    "places.primaryTypeDisplayName"
+    "places.primaryTypeDisplayName,places.googleMapsUri"
 )
 
 # Map Google place types to our internal categories.
@@ -46,6 +42,14 @@ TYPE_TO_CAT = {
     "zoo": "experiences",
     "stadium": "experiences",
     "performing_arts_theater": "culture",
+    "hotel": "hotels",
+    "lodging": "hotels",
+    "resort_hotel": "hotels",
+    "hostel": "hotels",
+    "bed_and_breakfast": "hotels",
+    "guest_house": "hotels",
+    "inn": "hotels",
+    "motel": "hotels",
 }
 
 
@@ -53,40 +57,26 @@ def _get_api_key() -> str | None:
     return os.getenv("GOOGLE_PLACES_API_KEY")
 
 
-def _cache_key(
-    query: str,
-    max_results: int,
-    included_type: str | None = None,
-    min_rating: float | None = None,
-    price_levels: list[str] | None = None,
-) -> str:
-    raw = f"{query}|{max_results}|{included_type}|{min_rating}|{price_levels}"
-    return hashlib.sha1(raw.encode("utf-8")).hexdigest()
-
-
 def google_places_search(
     query: str,
     *,
     max_results: int = 10,
-    cache_ttl_s: int = 3600,
+    cache_ttl_s: int = 0,
     included_type: str | None = None,
     min_rating: float | None = None,
     price_levels: list[str] | None = None,
+    language_code: str = "en",
 ) -> tuple[list[dict[str, Any]], bool]:
-    """Search Google Places and return normalized items + cache_hit flag."""
+    """Search Google Places and return normalized items.
+
+    Places content is deliberately not prefetched or cached. Google permits
+    durable storage of place IDs, but not general Places content. The unused
+    ``cache_ttl_s`` argument remains for backwards-compatible callers.
+    """
+    _ = cache_ttl_s
     api_key = _get_api_key()
     if not api_key:
         raise RuntimeError("GOOGLE_PLACES_API_KEY not set")
-
-    ck = _cache_key(query, max_results, included_type, min_rating, price_levels)
-    now = int(time.time())
-
-    cached = cache_get(namespace="google_places", key=ck, now=now)
-    if cached:
-        try:
-            return json.loads(cached["payload"]), True
-        except Exception:
-            pass
 
     headers = {
         "Content-Type": "application/json",
@@ -96,7 +86,7 @@ def google_places_search(
     body = {
         "textQuery": query,
         "maxResultCount": min(max_results, 20),
-        "languageCode": "en",
+        "languageCode": language_code if language_code in {"en", "no", "sv"} else "en",
     }
     if included_type:
         body["includedType"] = included_type
@@ -115,7 +105,6 @@ def google_places_search(
 
     items = [_normalize(p) for p in places]
     items = [i for i in items if i]
-    cache_set(namespace="google_places", key=ck, payload=json.dumps(items), ttl_s=cache_ttl_s, now=now)
     return items, False
 
 
@@ -146,19 +135,31 @@ def _normalize(place: dict[str, Any]) -> dict[str, Any] | None:
         rating_count = place.get("userRatingCount", 0)
         price_level = place.get("priceLevel", "")
 
-        url = place.get("websiteUri", "")
-        if not url:
+        website_url = str(place.get("websiteUri") or "")
+        maps_url = str(place.get("googleMapsUri") or "")
+        if not maps_url:
             place_id = place.get("id", "")
             if place_id:
-                url = f"https://maps.google.com/?cid={place_id}"
+                maps_url = "https://www.google.com/maps/search/?" + urlencode(
+                    {"api": "1", "query": name, "query_place_id": place_id}
+                )
+        url = website_url or maps_url
+        domain = ""
+        if website_url:
+            try:
+                domain = urlparse(website_url).netloc.lower().removeprefix("www.")
+            except Exception:
+                domain = ""
 
         return {
             "id": place.get("id", ""),
             "name": name,
             "url": url,
+            "website_url": website_url,
+            "maps_url": maps_url,
             "cat": cat,
             "snippet": snippet,
-            "domain": "maps.google.com",
+            "domain": domain,
             "source": "google_places",
             "lat": lat,
             "lng": lng,

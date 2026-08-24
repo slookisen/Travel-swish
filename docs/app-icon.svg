@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Travel Swipe">
+  <rect width="512" height="512" rx="112" fill="#0a0d1a"/>
+  <path d="M98 278c48-88 119-139 218-151 35-4 62 24 54 58-21 90-82 160-184 210-28 14-61-4-64-35-3-29-11-56-24-82Z" fill="#d6ef8c"/>
+  <path d="M149 325c71-10 132-43 184-100" fill="none" stroke="#2aa89a" stroke-width="30" stroke-linecap="round"/>
+  <path d="m288 127 45-52 9 78" fill="#f3c65d"/>
+</svg>

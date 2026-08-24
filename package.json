@@ -1,7 +1,7 @@
 {
   "name": "travel-swish",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.6.0",
   "type": "module",
   "scripts": {
     "gen:buildmeta": "node ./tools/gen-build-meta.mjs",

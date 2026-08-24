@@ -1,8 +1,8 @@
-# Travel-Swish API Contract v2
+# Travel Swipe API Contract v2
 
-> **Version:** 0.1.0  
-> **Last updated:** 2026-03-15  
-> **Status:** Development — no auth, no rate limiting yet
+> **Version:** 0.6.0
+> **Last updated:** 2026-08-24
+> **Status:** Testable beta — origin/API-key guard and process-local rate limits
 
 ---
 
@@ -30,7 +30,7 @@ Health check. Always returns 200 if the server is up.
 ```json
 {
   "ok": true,
-  "service": "travel-swish-backend"
+  "service": "travel-swipe-backend"
 }
 ```
 
@@ -347,12 +347,14 @@ Server-side **Brave Web Search** proxy. Uses a server-side API key (no key is ex
 
 ### `POST /recs/web`
 
-Get **live** recommendations from the web (Brave Search) and rank them using learned prefs.
+Get live, profile-ranked recommendations. Google Places is preferred for
+experiences, restaurants and hotels when configured; Brave Search handles
+organized trips, custom discovery and provider fallback.
 
 **Pipeline (v2-web-ranker):**
 1. Load prefs for `user_id + mode`
-2. Generate 3–5 diverse, destination-aware queries from prefs (`queryGen`-style)
-3. For each query: call Brave Web Search (server-side key), normalize results
+2. Generate diverse, destination-aware queries from prefs and search intent
+3. Run independent provider calls in a bounded parallel fan-out
 4. Merge + de-duplicate by canonical URL
 5. Score each result by **keyword/facet matching** against prefs → normalize to 0–100
 6. Apply diversity:
@@ -360,7 +362,10 @@ Get **live** recommendations from the web (Brave Search) and rank them using lea
    - cap repeated domains (avoid 10 results from the same site)
 7. Explainability: `why` includes top contributing facets
 
-> **Caching:** a small in-process TTL cache is applied to the aggregated `/recs/web` response, and Brave calls are also cached per query.
+> **Caching:** provider results use short-lived process memory. Persistent Brave
+> storage is off by default and may only be enabled when the subscribed plan
+> grants storage rights. Google Places content is not cached or prefetched.
+> Successful responses may schedule a transient Brave-backed next selection.
 
 **Request body** (`WebRecsRequest`)
 
@@ -377,6 +382,11 @@ Get **live** recommendations from the web (Brave Search) and rank them using lea
 | `search_lang` | `string \| null` | ❌ | Brave `search_lang` param |
 | `safesearch` | `string` | ❌ | `moderate` (default), `strict`, `off` |
 | `freshness` | `string \| null` | ❌ | Brave `freshness` param |
+| `search_kind` | `string \| null` | ❌ | `experiences`, `restaurants`, `hotels`, `tours`, or `custom` |
+| `query_text` | `string` | ❌ | Optional intent; required for `custom` |
+| `trip_context` | `object` | ❌ | Request-only `party`, `age_band`, `duration`, `budget` filters |
+| `exclude_ids` | `string[]` | ❌ | Previously shown provider IDs |
+| `prefetch_token` | `string \| null` | ❌ | One-use token returned by the previous response |
 
 **Example request:**
 
@@ -398,6 +408,11 @@ Get **live** recommendations from the web (Brave Search) and rank them using lea
   "ok": true,
   "cached": false,
   "model_version": "v2-web-ranker",
+  "provider": "brave",
+  "served_from_prefetch": false,
+  "next_token": "single-use-token",
+  "next_status": "preparing",
+  "next_seed": 12345,
   "queries": [
     {
       "query": "best spicy food in Oslo -\"fast food chain\" ...",
@@ -430,6 +445,8 @@ Get **live** recommendations from the web (Brave Search) and rank them using lea
 | `id` | `string` | Stable ID derived from URL |
 | `name` | `string` | Result title |
 | `url` | `string` | Link |
+| `website_url` | `string` | Verified official website when supplied by a structured provider |
+| `maps_url` | `string` | Direct Google Maps place link when available |
 | `cat` | `string` | Category/facet bucket (used for diversity) |
 | `match` | `float` | Match score 0–100 |
 | `why` | `string` | Explainability string referencing facets |
@@ -549,17 +566,16 @@ FastAPI 422 responses include field-level details:
 
 ## Authentication
 
-**Current:** None. All endpoints are open.
-
-**Planned:** Token-based auth (likely JWT or simple API key). The `user_id` field in requests will be validated against the authenticated identity.
+**Current:** protected endpoints require either an allowlisted browser `Origin`
+or the configured `TS_API_KEY`. This is an abuse guard, not user authentication.
+Real account identity and cross-device sync remain future work.
 
 ---
 
 ## Rate Limiting
 
-**Current:** None.
-
-**Planned:** Per-user rate limiting on write endpoints (`POST /events`, `POST /prefs`, `POST /recs`).
+**Current:** process-local weighted rate limits protect writes and provider calls.
+Multi-worker production should move these counters to shared storage such as Redis.
 
 ---
 

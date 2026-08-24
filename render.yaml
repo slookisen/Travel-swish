@@ -13,6 +13,9 @@ services:
       # Optional: preferred provider for structured place recommendations.
       - key: GOOGLE_PLACES_API_KEY
         sync: false
+      # Keep disabled unless the active Brave plan explicitly grants storage rights.
+      - key: TS_BRAVE_STORAGE_RIGHTS
+        value: "0"
       # CORS: allow your GitHub Pages origin(s). Comma-separated.
       - key: TS_CORS_ORIGINS
         value: https://slookisen.github.io
