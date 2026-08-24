@@ -193,6 +193,67 @@ test('adaptive profiling sends V2 taste and renders live results', async ({ page
   expect((taste.context as Record<string, unknown>).discovery).toBe('hidden');
 });
 
+test('profile discovery exposes official websites and consumes the prepared next selection', async ({ page }) => {
+  const recsBodies: Array<Record<string, unknown>> = [];
+  await page.route('**/sessions', async (route) => route.fulfill({ status: 200, contentType: 'application/json', body: '{}' }));
+  await page.route('**/prefs', async (route) => route.fulfill({ status: 200, contentType: 'application/json', body: '{}' }));
+  await page.route('**/recs/prefetch/**', async (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, status: 'ready' }) }));
+  await page.route('**/recs/web', async (route) => {
+    const body = route.request().postDataJSON() as Record<string, unknown>;
+    recsBodies.push(body);
+    const isTour = body.search_kind === 'tours';
+    const isPrepared = Boolean(body.prefetch_token);
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        run_id: `run-${recsBodies.length}`,
+        provider: isTour ? 'brave' : 'google_places',
+        served_from_prefetch: isPrepared,
+        next_token: isTour ? 'tour-next' : 'place-next',
+        next_status: 'preparing',
+        next_seed: 99,
+        items: [{
+          id: `result-${recsBodies.length}`,
+          name: isPrepared ? 'Prepared Portugal tour' : isTour ? 'Profiled Portugal tour' : 'Official Lisbon place',
+          cat: isTour ? 'tours' : 'culture',
+          match: 90,
+          why: 'Matches the current profile and trip request.',
+          source: isTour ? 'brave' : 'google_places',
+          maps_url: isTour ? '' : 'https://www.google.com/maps/search/?api=1&query=Lisbon',
+          website_url: isTour ? '' : 'https://official.example/lisbon',
+          url: isTour ? 'https://tour.example/portugal' : 'https://www.google.com/maps/search/?api=1&query=Lisbon',
+        }],
+      }),
+    });
+  });
+
+  await openBrief(page);
+  await buildReadyProfile(page);
+  await page.getByRole('button', { name: /Se mine treff/ }).click();
+  await expect(page.getByRole('link', { name: /Hjemmeside/ })).toHaveAttribute('href', 'https://official.example/lisbon');
+  await expect(page.getByRole('link', { name: /Åpne i kart/ })).toHaveAttribute('href', /google\.com\/maps/);
+
+  await page.getByText('Finn mer med profilen din').click();
+  await page.getByRole('button', { name: 'ARRANGERTE TURER' }).click();
+  await page.getByPlaceholder('For eksempel aktiv gruppetur i Portugal').fill('surf og fotturer');
+  await page.getByLabel('Aldersgruppe').selectOption('30-49');
+  await page.getByLabel('Varighet').selectOption('week');
+  await page.getByRole('button', { name: /Søk med profilen/ }).click();
+
+  await expect(page.getByText('Profiled Portugal tour')).toBeVisible();
+  expect(recsBodies[1].search_kind).toBe('tours');
+  expect(recsBodies[1].query_text).toBe('surf og fotturer');
+  expect((recsBodies[1].trip_context as Record<string, string>).age_band).toBe('30-49');
+  expect((recsBodies[1].trip_context as Record<string, string>).duration).toBe('week');
+
+  await expect(page.getByText('Neste utvalg er klart')).toBeVisible();
+  await page.getByRole('button', { name: /Vis neste utvalg/ }).click();
+  await expect(page.getByText('Prepared Portugal tour')).toBeVisible();
+  expect(recsBodies[2].prefetch_token).toBe('tour-next');
+  expect(recsBodies[2].seed).toBe(99);
+});
+
 test('failed live search falls back to sourced, actionable starter tips', async ({ page }) => {
   await page.route('**/sessions', async (route) => route.abort());
   await page.route('**/prefs', async (route) => route.abort());

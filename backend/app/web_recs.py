@@ -22,6 +22,7 @@ import os
 import re
 import time
 from collections import OrderedDict
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from typing import Any, Callable, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple
 from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
@@ -29,6 +30,7 @@ from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 from .algo import format_why
 from .brave_search import brave_web_search
 from .db_cache import cache_get, cache_set
+from .discovery_queries import generate_profile_search_queries
 from .query_gen import GeneratedQuery, generate_queries, to_search_string
 
 
@@ -50,6 +52,10 @@ def _env_int(name: str, default: int) -> int:
         return int(str(os.getenv(name) or "").strip() or default)
     except Exception:
         return int(default)
+
+
+def _storage_rights_enabled() -> bool:
+    return str(os.getenv("TS_BRAVE_STORAGE_RIGHTS") or "").strip().lower() in {"1", "true", "yes", "on"}
 
 
 def _prefs_hash(prefs: Mapping[str, Any]) -> str:
@@ -74,6 +80,10 @@ def _cache_key(
     freshness: str | None,
     safesearch: str,
     taste: Mapping[str, Any] | None = None,
+    search_kind: str = "",
+    query_text: str = "",
+    trip_context: Mapping[str, str] | None = None,
+    exclude_ids: Sequence[str] = (),
 ) -> str:
     raw = "\n".join(
         [
@@ -90,6 +100,10 @@ def _cache_key(
             f"fresh={freshness}",
             f"safe={safesearch}",
             f"taste={_prefs_hash(taste or {})}",
+            f"kind={search_kind}",
+            f"query={query_text.strip().lower()}",
+            f"context={json.dumps(dict(trip_context or {}), sort_keys=True, ensure_ascii=False)}",
+            f"exclude={_sha1('|'.join(sorted(str(value) for value in exclude_ids if value)))}",
         ]
     )
     return _sha1(raw)
@@ -280,6 +294,12 @@ def _infer_category(text: str, mode: str) -> str:
     """Coarse category heuristics for additional diversity."""
 
     t = (text or "").lower()
+    if mode == "hotels":
+        return "hotels"
+    if mode == "tours":
+        return "organized tours"
+    if mode == "custom":
+        return "profile search"
     if mode == "restaurants":
         if any(w in t for w in ["cafe", "coffee", "roastery", "espresso"]):
             return "coffee"
@@ -467,6 +487,11 @@ def rank_web_recs(
     search_max_retries: int = 2,
     rate_limit_key: str | None = None,
     search_fn: SearchFn = brave_web_search,
+    search_kind: str | None = None,
+    query_text: str = "",
+    trip_context: Mapping[str, str] | None = None,
+    exclude_ids: Sequence[str] | None = None,
+    allow_persistent_cache: bool | None = None,
 ) -> Dict[str, Any]:
     """Return ranked web recs payload.
 
@@ -476,6 +501,10 @@ def rank_web_recs(
     limit = max(1, min(200, int(limit)))
     max_queries = max(1, min(10, int(max_queries)))
     per_query = max(1, min(20, int(per_query)))
+    kind = search_kind or mode
+    context = dict(trip_context or {})
+    excluded = {str(value) for value in (exclude_ids or []) if value}
+    persist = _storage_rights_enabled() if allow_persistent_cache is None else bool(allow_persistent_cache)
 
     # Allow env override for caching in deployed demos.
     cache_ttl_s = _env_int("TS_WEB_RECS_CACHE_TTL_S", int(cache_ttl_s))
@@ -494,6 +523,10 @@ def rank_web_recs(
         freshness,
         safesearch,
         taste,
+        kind,
+        query_text,
+        context,
+        sorted(excluded),
     )
     now = time.time()
     ent = _WEB_RECS_CACHE.get(ck)
@@ -503,7 +536,7 @@ def rank_web_recs(
         return payload
 
     # Optional persistence layer (SQLite) to survive reloads.
-    db_hit = cache_get(namespace="web_recs", key=ck, now=int(now))
+    db_hit = cache_get(namespace="web_recs", key=ck, now=int(now)) if persist else None
     if db_hit:
         payload0, expires_ts = db_hit
         payload = dict(payload0 or {})
@@ -511,20 +544,27 @@ def rank_web_recs(
         _WEB_RECS_CACHE[ck] = WebRecsCacheEntry(expires_at=float(expires_ts), payload=payload)
         return payload
 
-    gqs: List[GeneratedQuery] = generate_queries(
-        mode,
-        destination,
-        prefs,
-        max_queries=max_queries,
-        seed=seed,
-    )
-    gqs = _apply_trip_context(gqs, taste)
+    if kind in {"hotels", "tours", "custom"}:
+        merged_context = dict((taste or {}).get("context") or {}) if isinstance(taste, Mapping) else {}
+        merged_context.update(context)
+        gqs = generate_profile_search_queries(
+            search_kind=kind,
+            destination=destination,
+            prefs=prefs,
+            query_text=query_text,
+            trip_context=merged_context,
+            max_queries=max_queries,
+            seed=seed,
+        )
+    else:
+        gqs = generate_queries(mode, destination, prefs, max_queries=max_queries, seed=seed)
+        gqs = _apply_trip_context(gqs, taste)
 
     # collect raw results (annotated by query source)
     raw: List[Dict[str, Any]] = []
-    for gq in gqs:
+    def fetch_query(gq: GeneratedQuery):
         q = to_search_string(gq)
-        items, _cached = search_fn(
+        return q, search_fn(
             q=q,
             count=per_query,
             country=country,
@@ -535,19 +575,28 @@ def rank_web_recs(
             max_retries=search_max_retries,
             cache_ttl_s=300,
             rate_limit_key=rate_limit_key,
+            allow_persistent_cache=persist,
         )
-        for i, it in enumerate(items):
-            it2 = dict(it)
-            it2["query"] = q
-            it2["query_source"] = gq.source
-            it2["query_weight"] = float(gq.weight)
-            it2["query_rank"] = i + 1
-            it2["domain"] = domain_from_url(it2.get("url") or "")
-            raw.append(it2)
+
+    with ThreadPoolExecutor(max_workers=max(1, min(4, len(gqs)))) as executor:
+        futures = [executor.submit(fetch_query, gq) for gq in gqs]
+        for gq, future in zip(gqs, futures):
+            q, (items, _cached) = future.result()
+            for i, it in enumerate(items):
+                it2 = dict(it)
+                it2["query"] = q
+                it2["query_source"] = gq.source
+                it2["query_weight"] = float(gq.weight)
+                it2["query_rank"] = i + 1
+                it2["domain"] = domain_from_url(it2.get("url") or "")
+                raw.append(it2)
+
+    if excluded:
+        raw = [item for item in raw if str(item.get("id") or "") not in excluded]
 
     # remove known junk (scam/warning/listicle pages) before scoring
     raw = [item for item in raw if not _is_junk_result(item)]
-    if mode == "experiences":
+    if kind == "experiences":
         raw = [item for item in raw if not _is_food_venue_web_result(item)]
 
     # de-dup by canonical URL
@@ -616,12 +665,18 @@ def rank_web_recs(
         match = max(0.0, min(100.0, match))
 
         # category: use query_source when available, but fall back to heuristic
-        cat = (it.get("query_source") or "").split("|")[0] or _infer_category(text, mode)
+        cat = _infer_category(text, kind) if kind in {"hotels", "tours", "custom"} else (
+            (it.get("query_source") or "").split("|")[0] or _infer_category(text, mode)
+        )
 
         it_out = {
             "id": str(it.get("id") or ""),
             "name": title,
             "url": str(it.get("url") or ""),
+            # A general web hit can be an article or listing, so do not label
+            # it as a verified official website.
+            "website_url": "",
+            "maps_url": "",
             "cat": str(cat),
             "match": float(round(match, 2)),
             "why": format_why(contributions, top_n=5),
@@ -652,7 +707,7 @@ def rank_web_recs(
         "cached": False,
         "provider": "brave",
         "items": final,
-        "model_version": "v4-mode-safe-diverse",
+        "model_version": "v6-profile-discovery",
         "queries": [
             {
                 "query": to_search_string(gq),
@@ -666,12 +721,13 @@ def rank_web_recs(
 
     ttl = max(1, int(cache_ttl_s))
     _WEB_RECS_CACHE[ck] = WebRecsCacheEntry(expires_at=now + ttl, payload=payload)
-    cache_set(
-        namespace="web_recs",
-        key=ck,
-        payload=payload,
-        ttl_s=ttl,
-        now=int(now),
-        max_rows=_env_int("TS_WEB_RECS_CACHE_MAX_ROWS", 800),
-    )
+    if persist:
+        cache_set(
+            namespace="web_recs",
+            key=ck,
+            payload=payload,
+            ttl_s=ttl,
+            now=int(now),
+            max_rows=_env_int("TS_WEB_RECS_CACHE_MAX_ROWS", 800),
+        )
     return payload

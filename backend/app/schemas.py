@@ -2,13 +2,13 @@ from __future__ import annotations
 
 from typing import Any, Dict, List, Literal, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 
 class Health(BaseModel):
     ok: bool = True
     service: str
-    version: str = "0.5.1"
+    version: str = "0.6.0"
     database: str = "ok"
     providers: List[str] = Field(default_factory=list)
 
@@ -166,6 +166,29 @@ class WebRecsRequest(BaseModel):
     # Multi-layer taste profile from frontend
     taste: dict | None = None
 
+    # `mode` selects the separately stored swipe profile. `search_kind`
+    # controls what that profile should discover for this request.
+    search_kind: Optional[Literal["experiences", "restaurants", "hotels", "tours", "custom"]] = None
+    query_text: str = Field(default="", max_length=160)
+    trip_context: Dict[str, str] = Field(default_factory=dict, max_length=12)
+    exclude_ids: List[str] = Field(default_factory=list, max_length=200)
+    prefetch_token: Optional[str] = Field(default=None, max_length=80)
+
+    @field_validator("trip_context")
+    @classmethod
+    def compact_trip_context(cls, value: Dict[str, str]) -> Dict[str, str]:
+        allowed = {"party", "pace", "budget", "discovery", "age_band", "duration"}
+        return {
+            str(key): str(raw).strip()[:80]
+            for key, raw in value.items()
+            if str(key) in allowed and str(raw).strip()
+        }
+
+    @field_validator("exclude_ids")
+    @classmethod
+    def compact_exclude_ids(cls, value: List[str]) -> List[str]:
+        return list(dict.fromkeys(str(item).strip()[:240] for item in value if str(item).strip()))
+
 
 class WebRecsQuery(BaseModel):
     query: str
@@ -196,6 +219,7 @@ class WebRecItem(BaseModel):
     types: List[str] = Field(default_factory=list)
     primary_type: str = ""
     website_url: str = ""
+    maps_url: str = ""
 
 
 class WebRecsResponse(BaseModel):
@@ -204,5 +228,9 @@ class WebRecsResponse(BaseModel):
     model_version: str = "v2-web-ranker"
     provider: str = "unknown"
     run_id: str = ""
+    served_from_prefetch: bool = False
+    next_token: Optional[str] = None
+    next_status: str = "unavailable"
+    next_seed: Optional[int] = None
     queries: List[WebRecsQuery] = Field(default_factory=list)
     items: List[WebRecItem]

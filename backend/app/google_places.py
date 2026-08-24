@@ -1,16 +1,12 @@
 """google_places.py — Google Places API (New) wrapper for Travel-Swish."""
 from __future__ import annotations
 
-import hashlib
-import json
 import logging
 import os
-import time
 from typing import Any
+from urllib.parse import urlencode, urlparse
 
 import httpx
-
-from .db_cache import cache_get, cache_set
 
 log = logging.getLogger(__name__)
 
@@ -56,6 +52,14 @@ TYPE_TO_CAT = {
     "zoo": "experiences",
     "stadium": "experiences",
     "performing_arts_theater": "culture",
+    "hotel": "hotels",
+    "lodging": "hotels",
+    "resort_hotel": "hotels",
+    "hostel": "hotels",
+    "bed_and_breakfast": "hotels",
+    "guest_house": "hotels",
+    "inn": "hotels",
+    "motel": "hotels",
 }
 
 
@@ -63,44 +67,23 @@ def _get_api_key() -> str | None:
     return os.getenv("GOOGLE_PLACES_API_KEY")
 
 
-def _cache_key(
-    query: str,
-    max_results: int,
-    language: str = "en",
-    included_type: str | None = None,
-    min_rating: float | None = None,
-    price_levels: list[str] | None = None,
-) -> str:
-    raw = f"{query}|{max_results}|{language}|{included_type}|{min_rating}|{price_levels}"
-    return hashlib.sha1(raw.encode("utf-8")).hexdigest()
-
-
 def google_places_search(
     query: str,
     *,
     max_results: int = 10,
     language: str = "en",
-    cache_ttl_s: int = 3600,
+    cache_ttl_s: int = 0,
     included_type: str | None = None,
     min_rating: float | None = None,
     price_levels: list[str] | None = None,
 ) -> tuple[list[dict[str, Any]], bool]:
-    """Search Google Places and return normalized items + cache_hit flag."""
+    """Search Google Places without persisting or prefetching Places content."""
+    _ = cache_ttl_s  # Kept for backwards-compatible callers.
     api_key = _get_api_key()
     if not api_key:
         raise RuntimeError("GOOGLE_PLACES_API_KEY not set")
 
     language_code = "en" if language == "en" else "no"
-    ck = _cache_key(query, max_results, language_code, included_type, min_rating, price_levels)
-    now = int(time.time())
-
-    cached = cache_get(namespace="google_places", key=ck, now=now)
-    if cached:
-        try:
-            return json.loads(cached["payload"]), True
-        except Exception:
-            pass
-
     headers = {
         "Content-Type": "application/json",
         "X-Goog-Api-Key": api_key,
@@ -128,7 +111,6 @@ def google_places_search(
 
     items = [_normalize(p) for p in places]
     items = [i for i in items if i]
-    cache_set(namespace="google_places", key=ck, payload=json.dumps(items), ttl_s=cache_ttl_s, now=now)
     return items, False
 
 
@@ -162,9 +144,19 @@ def _normalize(place: dict[str, Any]) -> dict[str, Any] | None:
         rating_count = place.get("userRatingCount", 0)
         price_level = place.get("priceLevel", "")
 
-        # A Place ID is not a numeric Maps CID. Ask Google for the canonical Maps
-        # URI instead of synthesizing a link that may not resolve.
-        url = place.get("googleMapsUri", "") or place.get("websiteUri", "")
+        website_url = str(place.get("websiteUri") or "")
+        maps_url = str(place.get("googleMapsUri") or "")
+        if not maps_url and place.get("id"):
+            maps_url = "https://www.google.com/maps/search/?" + urlencode(
+                {"api": "1", "query": name, "query_place_id": str(place["id"])}
+            )
+        url = maps_url or website_url
+        domain = ""
+        if website_url:
+            try:
+                domain = urlparse(website_url).netloc.lower().removeprefix("www.")
+            except Exception:
+                domain = ""
 
         return {
             "id": place.get("id", ""),
@@ -172,7 +164,7 @@ def _normalize(place: dict[str, Any]) -> dict[str, Any] | None:
             "url": url,
             "cat": cat,
             "snippet": snippet,
-            "domain": "maps.google.com",
+            "domain": domain,
             "source": "google_places",
             "lat": lat,
             "lng": lng,
@@ -181,7 +173,8 @@ def _normalize(place: dict[str, Any]) -> dict[str, Any] | None:
             "price_level": price_level,
             "types": types,
             "primary_type": primary_type,
-            "website_url": place.get("websiteUri", ""),
+            "website_url": website_url,
+            "maps_url": maps_url,
         }
     except Exception as e:
         log.warning("_normalize failed: %s", e)

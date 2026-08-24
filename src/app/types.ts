@@ -5,6 +5,8 @@ export type Screen = 'landing' | 'brief' | 'swipe' | 'profile' | 'results' | 'sa
 
 export type ResultSource = 'google_places' | 'brave' | 'starter' | 'unknown';
 export type ResultFeedback = 'useful' | 'not_relevant' | 'visited' | 'wrong_info';
+export type SearchKind = Mode | 'hotels' | 'tours' | 'custom';
+export type DiscoveryTripContext = Partial<Record<'party' | 'pace' | 'budget' | 'discovery' | 'age_band' | 'duration', string>>;
 
 export type ResultItem = {
   id: string;

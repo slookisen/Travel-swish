@@ -1,4 +1,4 @@
-# Travel Swipe — V0.5.0 PWA + Capacitor
+# Travel Swipe — V0.6.0 PWA + Capacitor
 
 En forskningsinformert videreutvikling av Travel Swipe. Konseptet er fortsatt kortbasert reiseoppdagelse, men profileringen er bygget om rundt tre separate lag:
 
@@ -9,6 +9,8 @@ En forskningsinformert videreutvikling av Travel Swipe. Konseptet er fortsatt ko
 Testbygget inkluderer responsiv frontend, lagret norsk/engelsk språkvalg, migrerbar lokal profil, lagrede tips, eksplisitt resultatfeedback, Google Places-/Brave-integrasjon og kuraterte starttips med kilder og kartlenker når livesøk ikke svarer.
 
 V0.5 gir i tillegg en mobiltilpasset swipeflate som holder kort, svar og treffknapp på én skjerm. Stedstyper valideres mot valgt modus før personlig rangering, slik at matsteder ikke presenteres som opplevelser. Se [RELEASE_NOTES_V0.5.md](RELEASE_NOTES_V0.5.md).
+
+V0.6 klargjør automatisk neste resultatutvalg i backend, viser offisiell hjemmeside separat fra kart når Google Places har den, og lar brukeren bruke profilen til å søke etter hotell, arrangerte turer eller et fritt behov. Alder og varighet er valg for det enkelte tursøket og blir ikke en del av den varige profilen. Se [RELEASE_NOTES_V0.6.md](RELEASE_NOTES_V0.6.md) og [RESEARCH_PROFILE_DISCOVERY_2026-08-24.md](RESEARCH_PROFILE_DISCOVERY_2026-08-24.md).
 
 ## Lagring og læringsdata
 
@@ -64,7 +66,7 @@ cd backend
 - [PROFILE_MODEL_V2.md](PROFILE_MODEL_V2.md) — profilmodell, signalvekter, usikkerhet, adaptivt kortvalg og API-format.
 - [API_CONTRACT_V2.md](API_CONTRACT_V2.md) — eksisterende API-kontrakt; bør oppdateres før produksjonslansering.
 - [MOBILE_BUILD.md](MOBILE_BUILD.md) — PWA-, Android- og iOS-flyt, krav og kommandoer.
-- [RELEASE_NOTES_V0.4.md](RELEASE_NOTES_V0.4.md) — endringer og kjente avgrensninger i denne leveransen.
+- [RELEASE_NOTES_V0.6.md](RELEASE_NOTES_V0.6.md) — endringer, tester og kjente avgrensninger i denne leveransen.
 
 ## Status og avgrensning
 

@@ -26,6 +26,10 @@ def _env_int(name: str, default: int) -> int:
         return int(default)
 
 
+def _storage_rights_enabled() -> bool:
+    return str(os.getenv("TS_BRAVE_STORAGE_RIGHTS") or "").strip().lower() in {"1", "true", "yes", "on"}
+
+
 def _get_brave_api_key() -> str | None:
     """Resolve Brave API key from env.
 
@@ -71,6 +75,7 @@ def brave_web_search(
     max_retries: int = 3,
     cache_ttl_s: int = 300,
     rate_limit_key: str | None = None,
+    allow_persistent_cache: bool | None = None,
 ) -> Tuple[List[Dict[str, Any]], bool]:
     """Call Brave Web Search API.
 
@@ -88,6 +93,7 @@ def brave_web_search(
 
     # Allow env override for TTL in deployed demos.
     cache_ttl_s = _env_int("TS_BRAVE_CACHE_TTL_S", int(cache_ttl_s))
+    persist = _storage_rights_enabled() if allow_persistent_cache is None else bool(allow_persistent_cache)
 
     ck = _cache_key(q, count, country, search_lang, safesearch, freshness)
     qh = hashlib.sha1(q.encode("utf-8")).hexdigest()[:10]
@@ -99,7 +105,7 @@ def brave_web_search(
 
     # Optional persistence layer (SQLite) to survive reloads.
     # Falls back to in-memory cache when DB cache misses.
-    db_hit = cache_get(namespace="brave_web", key=ck, now=int(now))
+    db_hit = cache_get(namespace="brave_web", key=ck, now=int(now)) if persist else None
     if db_hit:
         payload, expires_ts = db_hit
         try:
@@ -187,14 +193,15 @@ def brave_web_search(
             # cache (even empty) to avoid hammering
             ttl = max(1, int(cache_ttl_s))
             _CACHE[ck] = CacheEntry(expires_at=now + ttl, payload=items)
-            cache_set(
-                namespace="brave_web",
-                key=ck,
-                payload=items,
-                ttl_s=ttl,
-                now=int(now),
-                max_rows=_env_int("TS_BRAVE_CACHE_MAX_ROWS", 1500),
-            )
+            if persist:
+                cache_set(
+                    namespace="brave_web",
+                    key=ck,
+                    payload=items,
+                    ttl_s=ttl,
+                    now=int(now),
+                    max_rows=_env_int("TS_BRAVE_CACHE_MAX_ROWS", 1500),
+                )
             return (items, False)
 
         except Exception as e:  # noqa: BLE001 - boundary layer
