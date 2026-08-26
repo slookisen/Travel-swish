@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 import time
+import importlib
 
 import httpx
 import pytest
 
 from app.db import connect, init_db
 from app.main import app
+from app.prefetch import clear_for_tests as clear_prefetch_for_tests
 
 pytestmark = pytest.mark.anyio
 
@@ -75,3 +77,75 @@ async def test_session_and_feedback_lifecycle() -> None:
         assert stored_feedback[0] == "useful"
     finally:
         con.close()
+
+
+async def test_recommendation_endpoint_serves_prepared_next_selection(monkeypatch: pytest.MonkeyPatch) -> None:
+    main_module = importlib.import_module("app.main")
+    clear_prefetch_for_tests()
+    monkeypatch.setenv("TS_BRAVE_API_KEY", "test-key")
+    monkeypatch.delenv("GOOGLE_PLACES_API_KEY", raising=False)
+    monkeypatch.setattr(main_module, "api_consume_or_raise", lambda **_kwargs: None)
+
+    calls: list[int] = []
+
+    def stub_rank_web_recs(**kwargs):
+        seed = int(kwargs["seed"])
+        calls.append(seed)
+        return {
+            "ok": True,
+            "cached": False,
+            "model_version": "test-prefetch",
+            "provider": "brave",
+            "queries": [],
+            "items": [{
+                "id": f"brave:{seed}",
+                "name": f"Prepared result {seed}",
+                "match": 82,
+                "why": "Profile match",
+                "url": "https://example.test/result",
+                "cat": "culture",
+                "source": "brave",
+            }],
+        }
+
+    monkeypatch.setattr(main_module, "rank_web_recs", stub_rank_web_recs)
+    base_request = {
+        "user_id": "prefetch-user",
+        "mode": "experiences",
+        "destination": "Oslo",
+        "language": "en",
+        "limit": 4,
+        "max_queries": 2,
+        "per_query": 2,
+        "seed": 17,
+        "search_kind": "custom",
+        "query_text": "ceramics workshops",
+        "taste": {"version": 2, "context": {"party": "solo"}},
+        "trip_context": {"party": "solo"},
+    }
+
+    headers = {"Origin": "http://localhost:5173", "X-Forwarded-For": "8.8.8.8"}
+    async with httpx.AsyncClient(transport=_transport(), base_url="http://test") as client:
+        first = await client.post("/recs/web", json=base_request, headers=headers)
+        assert first.status_code == 200, first.text
+        first_body = first.json()
+        assert first_body["served_from_prefetch"] is False
+        assert first_body["next_token"]
+        assert first_body["next_status"] == "preparing"
+
+        status = await client.get(f"/recs/prefetch/{first_body['next_token']}", headers=headers)
+        assert status.json()["status"] == "ready"
+
+        second_request = {
+            **base_request,
+            "seed": first_body["next_seed"],
+            "prefetch_token": first_body["next_token"],
+            "exclude_ids": [first_body["items"][0]["id"]],
+        }
+        second = await client.post("/recs/web", json=second_request, headers=headers)
+
+    assert second.status_code == 200, second.text
+    second_body = second.json()
+    assert second_body["served_from_prefetch"] is True
+    assert second_body["items"][0]["id"] != first_body["items"][0]["id"]
+    assert len(calls) == 3  # current selection, prepared selection, then the next preparation

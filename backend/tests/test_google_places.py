@@ -15,6 +15,25 @@ def test_normalize_prefers_canonical_google_maps_uri() -> None:
     assert item is not None
     assert item["url"] == "https://maps.google.com/?cid=123456"
     assert item["website_url"] == "https://example.org"
+    assert item["maps_url"] == "https://maps.google.com/?cid=123456"
+
+
+def test_normalize_builds_safe_maps_fallback_and_keeps_official_site_separate() -> None:
+    item = _normalize({
+        "id": "place with spaces",
+        "displayName": {"text": "Hotel & Spa Málaga"},
+        "formattedAddress": "Málaga, Spain",
+        "types": ["hotel"],
+        "websiteUri": "https://hotel.example/rooms",
+    })
+
+    assert item is not None
+    assert item["website_url"] == "https://hotel.example/rooms"
+    assert item["maps_url"].startswith("https://www.google.com/maps/search/?api=1&")
+    assert "query_place_id=place+with+spaces" in item["maps_url"]
+    assert item["url"] == item["maps_url"]
+    assert _is_mode_appropriate(item, "hotels") is True
+    assert _is_mode_appropriate(item, "experiences") is False
 
 
 def test_bakery_is_classified_as_food_and_rejected_from_experiences() -> None:

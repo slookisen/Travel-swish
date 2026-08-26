@@ -1,12 +1,13 @@
 # Travel-Swish API Contract v2
 
-> V0.2 additions: `POST /sessions` records the active trip context, `POST /feedback`
-> records explicit result feedback, and `POST /recs/web` accepts `session_id` and returns
-> `run_id` plus `provider`. The numbered SQLite migrations are the schema source of truth.
+> V0.6: `POST /recs/web` supports profile-aware hotel, organized-tour and
+> free-form discovery, separates official website from maps, and returns a
+> short-lived token for the prepared next selection. Numbered SQLite migrations
+> remain the persistent schema source of truth; provider prefetch is not persisted.
 
-> **Version:** 0.2.0
+> **Version:** 0.6.0
 >
-> **Last updated:** 2026-08-19
+> **Last updated:** 2026-08-24
 > **Status:** Test build — origin/API-key guard and process-local rate limits enabled
 
 ---
@@ -352,7 +353,9 @@ Server-side **Brave Web Search** proxy. Uses a server-side API key (no key is ex
 
 ### `POST /recs/web`
 
-Get **live** recommendations from the web (Brave Search) and rank them using learned prefs.
+Get live, profile-ranked recommendations. Google Places is preferred for places,
+restaurants and hotels when configured; Brave is used for web discovery,
+organized tours, free-form searches and fallback.
 
 **Pipeline (v2-web-ranker):**
 1. Load prefs for `user_id + mode`
@@ -365,7 +368,10 @@ Get **live** recommendations from the web (Brave Search) and rank them using lea
    - cap repeated domains (avoid 10 results from the same site)
 7. Explainability: `why` includes top contributing facets
 
-> **Caching:** a small in-process TTL cache is applied to the aggregated `/recs/web` response, and Brave calls are also cached per query.
+> **Provider storage:** Google Places content is not cached. Brave caches are
+> transient unless `TS_BRAVE_STORAGE_RIGHTS=1` is explicitly configured under a
+> plan that grants storage. Prepared selections always remain process-local,
+> expire after three minutes and are single-use.
 
 **Request body** (`WebRecsRequest`)
 
@@ -382,6 +388,11 @@ Get **live** recommendations from the web (Brave Search) and rank them using lea
 | `search_lang` | `string \| null` | ❌ | Brave `search_lang` param |
 | `safesearch` | `string` | ❌ | `moderate` (default), `strict`, `off` |
 | `freshness` | `string \| null` | ❌ | Brave `freshness` param |
+| `search_kind` | `string \| null` | ❌ | `experiences`, `restaurants`, `hotels`, `tours` or `custom`; defaults to `mode` |
+| `query_text` | `string` | ❌ | Optional search need, required for `custom`; max 160 characters |
+| `trip_context` | `object` | ❌ | Request-only filters such as party, budget, age band or duration |
+| `exclude_ids` | `string[]` | ❌ | Previously shown IDs to avoid in the next selection; max 200 |
+| `prefetch_token` | `string \| null` | ❌ | Single-use token returned by the previous identical search |
 
 **Example request:**
 
@@ -403,6 +414,12 @@ Get **live** recommendations from the web (Brave Search) and rank them using lea
   "ok": true,
   "cached": false,
   "model_version": "v2-web-ranker",
+  "provider": "brave",
+  "run_id": "7fa...",
+  "served_from_prefetch": false,
+  "next_token": "random-single-use-token",
+  "next_status": "preparing",
+  "next_seed": 99,
   "queries": [
     {
       "query": "best spicy food in Oslo -\"fast food chain\" ...",
@@ -442,6 +459,14 @@ Get **live** recommendations from the web (Brave Search) and rank them using lea
 | `snippet` | `string` | Result snippet/description |
 | `domain` | `string` | Normalized domain (for diversity) |
 | `query_source` | `string` | Which query facet/source drove this hit |
+| `website_url` | `string` | Official website when Google Places provides one |
+| `maps_url` | `string` | Direct Google Maps place/search link |
+
+### `GET /recs/prefetch/{token}`
+
+Returns only preparation status: `preparing`, `ready`, `failed` or `expired`.
+It does not expose the prepared result payload. The matching `POST /recs/web`
+request consumes a ready token.
 
 ---
 
@@ -554,17 +579,17 @@ FastAPI 422 responses include field-level details:
 
 ## Authentication
 
-**Current:** None. All endpoints are open.
-
-**Planned:** Token-based auth (likely JWT or simple API key). The `user_id` field in requests will be validated against the authenticated identity.
+**Current:** lightweight demo protection. Protected endpoints accept an allowed
+browser `Origin` or the configured `TS_API_KEY` header. This is an abuse guard,
+not full user authentication.
 
 ---
 
 ## Rate Limiting
 
-**Current:** None.
-
-**Planned:** Per-user rate limiting on write endpoints (`POST /events`, `POST /prefs`, `POST /recs`).
+**Current:** process-local fixed-window rate limits for protected API operations
+and separate Brave provider calls. A shared limiter is required before a
+multi-worker production deployment.
 
 ---
 

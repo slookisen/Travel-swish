@@ -1,4 +1,4 @@
-# Travel‑Swish Backend (V0.2 test foundation)
+# Travel Swipe Backend (V0.6 test foundation)
 
 Goal: move the preference engine + destination-aware recommendations out of the browser.
 
@@ -51,12 +51,21 @@ Notes:
 | GET | `/cards` | List cards by mode |
 | GET | `/taxonomy` | Get taxonomy |
 | POST | `/recs` | Get ranked recommendations (local POIs DB) |
-| POST | `/recs/web` | Live web recs (Brave -> ranker) |
+| POST | `/recs/web` | Profilrangerte treff fra Google Places eller Brave; støtter hotell, turer, fritekst og engangs-prefetch |
+| GET | `/recs/prefetch/{token}` | Status for et kortlivet, forhåndsklargjort utvalg |
 | GET | `/search/brave` | Brave web search proxy (server-side key) |
 
 ## Database lifecycle
 
 `app.db.init_db()` applies numbered SQL files from `backend/migrations/` once and records them in `schema_migrations`. SQLite uses foreign keys, a five-second busy timeout, WAL journaling and `PRAGMA optimize`. Migration 002 adds sessions, recommendation exposure runs and result feedback so ranking improvements can be evaluated from explicit signals instead of clicks alone.
+
+## Providers, prefetch og lagring
+
+Google Places brukes til strukturerte steder og hotell. `websiteUri` og `googleMapsUri` returneres separat slik at klienten kan vise både offisiell hjemmeside og kart. Places-innhold mellomlagres eller forhåndshentes ikke.
+
+Brave brukes til vanlig weboppdagelse, organiserte turer og fritekstsøk. Etter et vellykket uttrekk reserverer `/recs/web` et tilfeldig, signaturbundet token og lager neste Brave-utvalg som en FastAPI-bakgrunnsoppgave. Utvalget ligger kun i prosessminnet, utløper etter tre minutter og slettes ved første vellykkede bruk. Dette gir raskere «Nytt utvalg» uten en vedvarende kopi av leverandørdata.
+
+Ved flere serverprosesser må den flyktige køen senere flyttes til en delt TTL-tjeneste, for eksempel Redis, uten permanent lagring av leverandørresultater.
 
 ## Brave Search (server-side)
 
@@ -71,8 +80,8 @@ Cost control:
   - `TS_BRAVE_RL_WINDOW_S` (default 60)
   - `TS_BRAVE_RL_MAX_CALLS` (default 25)
 - **Caching**
-  - In-memory TTL caches (fast, reset on reload)
-  - SQLite-backed KV cache (`kv_cache` table) so results can survive reloads:
+  - Flyktig in-memory TTL-cache (nullstilles ved omstart).
+  - SQLite-cache er av som standard. Den aktiveres bare med `TS_BRAVE_STORAGE_RIGHTS=1` når valgt avtale uttrykkelig tillater lagring:
     - `TS_BRAVE_CACHE_TTL_S` (default 300)
     - `TS_WEB_RECS_CACHE_TTL_S` (default 120)
     - `TS_BRAVE_CACHE_MAX_ROWS` (default 1500)

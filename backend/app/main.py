@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import hashlib
 import logging
 import os
 import sqlite3
@@ -8,7 +9,7 @@ import time
 import uuid
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import BackgroundTasks, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 
 from .config import cors_config
@@ -31,6 +32,11 @@ from .ratelimit import (
     brave_rate_limit_key,
 )
 from .places_recs import rank_places_recs
+from .prefetch import get_status as get_prefetch_status
+from .prefetch import mark_failed as mark_prefetch_failed
+from .prefetch import mark_ready as mark_prefetch_ready
+from .prefetch import reserve as reserve_prefetch
+from .prefetch import take as take_prefetch
 from .web_recs import rank_web_recs
 
 log = logging.getLogger(__name__)
@@ -60,7 +66,7 @@ async def lifespan(_: FastAPI):
     yield
 
 
-app = FastAPI(title="Travel Swipe API", version="0.5.1", lifespan=lifespan)
+app = FastAPI(title="Travel Swipe API", version="0.6.0", lifespan=lifespan)
 
 # CORS: local dev defaults; override with TS_CORS_ORIGINS for public deploys.
 _allow_origins, _allow_credentials = cors_config()
@@ -502,8 +508,129 @@ def brave_search(
         raise HTTPException(status_code=502, detail="brave_search_failed")
 
 
+_DISCOVERY_KINDS = {"hotels", "tours", "custom"}
+
+
+def _brave_configured() -> bool:
+    return any(
+        str(os.getenv(name) or "").strip()
+        for name in ("BRAVE_SEARCH_API_KEY", "BRAVE_API_KEY", "OPENCLAW_BRAVE_API_KEY", "TS_BRAVE_API_KEY")
+    )
+
+
+def _load_search_prefs(user_id: str, mode: str, search_kind: str) -> dict[str, float]:
+    con = connect()
+    try:
+        rows = con.execute(
+            "SELECT mode, prefs_json FROM prefs WHERE user_id=? AND mode IN ('experiences','restaurants')",
+            (user_id,),
+        ).fetchall()
+    finally:
+        con.close()
+
+    by_mode: dict[str, dict[str, float]] = {}
+    for row in rows:
+        try:
+            raw = json.loads(row["prefs_json"] or "{}")
+        except Exception:
+            raw = {}
+        by_mode[str(row["mode"])] = {
+            str(key): float(value) for key, value in raw.items() if isinstance(value, (int, float))
+        }
+    if search_kind not in _DISCOVERY_KINDS:
+        return dict(by_mode.get(mode, {}))
+
+    combined: dict[str, list[float]] = {}
+    for profile in by_mode.values():
+        for key, value in profile.items():
+            combined.setdefault(key, []).append(value)
+    return {key: sum(values) / len(values) for key, values in combined.items() if values}
+
+
+def _search_signature(req: WebRecsRequest, prefs: dict[str, float], search_kind: str) -> str:
+    raw = json.dumps(
+        {
+            "user_id": req.user_id,
+            "mode": req.mode,
+            "destination": req.destination.strip().casefold(),
+            "search_kind": search_kind,
+            "query_text": req.query_text.strip().casefold(),
+            "trip_context": dict(sorted(req.trip_context.items())),
+            "prefs": prefs,
+            "taste": req.taste or {},
+        },
+        sort_keys=True,
+        ensure_ascii=False,
+        separators=(",", ":"),
+    )
+    return hashlib.sha256(raw.encode("utf-8")).hexdigest()
+
+
+def _next_seed(seed: int) -> int:
+    return ((int(seed) * 1103515245 + 12345) & 0x7FFFFFFF) or 43
+
+
+def _run_brave_prefetch(token: str, params: dict) -> None:
+    try:
+        mark_prefetch_ready(token, rank_web_recs(**params))
+    except Exception as exc:  # noqa: BLE001 - isolated background boundary
+        log.warning("recommendation prefetch failed: %s", exc)
+        mark_prefetch_failed(token)
+
+
+def _schedule_next_selection(
+    background_tasks: BackgroundTasks,
+    *,
+    req: WebRecsRequest,
+    prefs: dict[str, float],
+    search_kind: str,
+    signature: str,
+    current_items: list[dict],
+    rate_limit_key: str,
+) -> tuple[str | None, int | None]:
+    if not _brave_configured():
+        return None, None
+    next_seed = _next_seed(req.seed)
+    token = reserve_prefetch(signature, ttl_s=180)
+    exclude_ids = list(dict.fromkeys(
+        [str(value) for value in req.exclude_ids if value]
+        + [str(item.get("id") or "") for item in current_items if item.get("id")]
+    ))[-200:]
+    background_tasks.add_task(_run_brave_prefetch, token, {
+        "user_id": req.user_id,
+        "mode": req.mode,
+        "destination": req.destination,
+        "prefs": prefs,
+        "taste": req.taste,
+        "limit": req.limit,
+        "max_queries": min(4, req.max_queries),
+        "per_query": min(10, req.per_query),
+        "seed": next_seed,
+        "country": req.country,
+        "search_lang": req.search_lang,
+        "freshness": req.freshness,
+        "safesearch": req.safesearch,
+        "rate_limit_key": rate_limit_key,
+        "search_kind": search_kind,
+        "query_text": req.query_text,
+        "trip_context": req.trip_context,
+        "exclude_ids": exclude_ids,
+        "cache_ttl_s": 120,
+        "allow_persistent_cache": False,
+    })
+    return token, next_seed
+
+
+@app.get("/recs/prefetch/{token}")
+def recs_prefetch_status(token: str, request: Request) -> dict:
+    require_demo_auth(request)
+    if len(token) > 80:
+        raise HTTPException(status_code=400, detail="invalid_prefetch_token")
+    return {"ok": True, "status": get_prefetch_status(token)}
+
+
 @app.post("/recs/web", response_model=WebRecsResponse)
-def recs_web(req: WebRecsRequest, request: Request) -> WebRecsResponse:
+def recs_web(req: WebRecsRequest, request: Request, background_tasks: BackgroundTasks) -> WebRecsResponse:
     """Live web recommendations (Google Places preferred, Brave fallback).
 
     This endpoint:
@@ -523,66 +650,101 @@ def recs_web(req: WebRecsRequest, request: Request) -> WebRecsResponse:
     except RateLimitError as e:
         raise HTTPException(status_code=429, detail="rate_limited", headers={"Retry-After": str(e.retry_after_s)})
 
+    search_kind = req.search_kind or req.mode
+    if search_kind == "custom" and not req.query_text.strip():
+        raise HTTPException(status_code=400, detail="query_text required for custom search")
+
     started = time.monotonic()
+    prefs = _load_search_prefs(req.user_id, req.mode, search_kind)
+    signature = _search_signature(req, prefs, search_kind)
+    rl_key = brave_rate_limit_key(request=request, user_id=req.user_id)
+    payload: dict | None = None
+
+    if req.prefetch_token:
+        status, prepared = take_prefetch(req.prefetch_token, signature, wait_s=1.25)
+        if status == "ready" and prepared:
+            excluded = {str(value) for value in req.exclude_ids if value}
+            prepared_items = [
+                item for item in list(prepared.get("items") or [])
+                if str(item.get("id") or "") not in excluded
+            ]
+            if prepared_items:
+                payload = dict(prepared)
+                payload["items"] = prepared_items
+                payload["served_from_prefetch"] = True
+
+    try:
+        google_key = os.getenv("GOOGLE_PLACES_API_KEY")
+        use_brave = search_kind in {"tours", "custom"} or not google_key
+        if payload is None and use_brave:
+            if not _brave_configured():
+                raise HTTPException(status_code=503, detail="search_provider_unavailable")
+            payload = rank_web_recs(
+                user_id=req.user_id,
+                mode=req.mode,
+                destination=req.destination,
+                prefs=prefs,
+                taste=req.taste,
+                limit=req.limit,
+                max_queries=req.max_queries,
+                per_query=req.per_query,
+                seed=req.seed,
+                country=req.country,
+                search_lang=req.search_lang,
+                safesearch=req.safesearch,
+                freshness=req.freshness,
+                rate_limit_key=rl_key,
+                search_kind=search_kind,
+                query_text=req.query_text,
+                trip_context=req.trip_context,
+                exclude_ids=req.exclude_ids,
+            )
+        elif payload is None:
+            payload = rank_places_recs(
+                user_id=req.user_id,
+                mode=req.mode,
+                destination=req.destination,
+                prefs=prefs,
+                taste=req.taste,
+                limit=req.limit,
+                max_queries=req.max_queries,
+                seed=req.seed,
+                language=req.language,
+                search_kind=search_kind,
+                query_text=req.query_text,
+                exclude_ids=req.exclude_ids,
+            )
+    except RateLimitError as e:
+        log.warning("recs_web rate_limited key=%s retry_after_s=%s", e.key, e.retry_after_s)
+        raise HTTPException(status_code=429, detail="rate_limited", headers={"Retry-After": str(e.retry_after_s)})
+
+    items = payload.get("items") if isinstance(payload.get("items"), list) else []
+    next_token, next_seed = (None, None)
+    if items:
+        next_token, next_seed = _schedule_next_selection(
+            background_tasks,
+            req=req,
+            prefs=prefs,
+            search_kind=search_kind,
+            signature=signature,
+            current_items=items,
+            rate_limit_key=rl_key,
+        )
+    payload["next_token"] = next_token
+    payload["next_status"] = "preparing" if next_token else "unavailable"
+    payload["next_seed"] = next_seed
+
+    run_id = str(uuid.uuid4())
+    provider = str(payload.get("provider") or ("brave" if use_brave else "google_places"))
+    model_version = str(payload.get("model_version") or "unknown")
+    result_ids = [str(item.get("id") or "") for item in items if isinstance(item, dict)]
     con = connect()
     try:
-        prow = con.execute(
-            "SELECT prefs_json FROM prefs WHERE user_id=? AND mode=?",
-            (req.user_id, req.mode),
-        ).fetchone()
-        prefs = json.loads(prow["prefs_json"]) if prow and prow["prefs_json"] else {}
-        taste = req.taste if hasattr(req, "taste") and req.taste else None
-
-        try:
-            google_key = os.getenv("GOOGLE_PLACES_API_KEY")
-            if google_key:
-                payload = rank_places_recs(
-                    user_id=req.user_id,
-                    mode=req.mode,
-                    destination=req.destination,
-                    prefs=prefs,
-                    taste=taste,
-                    limit=req.limit,
-                    max_queries=req.max_queries,
-                    seed=req.seed,
-                    language=req.language,
-                )
-            else:
-                rl_key = brave_rate_limit_key(request=request, user_id=req.user_id)
-                payload = rank_web_recs(
-                    user_id=req.user_id,
-                    mode=req.mode,
-                    destination=req.destination,
-                    prefs=prefs,
-                    taste=taste,
-                    limit=req.limit,
-                    max_queries=req.max_queries,
-                    per_query=req.per_query,
-                    seed=req.seed,
-                    country=req.country,
-                    search_lang=req.search_lang,
-                    safesearch=req.safesearch,
-                    freshness=req.freshness,
-                    rate_limit_key=rl_key,
-                )
-        except RateLimitError as e:
-            log.warning("recs_web rate_limited key=%s retry_after_s=%s", e.key, e.retry_after_s)
-            raise HTTPException(status_code=429, detail="rate_limited", headers={"Retry-After": str(e.retry_after_s)})
-
-        run_id = str(uuid.uuid4())
-        provider = str(payload.get("provider") or ("google_places" if google_key else "brave"))
-        model_version = str(payload.get("model_version") or "unknown")
-        items = payload.get("items") if isinstance(payload.get("items"), list) else []
-        result_ids = [str(item.get("id") or "") for item in items if isinstance(item, dict)]
-        con.execute(
-            "INSERT OR IGNORE INTO users(id, created_ts) VALUES(?, ?)",
-            (req.user_id, int(time.time())),
-        )
+        con.execute("INSERT OR IGNORE INTO users(id, created_ts) VALUES(?, ?)", (req.user_id, int(time.time())))
         session_id = None
         if req.session_id:
             session_exists = con.execute(
-                "SELECT 1 FROM sessions WHERE id=? AND user_id=?",
-                (req.session_id, req.user_id),
+                "SELECT 1 FROM sessions WHERE id=? AND user_id=?", (req.session_id, req.user_id)
             ).fetchone()
             session_id = req.session_id if session_exists else None
         con.execute(
@@ -593,32 +755,22 @@ def recs_web(req: WebRecsRequest, request: Request) -> WebRecsResponse:
             ) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
-                run_id,
-                req.user_id,
-                session_id,
-                req.mode,
-                req.destination.strip(),
-                provider,
-                model_version,
-                json.dumps(req.model_dump(), ensure_ascii=False),
-                json.dumps(result_ids, ensure_ascii=False),
-                int(time.time()),
+                run_id, req.user_id, session_id, req.mode, req.destination.strip(), provider, model_version,
+                json.dumps(req.model_dump(exclude={"prefetch_token"}), ensure_ascii=False),
+                json.dumps(result_ids, ensure_ascii=False), int(time.time()),
             ),
         )
         con.commit()
-        payload["run_id"] = run_id
-        payload["provider"] = provider
-        log.info(
-            "recommendations complete run_id=%s provider=%s mode=%s items=%s duration_ms=%s",
-            run_id,
-            provider,
-            req.mode,
-            len(result_ids),
-            round((time.monotonic() - started) * 1000),
-        )
-        return WebRecsResponse(**payload)
     finally:
         con.close()
+
+    payload["run_id"] = run_id
+    payload["provider"] = provider
+    log.info(
+        "recommendations complete run_id=%s provider=%s mode=%s search_kind=%s items=%s duration_ms=%s",
+        run_id, provider, req.mode, search_kind, len(result_ids), round((time.monotonic() - started) * 1000),
+    )
+    return WebRecsResponse(**payload)
 
 
 @app.post("/recs", response_model=RecsResponse)

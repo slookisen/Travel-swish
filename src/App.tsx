@@ -2,10 +2,10 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { getDeckCards, type DimId, type Mode } from './dataset';
 import { computeProfile, createEmptyStoredProfile, selectNextCard, type Reaction, type TripContext } from './profile/engine';
 import { getDimLabels } from './profile/labels';
-import { fetchRecommendations, postResultFeedback } from './app/api';
+import { fetchRecommendations, getRecommendationPrefetchStatus, postResultFeedback } from './app/api';
 import { buildStarterResults } from './app/starterCatalog';
 import { DEFAULT_CONTEXT, getClientIdentity, loadAppState, saveAppState } from './app/storage';
-import type { LocalAppState, ResultFeedback, ResultItem, SavedResult, Screen } from './app/types';
+import type { DiscoveryTripContext, LocalAppState, ResultFeedback, ResultItem, SavedResult, Screen, SearchKind } from './app/types';
 import { useLanguage } from './app/i18n';
 import { usePwaInstall } from './app/pwa';
 import { listSharePayload, resultSharePayload, shareTravelSwish } from './app/share';
@@ -13,6 +13,20 @@ import {
   AppHeader, Brand, ContextChoice, formatContext, getTopAxes,
   getTopCategories, LanguageSwitch, LiveProfile, ProfileEditor, ReactionControls, ResultCard, SwipeCard,
 } from './ui/components';
+
+type ActiveSearch = {
+  kind: SearchKind;
+  queryText: string;
+  tripContext: DiscoveryTripContext;
+};
+
+const regularSearch = (mode: Mode): ActiveSearch => ({ kind: mode, queryText: '', tripContext: {} });
+
+function sameSearch(left: ActiveSearch, right: ActiveSearch): boolean {
+  return left.kind === right.kind
+    && left.queryText === right.queryText
+    && JSON.stringify(left.tripContext) === JSON.stringify(right.tripContext);
+}
 
 export default function App() {
   const { language, copy } = useLanguage();
@@ -36,6 +50,14 @@ export default function App() {
   const [manualCopied, setManualCopied] = useState(false);
   const [showResultsPrompt, setShowResultsPrompt] = useState(false);
   const [dismissedPromptAt, setDismissedPromptAt] = useState(0);
+  const [activeSearch, setActiveSearch] = useState<ActiveSearch>(() => regularSearch(initial.trip.mode));
+  const [nextPrefetchToken, setNextPrefetchToken] = useState('');
+  const [nextPrefetchStatus, setNextPrefetchStatus] = useState('unavailable');
+  const [nextPrefetchSeed, setNextPrefetchSeed] = useState<number | null>(null);
+  const [discoveryKind, setDiscoveryKind] = useState<Exclude<SearchKind, Mode>>('hotels');
+  const [discoveryQuery, setDiscoveryQuery] = useState('');
+  const [tourAgeBand, setTourAgeBand] = useState('');
+  const [tourDuration, setTourDuration] = useState('');
   const pwaInstall = usePwaInstall();
 
   const cards = useMemo(() => getDeckCards(mode, language), [mode, language]);
@@ -74,6 +96,19 @@ export default function App() {
   }, [dismissedPromptAt, loading, profile.informativeCount, profile.ready, screen, showResultsPrompt]);
 
   useEffect(() => {
+    if (screen !== 'results' || !nextPrefetchToken || !['preparing', 'queued', 'running'].includes(nextPrefetchStatus)) return;
+    let cancelled = false;
+    const timer = window.setInterval(() => {
+      void getRecommendationPrefetchStatus(nextPrefetchToken)
+        .then((status) => {
+          if (!cancelled) setNextPrefetchStatus(status);
+        })
+        .catch(() => undefined);
+    }, 900);
+    return () => { cancelled = true; window.clearInterval(timer); };
+  }, [nextPrefetchStatus, nextPrefetchToken, screen]);
+
+  useEffect(() => {
     function onKey(event: KeyboardEvent) {
       if (screen !== 'swipe' || !currentCard || event.target instanceof HTMLInputElement) return;
       if (event.key === 'ArrowLeft') recordReaction('dislike');
@@ -110,33 +145,69 @@ export default function App() {
     setFeedback({});
     setRecentRuns([]);
     setResults([]);
+    setActiveSearch(regularSearch(mode));
+    setNextPrefetchToken('');
+    setNextPrefetchStatus('unavailable');
+    setNextPrefetchSeed(null);
     setDestination('');
     setContext(DEFAULT_CONTEXT);
     setScreen('brief');
   }
 
-  async function findMatches() {
+  async function findMatches(request: ActiveSearch = regularSearch(mode)) {
     const cleanDestination = destination.trim();
     if (!cleanDestination) { setScreen('brief'); return; }
+    const normalizedSearch: ActiveSearch = {
+      kind: request.kind,
+      queryText: request.queryText.trim().slice(0, 160),
+      tripContext: request.tripContext,
+    };
+    if (normalizedSearch.kind === 'custom' && !normalizedSearch.queryText) return;
+    const isContinuation = screen === 'results' && sameSearch(normalizedSearch, activeSearch);
     setLoading(true);
     setShowResultsPrompt(false);
     setResultNotice('');
     try {
-      const response = await fetchRecommendations({ identity, mode, destination: cleanDestination, context, profile, language });
+      const response = await fetchRecommendations({
+        identity,
+        mode,
+        destination: cleanDestination,
+        context,
+        profile,
+        language,
+        searchKind: normalizedSearch.kind,
+        queryText: normalizedSearch.queryText,
+        tripContext: normalizedSearch.tripContext,
+        excludeIds: isContinuation ? results.map((item) => item.id) : [],
+        prefetchToken: isContinuation ? nextPrefetchToken : '',
+        seed: isContinuation && nextPrefetchSeed !== null ? nextPrefetchSeed : undefined,
+      });
       if (!response.items.length) throw new Error('No live results');
       setResults(response.items);
       setActiveRunId(response.runId);
-      setResultNotice(copy.results.liveNotice);
+      setActiveSearch(normalizedSearch);
+      setNextPrefetchToken(response.nextToken);
+      setNextPrefetchStatus(response.nextStatus);
+      setNextPrefetchSeed(response.nextSeed);
+      setResultNotice(response.servedFromPrefetch ? copy.results.prefetchedNotice : copy.results.liveNotice);
       setRecentRuns((current) => [{
         id: response.runId, destination: cleanDestination, mode, provider: response.provider,
         createdAt: Date.now(), itemIds: response.items.map((item) => item.id),
       }, ...current.filter((run) => run.id !== response.runId)].slice(0, 20));
     } catch {
+      if (!['experiences', 'restaurants'].includes(normalizedSearch.kind)) {
+        setResultNotice(copy.results.discoveryUnavailable);
+        return;
+      }
       const starter = buildStarterResults(cleanDestination, mode, profile, context, language);
       const runId = `starter-${Date.now()}`;
       setResults(starter);
       setActiveRunId(runId);
       setResultNotice(copy.results.fallbackNotice);
+      setActiveSearch(normalizedSearch);
+      setNextPrefetchToken('');
+      setNextPrefetchStatus('unavailable');
+      setNextPrefetchSeed(null);
       setRecentRuns((current) => [{
         id: runId, destination: cleanDestination, mode, provider: 'starter',
         createdAt: Date.now(), itemIds: starter.map((item) => item.id),
@@ -145,6 +216,18 @@ export default function App() {
       setLoading(false);
       setScreen('results');
     }
+  }
+
+  function runDiscoverySearch() {
+    const tripContext: DiscoveryTripContext = {
+      party: context.party,
+      pace: context.pace,
+      budget: context.budget,
+      discovery: context.discovery,
+    };
+    if (discoveryKind === 'tours' && tourAgeBand) tripContext.age_band = tourAgeBand;
+    if (discoveryKind === 'tours' && tourDuration) tripContext.duration = tourDuration;
+    void findMatches({ kind: discoveryKind, queryText: discoveryQuery, tripContext });
   }
 
   function resultKey(item: ResultItem, itemMode = mode, itemDestination = destination) {
@@ -204,7 +287,7 @@ export default function App() {
     {toast && <div className="toast" role="status">{toast}</div>}
     {showInstallHelp && <div className="app-modal" role="dialog" aria-modal="true" aria-labelledby="install-help-title"><div className="app-modal__card"><h2 id="install-help-title">{copy.pwa.iosTitle}</h2><p>{copy.pwa.iosHelp}</p><div className="app-modal__actions"><button className="primary-button" onClick={() => setShowInstallHelp(false)}>{copy.results.close}</button></div></div></div>}
     {manualShareText && <div className="app-modal" role="dialog" aria-modal="true" aria-labelledby="share-manual-title"><div className="app-modal__card"><h2 id="share-manual-title">{copy.results.shareManualTitle}</h2><p>{copy.results.shareManualHelp}</p><textarea readOnly value={manualShareText} aria-label={copy.results.shareManualTitle} /><div className="app-modal__actions"><button className="secondary-button" onClick={() => setManualShareText('')}>{copy.results.close}</button><button className="primary-button" onClick={copyManualShare}>{manualCopied ? copy.results.copied : copy.results.copyShare}</button></div></div></div>}
-    {showResultsPrompt && <div className="app-modal app-modal--results" role="dialog" aria-modal="true" aria-labelledby="results-ready-title"><div className="app-modal__card"><p className="panel-kicker">{copy.swipe.promptKicker}</p><h2 id="results-ready-title">{copy.swipe.promptTitle}</h2><p>{copy.swipe.promptLead(destination)}</p><div className="app-modal__actions"><button className="secondary-button" onClick={() => { setDismissedPromptAt(profile.informativeCount); setShowResultsPrompt(false); }}>{copy.swipe.keepSwiping}</button><button className="primary-button" onClick={findMatches}>{copy.swipe.promptAction} <span>→</span></button></div></div></div>}
+    {showResultsPrompt && <div className="app-modal app-modal--results" role="dialog" aria-modal="true" aria-labelledby="results-ready-title"><div className="app-modal__card"><p className="panel-kicker">{copy.swipe.promptKicker}</p><h2 id="results-ready-title">{copy.swipe.promptTitle}</h2><p>{copy.swipe.promptLead(destination)}</p><div className="app-modal__actions"><button className="secondary-button" onClick={() => { setDismissedPromptAt(profile.informativeCount); setShowResultsPrompt(false); }}>{copy.swipe.keepSwiping}</button><button className="primary-button" onClick={() => void findMatches()}>{copy.swipe.promptAction} <span>→</span></button></div></div></div>}
   </>;
 
   if (screen === 'landing') {
@@ -264,11 +347,11 @@ export default function App() {
             <div className="swipe-heading"><div><p className="eyebrow">{copy.swipe.kicker}</p><h1>{profile.ready ? copy.swipe.readyTitle : copy.swipe.questionTitle}</h1></div><div className="swipe-count"><b>{profile.informativeCount}</b><span>{copy.swipe.signals}</span></div></div>
             <div className="readiness-progress"><div><span style={{ width: `${Math.max(4, profile.readiness * 100)}%` }} /></div><p>{profile.ready ? copy.swipe.readyProgress : copy.swipe.learningProgress}</p></div>
             {currentCard ? <><SwipeCard key={`${language}-${currentCard.id}`} card={currentCard} onReact={recordReaction} /><ReactionControls onReact={recordReaction} /><p className="keyboard-hint">{copy.swipe.keyboard}</p></> : <div className="deck-finished panel"><span>✓</span><h2>{copy.swipe.deckDone}</h2><p>{copy.swipe.deckDoneDesc}</p></div>}
-            {profile.ready && <button className="mobile-results-cta" disabled={loading} onClick={findMatches}>{loading ? copy.swipe.searching : copy.swipe.seeMatches} <span>→</span></button>}
+            {profile.ready && <button className="mobile-results-cta" disabled={loading} onClick={() => void findMatches()}>{loading ? copy.swipe.searching : copy.swipe.seeMatches} <span>→</span></button>}
           </div>
           <div className="swipe-side">
             <LiveProfile profile={profile} onOpen={() => setScreen('profile')} />
-            <div className={`ready-card ${profile.ready ? 'ready-card--active' : ''}`}><p>{profile.ready ? copy.swipe.readyKicker : copy.swipe.needsVariety}</p><h3>{profile.ready ? copy.swipe.findIn(destination) : copy.swipe.answersLeft(Math.max(0, 5 - profile.informativeCount))}</h3><button disabled={!profile.ready || loading} onClick={findMatches}>{loading ? copy.swipe.searching : copy.swipe.seeMatches} <span>→</span></button></div>
+            <div className={`ready-card ${profile.ready ? 'ready-card--active' : ''}`}><p>{profile.ready ? copy.swipe.readyKicker : copy.swipe.needsVariety}</p><h3>{profile.ready ? copy.swipe.findIn(destination) : copy.swipe.answersLeft(Math.max(0, 5 - profile.informativeCount))}</h3><button disabled={!profile.ready || loading} onClick={() => void findMatches()}>{loading ? copy.swipe.searching : copy.swipe.seeMatches} <span>→</span></button></div>
           </div>
         </section>
       )}
@@ -281,16 +364,31 @@ export default function App() {
             <div className="trip-context-card panel"><div className="panel-kicker">{copy.profile.activeBrief}</div><h2>{destination || copy.profile.noDestination}</h2><div className="taste-tags">{contextSummary.map((item) => <span key={item}>{item}</span>)}</div><button className="text-button" onClick={() => setScreen('brief')}>{copy.profile.changeBrief}</button></div>
           </div>
           <div className="profile-detail panel"><div className="profile-detail__head"><div><p className="panel-kicker">{copy.profile.axes}</p><h2>{copy.profile.adjust}</h2></div><p>{copy.profile.neutral}</p></div><ProfileEditor profile={profile} corrections={storedProfile.corrections} onCorrection={(dim: DimId, value) => setStoredProfile((current) => ({ ...current, corrections: { ...current.corrections, [dim]: value } }))} onClearCorrection={(dim: DimId) => setStoredProfile((current) => { const next = { ...current.corrections }; delete next[dim]; return { ...current, corrections: next }; })} /></div>
-          <div className="profile-page__footer"><button className="danger-link" onClick={resetLocalData}>{copy.profile.delete}</button><div><button className="secondary-button" onClick={() => setScreen('swipe')}>{copy.profile.moreCards}</button><button className="primary-button" disabled={!profile.ready || !destination.trim() || loading} onClick={findMatches}>{loading ? copy.swipe.searching : copy.profile.find} <span>→</span></button></div></div>
+          <div className="profile-page__footer"><button className="danger-link" onClick={resetLocalData}>{copy.profile.delete}</button><div><button className="secondary-button" onClick={() => setScreen('swipe')}>{copy.profile.moreCards}</button><button className="primary-button" disabled={!profile.ready || !destination.trim() || loading} onClick={() => void findMatches()}>{loading ? copy.swipe.searching : copy.profile.find} <span>→</span></button></div></div>
         </section>
       )}
 
       {screen === 'results' && (
         <section className="results-page page-wrap">
-          <div className="results-hero"><div><p className="eyebrow">{copy.results.personal} · {mode === 'restaurants' ? copy.results.food : copy.results.experiences}</p><h1>{copy.results.matchesFor} <em>{destination}</em></h1><p>{copy.results.lead}</p></div><div className="results-profile-glance">{topAxes.map((axis) => <span key={axis.dim}>{dimLabels[axis.dim].icon} {dimLabels[axis.dim].label}</span>)}<div className="results-profile-glance__actions"><button onClick={() => setScreen('profile')}>{copy.results.adjust}</button><button className="share-list-button" onClick={() => handleShare(listSharePayload(results, destination, language))}>↗ {copy.results.shareList}</button></div></div></div>
+          <div className="results-hero"><div><p className="eyebrow">{copy.results.personal} · {activeSearch.kind === 'restaurants' ? copy.results.food : activeSearch.kind === 'hotels' ? copy.results.hotels : activeSearch.kind === 'tours' ? copy.results.tours : activeSearch.kind === 'custom' ? copy.results.custom : copy.results.experiences}</p><h1>{copy.results.matchesFor} <em>{destination}</em></h1><p>{copy.results.lead}</p></div><div className="results-profile-glance">{topAxes.map((axis) => <span key={axis.dim}>{dimLabels[axis.dim].icon} {dimLabels[axis.dim].label}</span>)}<div className="results-profile-glance__actions"><button onClick={() => setScreen('profile')}>{copy.results.adjust}</button><button className="share-list-button" onClick={() => handleShare(listSharePayload(results, destination, language))}>↗ {copy.results.shareList}</button></div></div></div>
           {resultNotice && <div className="notice"><span>i</span><p>{resultNotice}</p></div>}
+          <details className="discovery-search panel">
+            <summary><span><b>{copy.results.discoveryTitle}</b><small>{copy.results.discoverySummary}</small></span><i>⌄</i></summary>
+            <div className="discovery-search__body">
+              <p>{copy.results.discoveryLead}</p>
+              <div className="discovery-search__kinds" role="group" aria-label={copy.results.discoveryKindAria}>
+                {(['hotels', 'tours', 'custom'] as const).map((kind) => <button type="button" className={discoveryKind === kind ? 'is-selected' : ''} aria-pressed={discoveryKind === kind} onClick={() => setDiscoveryKind(kind)} key={kind}>{kind === 'hotels' ? copy.results.hotels : kind === 'tours' ? copy.results.tours : copy.results.custom}</button>)}
+              </div>
+              <label className="discovery-search__query"><span>{discoveryKind === 'custom' ? copy.results.customLabel : copy.results.optionalWish}</span><input value={discoveryQuery} onChange={(event) => setDiscoveryQuery(event.target.value)} maxLength={160} placeholder={discoveryKind === 'hotels' ? copy.results.hotelPlaceholder : discoveryKind === 'tours' ? copy.results.tourPlaceholder : copy.results.customPlaceholder} /></label>
+              {discoveryKind === 'tours' && <div className="discovery-search__tour-fields">
+                <label><span>{copy.results.ageBand}</span><select value={tourAgeBand} onChange={(event) => setTourAgeBand(event.target.value)}><option value="">{copy.results.anyOption}</option><option value="18-29">18–29</option><option value="30-49">30–49</option><option value="50-64">50–64</option><option value="65+">65+</option></select></label>
+                <label><span>{copy.results.duration}</span><select value={tourDuration} onChange={(event) => setTourDuration(event.target.value)}><option value="">{copy.results.anyOption}</option><option value="weekend">{copy.results.weekend}</option><option value="week">{copy.results.oneWeek}</option><option value="two_weeks">{copy.results.twoWeeks}</option></select></label>
+              </div>}
+              <div className="discovery-search__footer"><small>{copy.results.requestOnly}</small><button className="primary-button" disabled={loading || (discoveryKind === 'custom' && !discoveryQuery.trim())} onClick={runDiscoverySearch}>{loading ? copy.swipe.searching : copy.results.searchWithProfile} <span>→</span></button></div>
+            </div>
+          </details>
           <div className="results-grid">{results.map((item, index) => { const key = resultKey(item); return <ResultCard item={item} index={index} saved={Boolean(saved[key])} feedback={feedback[key]} onSave={() => toggleSaved(item)} onFeedback={(value) => recordResultFeedback(item, value)} onShare={() => handleShare(resultSharePayload(item, destination, language))} key={item.id} />; })}</div>
-          <div className="results-footer panel"><div><p>{copy.results.another}</p><h2>{copy.results.everyAnswer}</h2></div><div><button className="secondary-button" onClick={() => setScreen('swipe')}>{copy.results.refine}</button><button className="primary-button" disabled={loading} onClick={findMatches}>{loading ? copy.swipe.searching : copy.results.newSelection} <span>↻</span></button></div></div>
+          <div className="results-footer panel"><div><p>{copy.results.another}</p><h2>{copy.results.everyAnswer}</h2>{nextPrefetchToken && <small className={`prefetch-status prefetch-status--${nextPrefetchStatus}`} aria-live="polite">{nextPrefetchStatus === 'ready' ? copy.results.nextReady : ['preparing', 'queued', 'running'].includes(nextPrefetchStatus) ? copy.results.nextPreparing : copy.results.nextOnDemand}</small>}</div><div><button className="secondary-button" onClick={() => setScreen('swipe')}>{copy.results.refine}</button><button className="primary-button" disabled={loading} onClick={() => void findMatches(activeSearch)}>{loading ? copy.swipe.searching : nextPrefetchStatus === 'ready' ? copy.results.showNext : copy.results.newSelection} <span>↻</span></button></div></div>
         </section>
       )}
 

@@ -26,3 +26,6 @@ services:
         value: "60"
       - key: TS_API_RL_MAX_COST
         value: "120"
+      # Brave result storage is opt-in only when the selected API plan grants it.
+      - key: TS_BRAVE_STORAGE_RIGHTS
+        value: "0"

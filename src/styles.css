@@ -331,6 +331,27 @@ button:focus-visible, a:focus-visible, input:focus-visible { outline: 3px solid 
 .results-profile-glance button { border-color: var(--teal); background: transparent; cursor: pointer; }
 .notice { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; padding: 13px 16px; border: 1px solid #d8cfab; border-radius: 7px; background: #fff8d9; color: #6e6544; }
 .notice p { margin: 0; font-size: 11px; line-height: 1.5; }
+.discovery-search { margin: 0 0 18px; overflow: hidden; }
+.discovery-search summary { display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 17px 20px; cursor: pointer; list-style: none; }
+.discovery-search summary::-webkit-details-marker { display: none; }
+.discovery-search summary > span { display: flex; min-width: 0; flex-direction: column; gap: 3px; }
+.discovery-search summary b { color: var(--teal-dark); font-size: 13px; }
+.discovery-search summary small { color: var(--muted); font-size: 10px; }
+.discovery-search summary i { color: var(--teal); font-style: normal; transition: transform .2s; }
+.discovery-search[open] summary i { transform: rotate(180deg); }
+.discovery-search__body { padding: 18px 20px 20px; border-top: 1px solid var(--line); }
+.discovery-search__body > p { margin: 0 0 14px; color: var(--muted); font-size: 11px; line-height: 1.5; }
+.discovery-search__kinds { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 14px; }
+.discovery-search__kinds button { min-height: 36px; padding: 0 13px; border: 1px solid var(--line); border-radius: 999px; background: transparent; color: var(--teal); font-size: 10px; font-weight: 700; cursor: pointer; }
+.discovery-search__kinds button.is-selected { border-color: var(--teal); background: var(--teal); color: #fff; }
+.discovery-search__query, .discovery-search__tour-fields label { display: flex; min-width: 0; flex-direction: column; gap: 7px; color: var(--ink); font-size: 10px; font-weight: 700; }
+.discovery-search input, .discovery-search select { width: 100%; min-height: 44px; padding: 0 12px; border: 1px solid #cfcabc; border-radius: 6px; outline: 0; background: #fff; color: var(--ink); font: 12px 'Manrope', sans-serif; }
+.discovery-search input:focus, .discovery-search select:focus { border-color: var(--teal); box-shadow: 0 0 0 3px rgba(29,91,85,.08); }
+.discovery-search__tour-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; }
+.discovery-search__footer { display: flex; align-items: center; justify-content: space-between; gap: 22px; margin-top: 16px; }
+.discovery-search__footer small { max-width: 560px; color: var(--muted); font-size: 9px; line-height: 1.45; }
+.prefetch-status { display: block; margin-top: 8px; color: var(--muted); font-size: 9px; }
+.prefetch-status--ready { color: var(--teal); font-weight: 700; }
 .results-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 .result-card { position: relative; display: grid; grid-template-columns: 58px 1fr; min-height: 250px; overflow: hidden; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); transition: transform .2s, box-shadow .2s; }
 .result-card:hover { transform: translateY(-3px); box-shadow: 0 18px 45px rgba(31,49,45,.09); }
@@ -488,6 +509,11 @@ button:focus-visible, a:focus-visible, input:focus-visible { outline: 3px solid 
   .profile-page__footer .primary-button, .profile-page__footer .secondary-button { width: 100%; }
   .results-hero { align-items: start; flex-direction: column; }
   .results-profile-glance { justify-content: flex-start; }
+  .discovery-search summary { min-height: 64px; padding: 14px 16px; }
+  .discovery-search__body { padding: 16px; }
+  .discovery-search__tour-fields { grid-template-columns: 1fr; }
+  .discovery-search__footer { align-items: stretch; flex-direction: column; gap: 12px; }
+  .discovery-search__footer .primary-button { width: 100%; }
   .results-grid { grid-template-columns: 1fr; }
   .result-card__footer { align-items: flex-start; flex-direction: column; }
   .result-links { justify-content: flex-start; }
