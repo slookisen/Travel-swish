@@ -13,7 +13,7 @@ from fastapi import BackgroundTasks, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 
 from .config import cors_config
-from .db import connect, init_db
+from .db import connect, delete_user_records, init_db
 from .seed import seed_if_empty
 from .algo import (
     DISLIKE_WEIGHT,
@@ -66,7 +66,7 @@ async def lifespan(_: FastAPI):
     yield
 
 
-app = FastAPI(title="Travel Swipe API", version="0.6.0", lifespan=lifespan)
+app = FastAPI(title="Travel Swipe API", version="0.6.1", lifespan=lifespan)
 
 # CORS: local dev defaults; override with TS_CORS_ORIGINS for public deploys.
 _allow_origins, _allow_credentials = cors_config()
@@ -92,6 +92,26 @@ def health() -> Health:
     if any(os.getenv(key) for key in ("BRAVE_SEARCH_API_KEY", "BRAVE_API_KEY", "OPENCLAW_BRAVE_API_KEY", "TS_BRAVE_API_KEY")):
         providers.append("brave")
     return Health(service="travel-swish-backend", providers=providers)
+
+
+@app.delete("/users/{user_id}")
+def delete_user_data(user_id: str, request: Request) -> dict:
+    """Delete the data linked to a pseudonymous client identity."""
+    require_demo_auth(request)
+    if not 1 <= len(user_id) <= 160:
+        raise HTTPException(status_code=422, detail="invalid_user_id")
+    try:
+        api_consume_or_raise(key=api_rate_limit_key(request=request, user_id=user_id), cost=4)
+    except RateLimitError as e:
+        raise HTTPException(status_code=429, detail="rate_limited", headers={"Retry-After": str(e.retry_after_s)})
+
+    con = connect()
+    try:
+        deleted = delete_user_records(con, user_id)
+        con.commit()
+        return {"ok": True, "deleted": deleted}
+    finally:
+        con.close()
 
 
 @app.post("/sessions")

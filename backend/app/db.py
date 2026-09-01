@@ -36,3 +36,22 @@ def init_db() -> None:
         con.commit()
     finally:
         con.close()
+
+
+def delete_user_records(con: sqlite3.Connection, user_id: str) -> dict[str, int]:
+    """Delete every persisted record linked to one pseudonymous app user."""
+    tables = (
+        "result_feedback",
+        "recommendation_runs",
+        "events",
+        "prefs",
+        "pref_stats",
+        "sessions",
+        "users",
+    )
+    deleted: dict[str, int] = {}
+    for table in tables:
+        column = "id" if table == "users" else "user_id"
+        cursor = con.execute(f"DELETE FROM {table} WHERE {column} = ?", (user_id,))
+        deleted[table] = max(0, cursor.rowcount)
+    return deleted

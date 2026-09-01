@@ -22,6 +22,18 @@ test('landing presents the V2 value proposition', async ({ page }) => {
   await expect(page.getByText('Turbrief først')).toBeVisible();
 });
 
+test('privacy and support pages are linked and responsive', async ({ page }) => {
+  await page.goto('/Travel-swish/');
+  await expect(page.getByRole('link', { name: 'Personvern' })).toHaveAttribute('href', '/Travel-swish/privacy.html');
+  await page.goto('/Travel-swish/privacy.html');
+  await expect(page.getByRole('heading', { name: /Your taste should help your trip/ })).toBeVisible();
+  await expect(page.getByText(/Delete my data/).first()).toBeVisible();
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/Travel-swish/support.html');
+  await expect(page.getByRole('heading', { name: /Keep the app light/ })).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
+});
+
 test('trip brief keeps destination as a guard rail', async ({ page }) => {
   await openBrief(page);
   await expect(page.getByPlaceholder('For eksempel Lisboa')).toBeVisible();

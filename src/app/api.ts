@@ -104,7 +104,7 @@ export async function fetchRecommendations(input: {
     destination,
     context,
     profile_version: 2,
-    client_version: '0.6.0',
+    client_version: '0.6.1',
     ts: now,
   }), 9000).catch(() => undefined);
 
@@ -166,6 +166,10 @@ export async function fetchRecommendations(input: {
 export async function getRecommendationPrefetchStatus(token: string): Promise<string> {
   const raw = await requestJson(`/recs/prefetch/${encodeURIComponent(token)}`, { method: 'GET' }, 6000);
   return z.object({ status: z.string() }).parse(raw).status;
+}
+
+export async function deleteUserData(userId: string): Promise<void> {
+  await requestJson(`/users/${encodeURIComponent(userId)}`, { method: 'DELETE' }, 12000).then(() => undefined);
 }
 
 export async function postResultFeedback(input: {
