@@ -5,6 +5,7 @@ __pycache__/
 .vite/
 test-results/
 playwright-report/
+store-assets/
 
 # Backend dev artifacts
 backend/.venv*/

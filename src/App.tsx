@@ -1,10 +1,10 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { getDeckCards, type DimId, type Mode } from './dataset';
-import { computeProfile, createEmptyStoredProfile, selectNextCard, type Reaction, type TripContext } from './profile/engine';
+import { computeProfile, selectNextCard, type Reaction, type TripContext } from './profile/engine';
 import { getDimLabels } from './profile/labels';
-import { fetchRecommendations, getRecommendationPrefetchStatus, postResultFeedback } from './app/api';
+import { deleteUserData, fetchRecommendations, getRecommendationPrefetchStatus, postResultFeedback } from './app/api';
 import { buildStarterResults } from './app/starterCatalog';
-import { DEFAULT_CONTEXT, getClientIdentity, loadAppState, saveAppState } from './app/storage';
+import { clearClientData, getClientIdentity, loadAppState, saveAppState } from './app/storage';
 import type { DiscoveryTripContext, LocalAppState, ResultFeedback, ResultItem, SavedResult, Screen, SearchKind } from './app/types';
 import { useLanguage } from './app/i18n';
 import { usePwaInstall } from './app/pwa';
@@ -21,6 +21,11 @@ type ActiveSearch = {
 };
 
 const regularSearch = (mode: Mode): ActiveSearch => ({ kind: mode, queryText: '', tripContext: {} });
+
+function LegalFooter({ privacy, support, dark = false }: { privacy: string; support: string; dark?: boolean }) {
+  const base = import.meta.env.BASE_URL;
+  return <footer className={`legal-footer ${dark ? 'legal-footer--dark' : ''}`}><span>© {new Date().getFullYear()} Travel Swipe</span><nav aria-label={`${privacy} / ${support}`}><a href={`${base}privacy.html`}>{privacy}</a><a href={`${base}support.html`}>{support}</a></nav></footer>;
+}
 
 function sameSearch(left: ActiveSearch, right: ActiveSearch): boolean {
   return left.kind === right.kind
@@ -58,6 +63,7 @@ export default function App() {
   const [discoveryQuery, setDiscoveryQuery] = useState('');
   const [tourAgeBand, setTourAgeBand] = useState('');
   const [tourDuration, setTourDuration] = useState('');
+  const [deletingData, setDeletingData] = useState(false);
   const pwaInstall = usePwaInstall();
 
   const cards = useMemo(() => getDeckCards(mode, language), [mode, language]);
@@ -138,20 +144,17 @@ export default function App() {
     setContext((current) => ({ ...current, [key]: value }));
   }
 
-  function resetLocalData() {
+  async function resetLocalData() {
     if (!window.confirm(copy.profile.confirmDelete)) return;
-    setStoredProfile(createEmptyStoredProfile());
-    setSaved({});
-    setFeedback({});
-    setRecentRuns([]);
-    setResults([]);
-    setActiveSearch(regularSearch(mode));
-    setNextPrefetchToken('');
-    setNextPrefetchStatus('unavailable');
-    setNextPrefetchSeed(null);
-    setDestination('');
-    setContext(DEFAULT_CONTEXT);
-    setScreen('brief');
+    setDeletingData(true);
+    try {
+      await deleteUserData(identity.userId);
+      clearClientData();
+      window.location.assign(import.meta.env.BASE_URL);
+    } catch {
+      setDeletingData(false);
+      setToast(copy.profile.deleteFailed);
+    }
   }
 
   async function findMatches(request: ActiveSearch = regularSearch(mode)) {
@@ -313,6 +316,7 @@ export default function App() {
         <section className="principles">
           {copy.landing.principles.map(([title, description], index) => <div key={title}><span>0{index + 1}</span><h3>{title}</h3><p>{description}</p></div>)}
         </section>
+        <LegalFooter privacy={copy.legal.privacy} support={copy.legal.support} dark />
       </main>{overlays}</>
     );
   }
@@ -364,7 +368,7 @@ export default function App() {
             <div className="trip-context-card panel"><div className="panel-kicker">{copy.profile.activeBrief}</div><h2>{destination || copy.profile.noDestination}</h2><div className="taste-tags">{contextSummary.map((item) => <span key={item}>{item}</span>)}</div><button className="text-button" onClick={() => setScreen('brief')}>{copy.profile.changeBrief}</button></div>
           </div>
           <div className="profile-detail panel"><div className="profile-detail__head"><div><p className="panel-kicker">{copy.profile.axes}</p><h2>{copy.profile.adjust}</h2></div><p>{copy.profile.neutral}</p></div><ProfileEditor profile={profile} corrections={storedProfile.corrections} onCorrection={(dim: DimId, value) => setStoredProfile((current) => ({ ...current, corrections: { ...current.corrections, [dim]: value } }))} onClearCorrection={(dim: DimId) => setStoredProfile((current) => { const next = { ...current.corrections }; delete next[dim]; return { ...current, corrections: next }; })} /></div>
-          <div className="profile-page__footer"><button className="danger-link" onClick={resetLocalData}>{copy.profile.delete}</button><div><button className="secondary-button" onClick={() => setScreen('swipe')}>{copy.profile.moreCards}</button><button className="primary-button" disabled={!profile.ready || !destination.trim() || loading} onClick={() => void findMatches()}>{loading ? copy.swipe.searching : copy.profile.find} <span>→</span></button></div></div>
+          <div className="profile-page__footer"><button className="danger-link" disabled={deletingData} onClick={() => void resetLocalData()}>{deletingData ? copy.swipe.searching : copy.profile.delete}</button><div><button className="secondary-button" onClick={() => setScreen('swipe')}>{copy.profile.moreCards}</button><button className="primary-button" disabled={!profile.ready || !destination.trim() || loading} onClick={() => void findMatches()}>{loading ? copy.swipe.searching : copy.profile.find} <span>→</span></button></div></div>
         </section>
       )}
 
@@ -398,6 +402,7 @@ export default function App() {
           {savedItems.length ? <div className="results-grid">{savedItems.map((item: SavedResult, index) => { const key = resultKey(item, item.mode, item.destination); return <ResultCard item={item} index={index} saved feedback={feedback[key]} onSave={() => toggleSaved(item, item.mode, item.destination)} onFeedback={(value) => recordResultFeedback(item, value, item.mode, item.destination)} onShare={() => handleShare(resultSharePayload(item, item.destination, language))} key={key} />; })}</div> : <div className="empty-saved panel"><span>♡</span><h2>{copy.results.emptySaved}</h2><p>{copy.results.emptySavedDesc}</p><button className="primary-button" onClick={() => setScreen('brief')}>{copy.results.findTips} <span>→</span></button></div>}
         </section>
       )}
+      {screen !== 'swipe' && <LegalFooter privacy={copy.legal.privacy} support={copy.legal.support} />}
     </main>{overlays}</>
   );
 }

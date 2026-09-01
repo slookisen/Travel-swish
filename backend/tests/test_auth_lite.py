@@ -46,6 +46,20 @@ async def test_origin_allowed_allows_post(tmp_path, monkeypatch: pytest.MonkeyPa
     assert r.json().get("ok") is True
 
 
+async def test_capacitor_origin_is_allowed(tmp_path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("TS_API_KEY", raising=False)
+    monkeypatch.setenv("TS_DB_PATH", str(tmp_path / "db.sqlite"))
+    init_db()
+
+    async with httpx.AsyncClient(transport=_transport(), base_url="http://test") as c:
+        r = await c.post(
+            "/events",
+            json=_event_payload(),
+            headers={"Origin": "capacitor://localhost", "X-Forwarded-For": "1.2.3.5"},
+        )
+    assert r.status_code == 200
+
+
 async def test_missing_origin_requires_api_key_when_set(tmp_path, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("TS_API_KEY", "secret")
     monkeypatch.setenv("TS_DB_PATH", str(tmp_path / "db.sqlite"))

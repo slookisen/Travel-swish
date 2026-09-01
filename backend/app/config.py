@@ -11,6 +11,9 @@ DEFAULT_CORS_ORIGINS: list[str] = [
     "http://localhost:8090",
     # GitHub Pages (production)
     "https://slookisen.github.io",
+    # Capacitor native shells
+    "capacitor://localhost",
+    "https://localhost",
 ]
 
 

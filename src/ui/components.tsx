@@ -49,7 +49,7 @@ export function formatContext(context: TripContext, language: AppLanguage) {
 }
 
 export function Brand({ compact = false }: { compact?: boolean }) {
-  return <div className={`brand ${compact ? 'brand--compact' : ''}`}><span className="brand__mark">S</span><span>TRAVEL SWIPE</span>{!compact && <em>V0.5 TEST</em>}</div>;
+  return <div className={`brand ${compact ? 'brand--compact' : ''}`}><span className="brand__mark">S</span><span>TRAVEL SWIPE</span></div>;
 }
 
 export function LanguageSwitch({ dark = false }: { dark?: boolean }) {

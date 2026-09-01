@@ -8,6 +8,7 @@ export const UI_COPY = {
   no: {
     language: { label: 'Språk', no: 'Norsk', en: 'English' },
     nav: { home: 'Gå til start', saved: 'Lagret', profile: 'Smaksprofil' },
+    legal: { privacy: 'Personvern', support: 'Hjelp og støtte' },
     pwa: {
       install: 'Installer app', installed: 'Appen er installert', installDismissed: 'Installasjonen ble avbrutt',
       iosTitle: 'Legg Travel Swipe på hjemskjermen', iosHelp: 'Trykk Del i Safari og velg «Legg til på Hjem-skjerm». Profilen og lagrede tips blir på denne enheten.',
@@ -64,8 +65,9 @@ export const UI_COPY = {
       clearAnswers: 'tydelige svar', unsure: 'usikre', explored: 'områder utforsket', positive: 'positive smaksfelt', saved: 'lagrede tips',
       activeBrief: 'AKTIV TURBRIEF', noDestination: 'Ingen destinasjon valgt', changeBrief: 'Endre turbrief →',
       axes: 'PREFERANSEAKSER', adjust: 'Juster det vi har lært', neutral: 'Midten er nøytral. ↺ fjerner din manuelle justering.',
-      delete: 'Slett alle lokale data', moreCards: 'Svar på flere kort', find: 'Finn treff',
-      confirmDelete: 'Vil du slette profil, lagrede tips og tilbakemeldinger på denne enheten?',
+      delete: 'Slett mine data', moreCards: 'Svar på flere kort', find: 'Finn treff',
+      confirmDelete: 'Vil du slette profil, lagrede tips og tilbakemeldinger både på denne enheten og fra Travel Swipe-tjenesten?',
+      deleteFailed: 'Vi fikk ikke bekreftet sletting fra tjenesten. Sjekk nettet og prøv igjen; dataene er beholdt slik at slettingen kan fullføres.',
       panelKicker: 'LEVENDE PROFIL', learning: 'Dette lærer vi', areas: 'områder', strongest: 'Sterkeste kategorier',
       open: 'Se og juster hele profilen →', privacy: 'Kort-svarene blir på enheten. Søkeprofil og frivillig tilbakemelding sendes når du ber om tips.',
       empty: 'Svar på noen kort, så vokser profilen frem her.', adjustAxis: 'Juster', learnedAxis: 'Bruk lærte data for', confidence: 'sikker',
@@ -100,6 +102,7 @@ export const UI_COPY = {
   en: {
     language: { label: 'Language', no: 'Norwegian', en: 'English' },
     nav: { home: 'Go to home', saved: 'Saved', profile: 'Taste profile' },
+    legal: { privacy: 'Privacy', support: 'Help and support' },
     pwa: {
       install: 'Install app', installed: 'The app is installed', installDismissed: 'Installation was dismissed',
       iosTitle: 'Add Travel Swipe to your Home Screen', iosHelp: 'Tap Share in Safari and choose “Add to Home Screen”. Your profile and saved tips stay on this device.',
@@ -156,8 +159,9 @@ export const UI_COPY = {
       clearAnswers: 'clear answers', unsure: 'unsure', explored: 'areas explored', positive: 'positive taste fields', saved: 'saved tips',
       activeBrief: 'ACTIVE TRIP BRIEF', noDestination: 'No destination selected', changeBrief: 'Change trip brief →',
       axes: 'PREFERENCE AXES', adjust: 'Adjust what we have learned', neutral: 'The middle is neutral. ↺ removes your manual adjustment.',
-      delete: 'Delete all local data', moreCards: 'Answer more cards', find: 'Find matches',
-      confirmDelete: 'Delete the profile, saved tips and feedback stored on this device?',
+      delete: 'Delete my data', moreCards: 'Answer more cards', find: 'Find matches',
+      confirmDelete: 'Delete your profile, saved tips and feedback from both this device and the Travel Swipe service?',
+      deleteFailed: 'We could not confirm deletion from the service. Check your connection and try again; your data was kept so the deletion can be completed.',
       panelKicker: 'LIVE PROFILE', learning: 'What we are learning', areas: 'areas', strongest: 'Strongest categories',
       open: 'View and adjust the full profile →', privacy: 'Card answers stay on this device. Your search profile and optional feedback are sent when you request recommendations.',
       empty: 'Answer a few cards and your profile will grow here.', adjustAxis: 'Adjust', learnedAxis: 'Use learned data for', confidence: 'confidence',

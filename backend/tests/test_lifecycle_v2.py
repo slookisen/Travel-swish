@@ -79,6 +79,42 @@ async def test_session_and_feedback_lifecycle() -> None:
         con.close()
 
 
+async def test_user_can_delete_pseudonymous_service_data() -> None:
+    now = int(time.time())
+    headers = {"Origin": "http://localhost:5173", "X-Forwarded-For": "7.7.7.8"}
+    user_id = "user-delete-me"
+    session = {
+        "user_id": user_id,
+        "session_id": "session-delete-me",
+        "mode": "experiences",
+        "destination": "Lisbon",
+        "context": {"pace": "balanced"},
+        "profile_version": 2,
+        "client_version": "0.6.0",
+        "ts": now,
+    }
+    prefs = {
+        "user_id": user_id,
+        "mode": "experiences",
+        "prefs": {"nature": 0.8},
+        "updated_ts": now,
+    }
+
+    async with httpx.AsyncClient(transport=_transport(), base_url="http://test") as client:
+        assert (await client.post("/sessions", json=session, headers=headers)).status_code == 200
+        assert (await client.post("/prefs", json=prefs, headers=headers)).status_code == 200
+        response = await client.delete(f"/users/{user_id}", headers=headers)
+
+    assert response.status_code == 200
+    assert response.json()["ok"] is True
+    con = connect()
+    try:
+        for table in ("users", "sessions", "prefs", "events", "pref_stats", "recommendation_runs", "result_feedback"):
+            assert con.execute(f"SELECT COUNT(*) FROM {table} WHERE {'id' if table == 'users' else 'user_id'}=?", (user_id,)).fetchone()[0] == 0
+    finally:
+        con.close()
+
+
 async def test_recommendation_endpoint_serves_prepared_next_selection(monkeypatch: pytest.MonkeyPatch) -> None:
     main_module = importlib.import_module("app.main")
     clear_prefetch_for_tests()

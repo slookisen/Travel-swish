@@ -144,6 +144,14 @@ export function saveAppState(state: LocalAppState): void {
   }
 }
 
+export function clearClientData(): void {
+  if (typeof window === 'undefined') return;
+  for (const key of [APP_STATE_KEY, LEGACY_PROFILE_KEY, LEGACY_TRIP_KEY, USER_ID_KEY, 'ts_user_id_v2', 'travel_swish_language_v1']) {
+    window.localStorage.removeItem(key);
+  }
+  window.sessionStorage.removeItem(SESSION_ID_KEY);
+}
+
 function makeId(prefix: string): string {
   if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) return `${prefix}-${crypto.randomUUID()}`;
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
