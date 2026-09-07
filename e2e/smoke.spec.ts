@@ -9,9 +9,11 @@ async function buildReadyProfile(page: import('@playwright/test').Page) {
   await page.getByPlaceholder('For eksempel Lisboa').fill('Lisboa');
   await page.getByRole('button', { name: /Start kortene/ }).click();
   for (let index = 0; index < 12; index += 1) {
+    const prompt = page.getByRole('button', { name: 'Fortsett å finjustere' });
+    if (await prompt.isVisible()) await prompt.click();
     const ready = page.getByRole('button', { name: /Se mine treff/ });
-    if (await ready.isEnabled().catch(() => false)) return;
-    await page.keyboard.press('ArrowRight');
+    if (await ready.isVisible() && await ready.isEnabled()) return;
+    await page.getByRole('button', { name: /Ja$/ }).click();
   }
 }
 
@@ -91,7 +93,7 @@ test('mobile swipe locks to the intended axis and surfaces results without scrol
   await page.setViewportSize({ width: 390, height: 844 });
   await page.route('**/sessions', async (route) => route.fulfill({ status: 200, contentType: 'application/json', body: '{}' }));
   await page.route('**/prefs', async (route) => route.fulfill({ status: 200, contentType: 'application/json', body: '{}' }));
-  await page.route('**/recs/web', async (route) => route.fulfill({
+  await page.route('**/recs/personalized', async (route) => route.fulfill({
     status: 200,
     contentType: 'application/json',
     body: JSON.stringify({ items: [{ id: 'mobile-1', name: 'Mobiltreff i Malaga', cat: 'culture', match: 88, why: 'Passer profilen.', source: 'google_places' }] }),
@@ -142,9 +144,13 @@ test('ready profile remains balanced on a tall desktop', async ({ page }, testIn
   await openBrief(page);
   await page.getByPlaceholder('For eksempel Lisboa').fill('Malaga');
   await page.getByRole('button', { name: /Start kortene/ }).click();
-  for (let index = 0; index < 14; index += 1) await page.keyboard.press('ArrowRight');
+  for (let index = 0; index < 14; index += 1) {
+    const prompt = page.getByRole('button', { name: 'Fortsett å finjustere' });
+    if (await prompt.isVisible()) await prompt.click();
+    await page.getByRole('button', { name: /Ja$/ }).click();
+  }
 
-  const heading = page.getByRole('heading', { name: 'Profilen er klar.' });
+  const heading = page.getByRole('heading', { name: 'Klar for første tips.' });
   await expect(heading).toBeVisible();
   const headingBox = await heading.boundingBox();
   expect(headingBox!.height).toBeLessThan(70);
@@ -165,7 +171,7 @@ test('ready profile remains balanced on a tall desktop', async ({ page }, testIn
   await page.screenshot({ path: testInfo.outputPath('swipe-ready-desktop.png'), fullPage: true });
 });
 
-test('adaptive profiling sends V2 taste and renders live results', async ({ page }) => {
+test('adaptive profiling sends computed taste and renders live results', async ({ page }) => {
   let recsBody: Record<string, unknown> | null = null;
   await page.route('**/sessions', async (route) => {
     await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true }) });
@@ -173,7 +179,7 @@ test('adaptive profiling sends V2 taste and renders live results', async ({ page
   await page.route('**/prefs', async (route) => {
     await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true }) });
   });
-  await page.route('**/recs/web', async (route) => {
+  await page.route('**/recs/personalized', async (route) => {
     recsBody = route.request().postDataJSON();
     await route.fulfill({
       status: 200,
@@ -192,6 +198,7 @@ test('adaptive profiling sends V2 taste and renders live results', async ({ page
   });
 
   await openBrief(page);
+  await page.getByText('Tilpass denne gangen', { exact: true }).click();
   await page.getByRole('button', { name: 'Skjulte funn' }).click();
   await buildReadyProfile(page);
   const findButton = page.getByRole('button', { name: /Se mine treff/ });
@@ -201,7 +208,7 @@ test('adaptive profiling sends V2 taste and renders live results', async ({ page
   await expect(page.getByText('Live: Alfama morning walk')).toBeVisible();
   expect(recsBody).not.toBeNull();
   const taste = recsBody?.taste as Record<string, unknown>;
-  expect(taste.version).toBe(2);
+  expect(taste.version).toBe(3);
   expect((taste.context as Record<string, unknown>).discovery).toBe('hidden');
 });
 
@@ -210,7 +217,7 @@ test('profile discovery exposes official websites and consumes the prepared next
   await page.route('**/sessions', async (route) => route.fulfill({ status: 200, contentType: 'application/json', body: '{}' }));
   await page.route('**/prefs', async (route) => route.fulfill({ status: 200, contentType: 'application/json', body: '{}' }));
   await page.route('**/recs/prefetch/**', async (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, status: 'ready' }) }));
-  await page.route('**/recs/web', async (route) => {
+  await page.route('**/recs/personalized', async (route) => {
     const body = route.request().postDataJSON() as Record<string, unknown>;
     recsBodies.push(body);
     const isTour = body.search_kind === 'tours';
@@ -266,14 +273,15 @@ test('profile discovery exposes official websites and consumes the prepared next
   expect(recsBodies[2].seed).toBe(99);
 });
 
-test('failed live search falls back to sourced, actionable starter tips', async ({ page }) => {
+test('failed live search offers explicit sourced starter tips', async ({ page }) => {
   await page.route('**/sessions', async (route) => route.abort());
   await page.route('**/prefs', async (route) => route.abort());
-  await page.route('**/recs/web', async (route) => route.abort());
+  await page.route('**/recs/personalized', async (route) => route.abort());
   await openBrief(page);
   await buildReadyProfile(page);
   await page.getByRole('button', { name: /Se mine treff/ }).click();
 
+  await page.getByRole('button', { name: 'Se starttips uten livesøk' }).click();
   await expect(page.getByText(/Livesøket svarte ikke/)).toBeVisible();
   await expect(page.getByText('Kurert starttips').first()).toBeVisible();
   await expect(page.getByRole('link', { name: /Søk i kart/ }).first()).toHaveAttribute('href', /google\.com\/maps/);
@@ -301,7 +309,7 @@ test('saved result and explicit feedback survive a reload', async ({ page }) => 
   await page.route('**/sessions', async (route) => route.fulfill({ status: 200, contentType: 'application/json', body: '{}' }));
   await page.route('**/prefs', async (route) => route.fulfill({ status: 200, contentType: 'application/json', body: '{}' }));
   await page.route('**/feedback', async (route) => route.fulfill({ status: 200, contentType: 'application/json', body: '{}' }));
-  await page.route('**/recs/web', async (route) => route.fulfill({
+  await page.route('**/recs/personalized', async (route) => route.fulfill({
     status: 200,
     contentType: 'application/json',
     body: JSON.stringify({ run_id: 'run-save', provider: 'google_places', items: [{ id: 'save-1', name: 'Teststed i Oslo', cat: 'culture', match: 84, why: 'Passer kulturprofilen.', url: 'https://example.com/place', source: 'google_places' }] }),
@@ -310,6 +318,7 @@ test('saved result and explicit feedback survive a reload', async ({ page }) => 
   await buildReadyProfile(page);
   await page.getByRole('button', { name: /Se mine treff/ }).click();
   await page.getByRole('button', { name: 'Lagre Teststed i Oslo' }).click();
+  await page.getByText('Mer om tipset', { exact: true }).click();
   await page.getByRole('button', { name: 'Bra tips' }).click();
   await expect(page.getByRole('button', { name: 'Bra tips' })).toHaveAttribute('aria-pressed', 'true');
 
@@ -328,7 +337,7 @@ test('a result is shared with a trackable marketing link', async ({ page }) => {
   });
   await page.route('**/sessions', async (route) => route.fulfill({ status: 200, contentType: 'application/json', body: '{}' }));
   await page.route('**/prefs', async (route) => route.fulfill({ status: 200, contentType: 'application/json', body: '{}' }));
-  await page.route('**/recs/web', async (route) => route.fulfill({
+  await page.route('**/recs/personalized', async (route) => route.fulfill({
     status: 200,
     contentType: 'application/json',
     body: JSON.stringify({ items: [{ id: 'share-1', name: 'Solnedgang over Alfama', cat: 'culture', match: 93, why: 'Passer oppdagelsesprofilen din.', url: 'https://example.com/alfama', source: 'google_places' }] }),

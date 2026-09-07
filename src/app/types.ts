@@ -1,10 +1,10 @@
 import type { Mode } from '../dataset';
 import type { StoredProfile, TripContext } from '../profile/engine';
 
-export type Screen = 'landing' | 'brief' | 'swipe' | 'profile' | 'results' | 'saved';
+export type Screen = 'landing' | 'home' | 'brief' | 'swipe' | 'profile' | 'results' | 'saved';
 
 export type ResultSource = 'google_places' | 'brave' | 'starter' | 'unknown';
-export type ResultFeedback = 'useful' | 'not_relevant' | 'visited' | 'wrong_info';
+export type ResultFeedback = 'useful' | 'not_relevant' | 'visited' | 'wrong_info' | 'enjoyed' | 'not_for_me';
 export type SearchKind = Mode | 'hotels' | 'tours' | 'custom';
 export type DiscoveryTripContext = Partial<Record<'party' | 'pace' | 'budget' | 'discovery' | 'age_band' | 'duration', string>>;
 

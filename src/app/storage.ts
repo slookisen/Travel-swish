@@ -21,6 +21,8 @@ const reactionSchema = z.object({
   answeredAt: z.number().finite(),
 });
 
+const feedbackSchema = z.enum(['useful', 'not_relevant', 'visited', 'wrong_info', 'enjoyed', 'not_for_me']);
+
 const storedProfileSchema = z.object({
   version: z.literal(2),
   reactions: z.object({
@@ -28,6 +30,10 @@ const storedProfileSchema = z.object({
     restaurants: z.record(reactionSchema),
   }),
   corrections: z.record(z.number().min(-1).max(1)),
+  outcomes: z.record(z.object({
+    itemId: z.string(), category: z.string(), mode: z.enum(['experiences', 'restaurants']),
+    destination: z.string(), feedback: feedbackSchema, answeredAt: z.number().finite(),
+  })).default({}),
 });
 
 const contextSchema = z.object({
@@ -65,7 +71,7 @@ const appStateSchema = z.object({
     context: contextSchema,
   }),
   saved: z.record(resultSchema),
-  feedback: z.record(z.enum(['useful', 'not_relevant', 'visited', 'wrong_info'])),
+  feedback: z.record(feedbackSchema),
   recentRuns: z.array(z.object({
     id: z.string(),
     destination: z.string(),

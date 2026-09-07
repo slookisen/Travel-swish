@@ -1,4 +1,4 @@
-# Travel Swipe Backend (V0.6 test foundation)
+# Travel Swipe Backend (V0.7 test foundation)
 
 Goal: move the preference engine + destination-aware recommendations out of the browser.
 
@@ -52,6 +52,7 @@ Notes:
 | GET | `/taxonomy` | Get taxonomy |
 | POST | `/recs` | Get ranked recommendations (local POIs DB) |
 | POST | `/recs/web` | Profilrangerte treff fra Google Places eller Brave; støtter hotell, turer, fritekst og engangs-prefetch |
+| POST | `/recs/personalized` | V0.7: krever `current_prefs`; bruker og lagrer profil, økt og søk i én forespørsel. Gammel `/recs/web` beholdes. |
 | GET | `/recs/prefetch/{token}` | Status for et kortlivet, forhåndsklargjort utvalg |
 | GET | `/search/brave` | Brave web search proxy (server-side key) |
 
@@ -59,9 +60,11 @@ Notes:
 
 `app.db.init_db()` applies numbered SQL files from `backend/migrations/` once and records them in `schema_migrations`. SQLite uses foreign keys, a five-second busy timeout, WAL journaling and `PRAGMA optimize`. Migration 002 adds sessions, recommendation exposure runs and result feedback so ranking improvements can be evaluated from explicit signals instead of clicks alone.
 
+Migration 003 preserves existing feedback rows and accepts `enjoyed` and `not_for_me`. Take a consistent SQLite backup before production migration. `render.yaml` still specifies the free plan without a persistent disk; long-term retention is not guaranteed by this code change.
+
 ## Providers, prefetch og lagring
 
-Google Places brukes til strukturerte steder og hotell. `websiteUri` og `googleMapsUri` returneres separat slik at klienten kan vise både offisiell hjemmeside og kart. Places-innhold mellomlagres eller forhåndshentes ikke.
+Google Places brukes til strukturerte steder og hotell. V0.7 avklarer først ett geografisk område, avgrenser søket til dette og etterkontrollerer koordinater. Uavklart område gir 422 `destination_unresolved`; leverandørfeil gir 503. `websiteUri` og `googleMapsUri` returneres separat. Places-innhold forhåndshentes ikke i backend. Inntil ni kandidater returneres i én respons; frontend viser tre om gangen. Neste knapp må ikke bytte fra Places til et svakere geografisk avgrenset Brave-utvalg.
 
 Brave brukes til vanlig weboppdagelse, organiserte turer og fritekstsøk. Etter et vellykket uttrekk reserverer `/recs/web` et tilfeldig, signaturbundet token og lager neste Brave-utvalg som en FastAPI-bakgrunnsoppgave. Utvalget ligger kun i prosessminnet, utløper etter tre minutter og slettes ved første vellykkede bruk. Dette gir raskere «Nytt utvalg» uten en vedvarende kopi av leverandørdata.
 

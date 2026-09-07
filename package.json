@@ -1,7 +1,7 @@
 {
   "name": "travel-swipe",
   "private": true,
-  "version": "0.6.1",
+  "version": "0.7.0",
   "type": "module",
   "scripts": {
     "gen:buildmeta": "node ./tools/gen-build-meta.mjs",
@@ -17,6 +17,7 @@
     "test:cards": "node ./tools/card-audit.mjs",
     "typecheck": "tsc --noEmit",
     "test:pwa": "node ./tools/pwa-check.mjs",
+    "test:pwa:offline": "node ./tools/pwa-offline-check.mjs",
     "check": "npm run typecheck && npm run test:cards && npm run test:profile && npm run build && npm run test:pwa",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",

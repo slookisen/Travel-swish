@@ -37,24 +37,34 @@ const recsSchema = z.object({
 });
 
 export class ApiError extends Error {
-  constructor(message: string, readonly status?: number) {
+  constructor(message: string, readonly status?: number, readonly retryAfterSeconds = 0, readonly code = '') {
     super(message);
     this.name = 'ApiError';
   }
 }
 
-async function requestJson(path: string, options: RequestInit, timeoutMs: number): Promise<unknown> {
+async function requestJson(path: string, options: RequestInit, timeoutMs: number, signal?: AbortSignal): Promise<unknown> {
   const controller = new AbortController();
+  const abort = () => controller.abort();
+  signal?.addEventListener('abort', abort, { once: true });
+  if (signal?.aborted) abort();
   const timer = window.setTimeout(() => controller.abort(), timeoutMs);
   try {
     const response = await fetch(`${BACKEND_URL}${path}`, { ...options, signal: controller.signal });
-    if (!response.ok) throw new ApiError(`Backend svarte med HTTP ${response.status}`, response.status);
+    if (!response.ok) {
+      const retryHeader = response.headers.get('Retry-After') || '';
+      const seconds = /^\d+(\.\d+)?$/.test(retryHeader) ? Number(retryHeader) : (Date.parse(retryHeader) - Date.now()) / 1000;
+      const retryAfter = response.status === 429 ? Math.max(1, Math.ceil(Number.isFinite(seconds) ? seconds : 30)) : 0;
+      const body = await response.json().catch(() => ({}));
+      throw new ApiError(`HTTP ${response.status}`, response.status, retryAfter, typeof body.detail === 'string' ? body.detail : '');
+    }
     return await response.json();
   } catch (error) {
     if (error instanceof DOMException && error.name === 'AbortError') throw new ApiError('Backend brukte for lang tid');
     throw error;
   } finally {
     window.clearTimeout(timer);
+    signal?.removeEventListener('abort', abort);
   }
 }
 
@@ -84,6 +94,7 @@ export async function fetchRecommendations(input: {
   excludeIds?: string[];
   prefetchToken?: string;
   seed?: number;
+  signal?: AbortSignal;
 }): Promise<{
   items: ResultItem[];
   runId: string;
@@ -95,33 +106,18 @@ export async function fetchRecommendations(input: {
 }> {
   const { identity, mode, destination, context, profile, language } = input;
   const backendProfile = profileToBackend(profile, context);
-  const now = Math.floor(Date.now() / 1000);
-
-  await requestJson('/sessions', jsonPost({
+  // One atomic request: never search using stale server preferences because a
+  // preceding /prefs write failed. The versioned route also fails safely against
+  // an old backend instead of silently ignoring the supplied current profile.
+  const raw = await requestJson('/recs/personalized', jsonPost({
     user_id: identity.userId,
     session_id: identity.sessionId,
     mode,
     destination,
-    context,
-    profile_version: 2,
-    client_version: '0.6.1',
-    ts: now,
-  }), 9000).catch(() => undefined);
-
-  await requestJson('/prefs', jsonPost({
-    user_id: identity.userId,
-    mode,
-    prefs: backendProfile.prefs,
-    updated_ts: now,
-  }), 20000).catch(() => undefined);
-
-  const raw = await requestJson('/recs/web', jsonPost({
-    user_id: identity.userId,
-    session_id: identity.sessionId,
-    mode,
-    destination,
-    limit: 12,
-    max_queries: 8,
+    limit: 9,
+    max_queries: 6,
+    current_prefs: backendProfile.prefs,
+    client_version: '0.7.0',
     seed: input.seed ?? (Date.now() % 100000),
     language,
     search_lang: language,
@@ -131,7 +127,7 @@ export async function fetchRecommendations(input: {
     trip_context: input.tripContext || {},
     exclude_ids: (input.excludeIds || []).filter(Boolean).slice(-200),
     prefetch_token: input.prefetchToken || undefined,
-  }), 46000);
+  }), 40000, input.signal);
   const parsed = recsSchema.parse(raw);
   const provider = parsed.provider || parsed.items[0]?.source || 'live';
   return {

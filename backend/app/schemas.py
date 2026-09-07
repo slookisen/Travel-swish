@@ -3,12 +3,13 @@ from __future__ import annotations
 from typing import Any, Dict, List, Literal, Optional
 
 from pydantic import BaseModel, Field, field_validator
+import math
 
 
 class Health(BaseModel):
     ok: bool = True
     service: str
-    version: str = "0.6.0"
+    version: str = "0.7.0"
     database: str = "ok"
     providers: List[str] = Field(default_factory=list)
 
@@ -53,7 +54,7 @@ class FeedbackIn(BaseModel):
     run_id: str = Field(min_length=1, max_length=160)
     item_id: str = Field(min_length=1, max_length=300)
     item_name: str = Field(min_length=1, max_length=500)
-    feedback: Literal["useful", "not_relevant", "visited", "wrong_info"]
+    feedback: Literal["useful", "not_relevant", "visited", "wrong_info", "enjoyed", "not_for_me"]
     mode: Literal["experiences", "restaurants"]
     destination: str = Field(min_length=1, max_length=180)
     payload: Dict[str, Any] = Field(default_factory=dict)
@@ -173,6 +174,18 @@ class WebRecsRequest(BaseModel):
     trip_context: Dict[str, str] = Field(default_factory=dict, max_length=12)
     exclude_ids: List[str] = Field(default_factory=list, max_length=200)
     prefetch_token: Optional[str] = Field(default=None, max_length=80)
+    current_prefs: Optional[Dict[str, float]] = Field(default=None, max_length=9)
+    client_version: str = Field(default="unknown", max_length=40)
+
+    @field_validator("current_prefs")
+    @classmethod
+    def validate_current_prefs(cls, value: Optional[Dict[str, float]]) -> Optional[Dict[str, float]]:
+        if value is None:
+            return None
+        allowed = {"adv", "soc", "lux", "act", "cul", "nat", "food", "night", "spont"}
+        if set(value) - allowed or any(not math.isfinite(v) or not -1 <= v <= 1 for v in value.values()):
+            raise ValueError("invalid preference dimensions")
+        return value
 
     @field_validator("trip_context")
     @classmethod

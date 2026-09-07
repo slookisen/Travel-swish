@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import logging
+import math
 import os
 from typing import Any
 from urllib.parse import urlencode, urlparse
@@ -76,6 +77,7 @@ def google_places_search(
     included_type: str | None = None,
     min_rating: float | None = None,
     price_levels: list[str] | None = None,
+    bounds: dict[str, Any] | None = None,
 ) -> tuple[list[dict[str, Any]], bool]:
     """Search Google Places without persisting or prefetching Places content."""
     _ = cache_ttl_s  # Kept for backwards-compatible callers.
@@ -91,7 +93,7 @@ def google_places_search(
     }
     body = {
         "textQuery": query,
-        "maxResultCount": min(max_results, 20),
+        "pageSize": min(max_results, 20),
         "languageCode": language_code,
     }
     if included_type:
@@ -100,6 +102,8 @@ def google_places_search(
         body["minRating"] = min_rating
     if price_levels:
         body["priceLevels"] = price_levels
+    if bounds:
+        body["locationRestriction"] = {"rectangle": bounds}
 
     try:
         resp = httpx.post(PLACES_URL, json=body, headers=headers, timeout=10.0)
@@ -112,6 +116,55 @@ def google_places_search(
     items = [_normalize(p) for p in places]
     items = [i for i in items if i]
     return items, False
+
+
+def resolve_destination_bounds(destination: str, language: str = "en") -> dict[str, Any] | None:
+    """Resolve one geographical area per request; never persist provider content.
+
+    Do not accept a similarly named business, ambiguous cities, or a whole country
+    as a local recommendation area. A caller must fail closed if this fails.
+    """
+    api_key = _get_api_key()
+    if not api_key:
+        return None
+    try:
+        response = httpx.post(PLACES_URL, headers={
+            "Content-Type": "application/json", "X-Goog-Api-Key": api_key,
+            "X-Goog-FieldMask": "places.types,places.viewport",
+        }, json={"textQuery": destination, "pageSize": 3, "languageCode": "en" if language == "en" else "no"}, timeout=8.0)
+        response.raise_for_status()
+        area_types = {"locality", "postal_town", "sublocality", "administrative_area_level_2", "administrative_area_level_1"}
+        areas = [place for place in response.json().get("places", []) if set(place.get("types", [])) & area_types]
+        if len(areas) != 1:
+            return None
+        bounds = areas[0].get("viewport", {})
+        low, high = bounds["low"], bounds["high"]
+        south, north = float(low["latitude"]), float(high["latitude"])
+        west, east = float(low["longitude"]), float(high["longitude"])
+        if not all(math.isfinite(v) for v in (south, north, west, east)):
+            return None
+        lon_span = (east - west) % 360
+        if not (-90 <= south < north <= 90 and -180 <= west <= 180 and -180 <= east <= 180 and 0 < north - south <= 10 and 0 < lon_span <= 15):
+            return None
+        return {"low": {"latitude": south, "longitude": west}, "high": {"latitude": north, "longitude": east}}
+    except httpx.HTTPError as exc:
+        # Provider outages/authentication errors are not invalid destinations.
+        raise RuntimeError("destination_provider_unavailable") from exc
+    except (ValueError, KeyError, TypeError):
+        log.warning("destination area could not be resolved")
+        return None
+
+
+def within_bounds(item: dict[str, Any], bounds: dict[str, Any]) -> bool:
+    """Defensive post-filter, including missing coordinates and date-line areas."""
+    try:
+        lat, lng = float(item["lat"]), float(item["lng"])
+        low, high = bounds["low"], bounds["high"]
+        west, east = low["longitude"], high["longitude"]
+        longitude_ok = west <= lng <= east if west <= east else lng >= west or lng <= east
+        return math.isfinite(lat) and math.isfinite(lng) and -180 <= lng <= 180 and low["latitude"] <= lat <= high["latitude"] and longitude_ok
+    except (KeyError, ValueError, TypeError):
+        return False
 
 
 def _normalize(place: dict[str, Any]) -> dict[str, Any] | None:
