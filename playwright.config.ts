@@ -28,7 +28,7 @@ export default defineConfig({
     },
     {
       name: 'webkit-mobile',
-      testMatch: /mobile-v07\.spec\.ts/,
+      testMatch: /(?:mobile-v07|theme)\.spec\.ts/,
       grepInvert: /diagonal touch/,
       use: { ...devices['iPhone 13'], browserName: 'webkit' },
     },
