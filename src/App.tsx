@@ -8,6 +8,7 @@ import { buildStarterResults } from './app/starterCatalog';
 import { clearClientData, getClientIdentity, loadAppState, saveAppState } from './app/storage';
 import type { DiscoveryTripContext, LocalAppState, ResultFeedback, ResultItem, SavedResult, Screen, SearchKind } from './app/types';
 import { useLanguage } from './app/i18n';
+import { ThemeSwitch } from './app/theme';
 import { usePwaInstall } from './app/pwa';
 import { listSharePayload, resultSharePayload, shareTravelSwish } from './app/share';
 import {
@@ -417,7 +418,9 @@ export default function App() {
     {toast && <div className="toast" role="status">{toast}</div>}
     {loading && <div className="app-modal search-progress" role="dialog" aria-modal="true" aria-labelledby="search-progress-title"><div className="app-modal__card"><span className="search-spinner" aria-hidden="true" /><h2 id="search-progress-title">{copy.flow.working}</h2><p>{copy.flow.workingHint}</p><button className="quiet-button" onClick={cancelSearch}>{copy.flow.cancel}</button></div></div>}
     {searchError && <div className="app-modal" role="dialog" aria-modal="true" aria-labelledby="search-error-title"><div className="app-modal__card">
-      <h2 id="search-error-title">{searchError.status === 429 ? copy.flow.rateLimited : [401, 403].includes(searchError.status || 0) ? copy.flow.authError : searchError.status === 404 ? copy.flow.updateRequired : searchError.code === 'destination_unresolved' ? copy.flow.locationError : copy.flow.unavailable}</h2>
+      <h2 id="search-error-title">{copy.flow.errorTitle}</h2>
+      <p>{searchError.status === 429 ? copy.flow.rateLimited : [401, 403].includes(searchError.status || 0) ? copy.flow.authError : searchError.status === 404 ? copy.flow.updateRequired : searchError.code === 'destination_unresolved' ? copy.flow.locationError : searchError.code === 'timeout' ? copy.flow.timeout : searchError.code === 'offline' ? copy.flow.offline : searchError.code === 'network' ? copy.flow.networkError : copy.flow.unavailable}</p>
+      {searchError.code === 'network' && ['localhost', '127.0.0.1', '[::1]'].includes(window.location.hostname) && <p>{copy.flow.localSearchHelp}</p>}
       <div className="app-modal__actions"><button className="secondary-button" onClick={() => setSearchError(null)}>{copy.results.close}</button>
         {![401, 403, 404].includes(searchError.status || 0) && <button className="primary-button" disabled={searchDisabled} onClick={() => void findMatches(lastSearch.current)}>{cooldown ? copy.flow.wait(cooldown) : copy.flow.retry}</button>}
       </div>
@@ -432,7 +435,7 @@ export default function App() {
     return (
       <><main className="landing" aria-hidden={modalActive || undefined}>
         <div className="landing__glow landing__glow--one" /><div className="landing__glow landing__glow--two" />
-        <nav className="landing-nav"><Brand /><div className="landing-nav__actions">{savedItems.length > 0 && <button className="quiet-button quiet-button--light" onClick={() => setScreen('saved')}>{copy.landing.saved} ({savedItems.length})</button>}<button className="quiet-button quiet-button--light" onClick={() => setScreen('profile')}>{copy.landing.profile}</button>{pwaInstall.canInstall && <button className="quiet-button install-button" onClick={handleInstall}>↓ {copy.pwa.install}</button>}<LanguageSwitch dark /></div></nav>
+        <nav className="landing-nav"><Brand /><div className="landing-nav__actions">{savedItems.length > 0 && <button className="quiet-button quiet-button--light" onClick={() => setScreen('saved')}>{copy.landing.saved} ({savedItems.length})</button>}<button className="quiet-button quiet-button--light" onClick={() => setScreen('profile')}>{copy.landing.profile}</button>{pwaInstall.canInstall && <button className="quiet-button install-button" onClick={handleInstall}>↓ {copy.pwa.install}</button>}<ThemeSwitch /><LanguageSwitch dark /></div></nav>
         <section className="hero">
           <div className="hero__copy">
             <p className="hero__kicker"><span /> {copy.landing.kicker}</p>

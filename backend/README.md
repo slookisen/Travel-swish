@@ -25,7 +25,11 @@ Open:
 - http://127.0.0.1:8000/docs
 
 ## CORS (GitHub Pages / public frontend)
-By default the API only allows local dev origins (Vite dev server + the local dashboard).
+Defaults allow the Travel Swipe Pages origin, Capacitor shells, local Vite development
+and the built preview at `http://127.0.0.1:4173` / `http://localhost:4173`.
+An explicit `TS_CORS_ORIGINS` value **replaces** these defaults. Production uses
+the exact allowlist in `render.yaml`; sync the Blueprint/environment when changing
+that list. Updating Python defaults alone will not change an existing override.
 
 To allow a GitHub Pages frontend, set a comma-separated allowlist:
 

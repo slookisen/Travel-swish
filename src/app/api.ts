@@ -60,7 +60,11 @@ async function requestJson(path: string, options: RequestInit, timeoutMs: number
     }
     return await response.json();
   } catch (error) {
-    if (error instanceof DOMException && error.name === 'AbortError') throw new ApiError('Backend brukte for lang tid');
+    if (error instanceof DOMException && error.name === 'AbortError') {
+      throw new ApiError('Request aborted', undefined, 0, signal?.aborted ? 'cancelled' : 'timeout');
+    }
+    // Browsers intentionally do not distinguish CORS from other network errors.
+    if (error instanceof TypeError) throw new ApiError('Network unavailable', undefined, 0, navigator.onLine === false ? 'offline' : 'network');
     throw error;
   } finally {
     window.clearTimeout(timer);

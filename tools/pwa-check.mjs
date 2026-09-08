@@ -11,7 +11,7 @@ for (const size of ['192x192', '512x512']) {
   const icon = manifest.icons.find((entry) => entry.sizes === size);
   if (!icon || !fs.existsSync(path.join(root, 'docs', icon.src))) throw new Error(`missing ${size} PWA icon`);
 }
-for (const file of ['sw.js', 'og.png', 'icons/apple-touch-icon.png']) {
+for (const file of ['sw.js', 'theme.js', 'theme.css', 'og.png', 'icons/apple-touch-icon.png']) {
   if (!fs.existsSync(path.join(root, 'docs', file))) throw new Error(`missing docs/${file}`);
 }
 const html = fs.readFileSync(path.join(root, 'docs', 'index.html'), 'utf8');

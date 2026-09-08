@@ -4,6 +4,7 @@ import type { PreferenceProfile, Reaction, TripContext } from '../profile/engine
 import { getCategoryLabel, getDimLabels } from '../profile/labels';
 import type { ResultFeedback, ResultItem, Screen } from '../app/types';
 import { UI_COPY, useLanguage, type AppLanguage } from '../app/i18n';
+import { ThemeSwitch } from '../app/theme';
 
 export function getTopAxes(profile: PreferenceProfile, limit = 3) {
   return DIMS.map((dim) => ({ dim, ...profile.dims[dim] }))
@@ -90,6 +91,7 @@ export function AppHeader({
         {screen !== 'landing' && <button className="quiet-button" onClick={onSaved}>{copy.nav.saved} {savedCount ? `(${savedCount})` : ''}</button>}
         {screen !== 'landing' && <button className="quiet-button app-header__profile-button" onClick={onProfile}>{copy.nav.profile}</button>}
         {canInstall && <button className="quiet-button install-button" onClick={onInstall}>↓ {copy.pwa.install}</button>}
+        <ThemeSwitch />
         <LanguageSwitch />
       </div>
     </header>

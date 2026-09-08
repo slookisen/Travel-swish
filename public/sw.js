@@ -1,10 +1,12 @@
-const CACHE_NAME = 'travel-swipe-v0.7.0';
+const CACHE_NAME = 'travel-swipe-v0.7.1';
 const APP_SHELL = [
   './',
   './manifest.webmanifest',
   './privacy.html',
   './support.html',
   './legal.css',
+  './theme.js',
+  './theme.css',
   './icons/icon-192.png',
   './icons/icon-512.png',
   './icons/icon-maskable-512.png',
