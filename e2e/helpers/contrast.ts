@@ -27,4 +27,3 @@ export async function readable(page: Page) {
   });
   expect(failures, 'Visible text must meet WCAG AA contrast (including disabled labels)').toEqual([]);
 }
-

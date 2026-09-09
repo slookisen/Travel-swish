@@ -64,7 +64,7 @@ export function QuickHome({ destination, mode, context, ready, disabled, onDesti
     </div>
     {!ready && <p className="home-start-hint" role="status">{content.needsCards}</p>}
     <div className="home-actions" role="group" aria-label={home.actions}>
-      <button className="home-action home-action--profile" disabled={!hasDestination || disabled} onClick={onRefine} aria-labelledby="home-refine-label" aria-describedby="home-refine-hint">
+      <button className="home-action home-action--profile" disabled={!hasDestination} onClick={onRefine} aria-labelledby="home-refine-label" aria-describedby="home-refine-hint">
         <span className="home-action__icon"><HomeIcon kind="cards" /></span><span className="home-action__arrow" aria-hidden="true">↗</span>
         <strong id="home-refine-label">{ready ? home.refine : home.build}</strong><span id="home-refine-hint">{content.refineHint}</span>
       </button>

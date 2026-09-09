@@ -106,3 +106,16 @@ test('category choice works with keyboard and reduced motion', async ({ page }) 
   await expect(page.getByRole('heading', {name:'Finn din neste favoritt.'})).toBeVisible();
   await expect(page.getByRole('button', {name:'Forbedre profilen min',exact:true})).toBeVisible();
 });
+
+test('profile cards stay available while live search is cooling down', async ({ page }) => {
+  await page.route('**/recs/personalized', route => route.fulfill({status:429,headers:{'Retry-After':'60','Access-Control-Expose-Headers':'Retry-After'},json:{detail:'rate_limited'}}));
+  await home(page, 'no', 'dark');
+  await page.getByRole('button', {name:'Finn opplevelser',exact:true}).click();
+  await expect(page.getByRole('dialog')).toContainText('Søket trenger en liten pause');
+  await page.getByRole('button', {name:'Lukk',exact:true}).click();
+  await expect(page.locator('.home-action--find')).toBeDisabled();
+  await expect(page.locator('.home-action--profile')).toBeEnabled();
+  await page.getByRole('button', {name:'Forbedre profilen min',exact:true}).click();
+  await page.getByRole('button', {name:UI_COPY.no.swipe.keepSwiping,exact:true}).click();
+  await expect(page.locator('.swipe-card__copy h1')).toBeVisible();
+});
