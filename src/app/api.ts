@@ -131,7 +131,9 @@ export async function fetchRecommendations(input: {
     trip_context: input.tripContext || {},
     exclude_ids: (input.excludeIds || []).filter(Boolean).slice(-200),
     prefetch_token: input.prefetchToken || undefined,
-  }), 40000, input.signal);
+  // Render Free can need 50+ seconds to wake after inactivity. Keep the
+  // cancellable request alive through that startup instead of failing at 40s.
+  }), 90000, input.signal);
   const parsed = recsSchema.parse(raw);
   const provider = parsed.provider || parsed.items[0]?.source || 'live';
   return {

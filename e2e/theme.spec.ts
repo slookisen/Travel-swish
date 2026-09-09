@@ -136,7 +136,9 @@ test('timeout and offline are distinct, and disabled dark controls stay readable
   await page.route('**/recs/personalized', () => {});
   await page.getByRole('button', { name: 'Find something now' }).click();
   await expect(page.getByRole('dialog')).toContainText('Finding places');
-  await page.clock.fastForward(40001);
+  await page.clock.fastForward(60000);
+  await expect(page.getByRole('dialog')).toContainText('Finding places');
+  await page.clock.fastForward(30001);
   await expect(page.getByRole('dialog')).toContainText('did not respond in time');
   await readable(page);
   await page.getByRole('button', { name: 'Close', exact: true }).click();
