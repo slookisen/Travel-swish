@@ -7,6 +7,11 @@ from app.places_recs import DestinationProviderUnavailable, _is_mode_appropriate
 from app.query_builder import build_queries
 
 
+def test_health_reports_the_running_app_version():
+    from app.main import app, health
+    assert health().version == app.version == "0.7.1"
+
+
 @pytest.mark.parametrize("budget", ["value", "premium", None])
 @pytest.mark.parametrize("kind", ["experiences", "hotels"])
 def test_unsupported_places_never_receive_restaurant_price_filter(budget, kind):
