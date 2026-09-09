@@ -1,4 +1,4 @@
-# Travel Swipe 0.7.2 — home design preview
+# Travel Swipe 0.7.2 — expressive home and direct profile refinement
 
 ## Changes
 
@@ -9,16 +9,17 @@
 - Stronger rounded/system typography, lime/lavender and peach accents, SVG illustrations, focus indicators and reduced-motion handling. No added fonts, image services, dependencies or tracking.
 - English and Norwegian are covered. Unsupported saved language codes, including Swedish, retain the existing Norwegian fallback.
 - The top-level profile navigation now says “My profile” / “Profilen min”.
+- Choosing more cards for an already-ready profile opens the swipe deck directly, without immediately asking to see results. The results action stays available on the swipe screen. First-time readiness guidance is retained separately for each category.
 
 ## Verification
 
 - `npm run check`: types, 180-card audit, profile engine, production build and PWA checks pass.
 - Home cases cover both languages and themes, equal action dimensions, viewport fit, keyboard controls, profile persistence, destination/readiness guards and correct search-mode request bodies. Profile building stays available during a live-search cooldown.
-- Verification result: 48 browser cases passed in the full run; the 2 additional cooldown cases passed on rerun after correcting their test-only assumption that an already-dismissed readiness prompt would reappear. No unresolved application/test failures remain.
+- Final verification: all 54 browser cases passed in one full Chromium/mobile-WebKit run. This includes 10 uninterrupted refinement answers, reload/re-entry and first-time food guidance in EN/NO. A timing-sensitive swipe-animation test now records actual browser frames rather than measuring a card after its removal timer.
 - Contrast checks cover visible text in both palettes and disabled states. Desktop/mobile screenshots reviewed.
 - `npm run test:pwa:offline`: built service-worker assets, theme, profile and offline navigation pass.
 - Provider responses in these UI tests are mocked. The live-search service and API contract are unchanged by this design work.
 
 ## Release status
 
-Local design preview on branch `codex/expressive-home`. Not published to GitHub Pages or Microsoft Store. The existing Store PWA will pick up the design after a separately approved Pages release; no new Store binary is required.
+Approved by Daniel on 2026-09-09 for release through the existing GitHub Pages `main/docs` pipeline. Release build: `v0.7.2+6198636`. The existing Store PWA loads this hosted app; no new Store binary or hosting-plan change is required. Publication and real-provider smoke checks are performed after the release merge.
