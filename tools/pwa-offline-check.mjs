@@ -34,7 +34,7 @@ try {
   const keys = await page.evaluate(() => caches.keys());
   assert(keys.includes('other-app-cache'), 'activation must preserve other apps');
   assert(!keys.includes('travel-swipe-v0.6.1'), 'old app cache should be retired');
-  const cachedAssets = await page.evaluate(async () => (await (await caches.open('travel-swipe-v0.7.1')).keys()).map((request) => request.url));
+  const cachedAssets = await page.evaluate(async () => (await (await caches.open('travel-swipe-v0.7.2')).keys()).map((request) => request.url));
   assert(cachedAssets.some((url) => /\/assets\/.+\.js$/.test(url)), 'hashed app JS must be ready before activating');
   assert(cachedAssets.some((url) => /\/assets\/.+\.css$/.test(url)), 'hashed app CSS must be ready before activating');
   for (const file of ['theme.js', 'theme.css']) assert(cachedAssets.some(url => url.endsWith('/' + file)), `${file} must be available offline`);
@@ -47,14 +47,14 @@ try {
   await page.goto(`${appUrl}privacy.html`);
   await context.setOffline(true);
   await page.goto(appUrl);
-  await page.getByRole('heading', { name: 'Hva frister i dag?' }).waitFor();
+  await page.getByRole('heading', { name: 'Gjør dagen litt mer deg.' }).waitFor();
   assert.equal(await page.locator('html').getAttribute('data-theme'), 'dark', 'offline theme persists');
   assert.equal(await page.evaluate(() => localStorage.getItem('travel_swish_app_v3')), saved);
   await page.goto(`${appUrl}privacy.html`);
   await page.getByRole('heading', { name: 'Your taste should help your trip—not follow you around.' }).waitFor();
   assert.equal(await page.locator('html').getAttribute('data-theme'), 'dark', 'offline legal page follows theme');
   await page.goto(appUrl);
-  await page.getByRole('heading', { name: 'Hva frister i dag?' }).waitFor();
+  await page.getByRole('heading', { name: 'Gjør dagen litt mer deg.' }).waitFor();
   console.log('pwa-offline-check: build assets, isolated cache cleanup, offline profile and legal navigation passed');
 } finally {
   await browser?.close();

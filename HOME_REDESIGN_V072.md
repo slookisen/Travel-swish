@@ -1,0 +1,23 @@
+# Travel Swipe 0.7.2 — home design preview
+
+## Changes
+
+- Experiences and food/drink now have their own headline, lead, search label, profile prompt, accent palette and decorative swipe-card illustration.
+- Improve/build profile and find places are equal-size action cards. Both fit in the initial 375×667 mobile viewport for a returning user with a ready profile.
+- No search starts when switching category. The selected category and trip survive reload; the two preference histories remain separate.
+- An unlearned category explicitly asks for card answers. Its search action remains visible but disabled until ready; the profile action starts the relevant card deck. A destination is still required.
+- Stronger rounded/system typography, lime/lavender and peach accents, SVG illustrations, focus indicators and reduced-motion handling. No added fonts, image services, dependencies or tracking.
+- English and Norwegian are covered. Unsupported saved language codes, including Swedish, retain the existing Norwegian fallback.
+- The top-level profile navigation now says “My profile” / “Profilen min”.
+
+## Verification
+
+- `npm run check`: types, 180-card audit, profile engine, production build and PWA checks pass.
+- 48 Chromium/mobile-WebKit browser tests pass, including 12 new home cases covering both languages and themes, equal action dimensions, viewport fit, keyboard controls, profile persistence, destination/readiness guards and correct search-mode request bodies.
+- Contrast checks cover visible text in both palettes and disabled states. Desktop/mobile screenshots reviewed.
+- `npm run test:pwa:offline`: built service-worker assets, theme, profile and offline navigation pass.
+- Provider responses in these UI tests are mocked. The live-search service and API contract are unchanged by this design work.
+
+## Release status
+
+Local design preview on branch `codex/expressive-home`. Not published to GitHub Pages or Microsoft Store. The existing Store PWA will pick up the design after a separately approved Pages release; no new Store binary is required.
