@@ -4,6 +4,7 @@ import type { PreferenceProfile, Reaction, TripContext } from '../profile/engine
 import { getCategoryLabel, getDimLabels } from '../profile/labels';
 import type { ResultFeedback, ResultItem, Screen } from '../app/types';
 import { UI_COPY, useLanguage, type AppLanguage } from '../app/i18n';
+import { ThemeSwitch } from '../app/theme';
 
 export function getTopAxes(profile: PreferenceProfile, limit = 3) {
   return DIMS.map((dim) => ({ dim, ...profile.dims[dim] }))
@@ -90,6 +91,7 @@ export function AppHeader({
         {screen !== 'landing' && <button className="quiet-button" onClick={onSaved}>{copy.nav.saved} {savedCount ? `(${savedCount})` : ''}</button>}
         {screen !== 'landing' && <button className="quiet-button app-header__profile-button" onClick={onProfile}>{copy.nav.profile}</button>}
         {canInstall && <button className="quiet-button install-button" onClick={onInstall}>↓ {copy.pwa.install}</button>}
+        <ThemeSwitch />
         <LanguageSwitch />
       </div>
     </header>
@@ -124,7 +126,7 @@ export function ProfileBars({ profile, limit = 4 }: { profile: PreferenceProfile
         const signedPosition = 50 + axis.value * 45;
         return (
           <div className="profile-axis" key={axis.dim}>
-            <div className="profile-axis__top"><span><b>{meta.icon}</b>{meta.label}</span><small>{confidenceLabel(axis.confidence, language)} · {Math.round(axis.confidence * 100)}%</small></div>
+            <div className="profile-axis__top"><span><b>{meta.icon}</b>{meta.label}</span><small>{confidenceLabel(axis.confidence, language)}</small></div>
             <div className="axis-track" aria-label={`${meta.label}: ${Math.round(axis.value * 100)}`}>
               <span className="axis-track__middle" /><span className="axis-track__fill" style={{ left: `${Math.min(50, signedPosition)}%`, width: `${Math.abs(signedPosition - 50)}%` }} /><span className="axis-track__dot" style={{ left: `${signedPosition}%` }} />
             </div>
@@ -143,7 +145,7 @@ export function LiveProfile({ profile, onOpen }: { profile: PreferenceProfile; o
       <div className="panel-kicker">{copy.profile.panelKicker}</div>
       <div className="live-profile__heading">
         <div><h2>{copy.profile.learning}</h2><p>{profile.informativeCount} {copy.profile.clearAnswers} · {profile.categoryCoverage} {copy.profile.areas}</p></div>
-        <div className="readiness-ring" style={{ '--progress': `${Math.round(profile.readiness * 100)}%` } as React.CSSProperties}><span>{Math.round(profile.readiness * 100)}</span><small>%</small></div>
+        <div className="readiness-ring" style={{ '--progress': `${Math.round(profile.readiness * 100)}%` } as React.CSSProperties} aria-label={profile.ready ? copy.profile.goodStart : copy.profile.early}><span>{profile.ready ? '✓' : '…'}</span></div>
       </div>
       <ProfileBars profile={profile} />
       {categories.length > 0 && <div className="taste-tags" aria-label={copy.profile.strongest}>{categories.map(([category]) => <span key={category}>{getCategoryLabel(language, category)}</span>)}</div>}
@@ -153,7 +155,7 @@ export function LiveProfile({ profile, onOpen }: { profile: PreferenceProfile; o
   );
 }
 
-export function SwipeCard({ card, onReact }: { card: Card; onReact: (reaction: Reaction) => void }) {
+export function SwipeCard({ card, onReact, onBusy }: { card: Card; onReact: (reaction: Reaction) => void; onBusy?: (busy: boolean) => void }) {
   const { language, copy } = useLanguage();
   const [dragX, setDragX] = useState(0);
   const [dragY, setDragY] = useState(0);
@@ -184,7 +186,7 @@ export function SwipeCard({ card, onReact }: { card: Card; onReact: (reaction: R
   }, [card.id]);
 
   function pointerDown(event: React.PointerEvent<HTMLElement>) {
-    if (exitDirection) return;
+    if (exitDirection || !event.isPrimary || event.button !== 0 || activePointer.current !== null) return;
     startX.current = event.clientX;
     startY.current = event.clientY;
     startTime.current = event.timeStamp;
@@ -199,18 +201,21 @@ export function SwipeCard({ card, onReact }: { card: Card; onReact: (reaction: R
 
     if (gestureAxis.current === 'pending') {
       if (Math.hypot(deltaX, deltaY) < 10) return;
-      if (Math.abs(deltaY) > Math.abs(deltaX) * 1.08) {
+      const touch = event.pointerType === 'touch';
+      if (Math.abs(deltaY) > Math.abs(deltaX) * (touch ? 1.65 : 1.08)) {
         resetDrag('vertical');
         return;
       }
-      if (Math.abs(deltaX) <= Math.abs(deltaY) * 1.08) return;
+      if (Math.abs(deltaX) < 10 || Math.abs(deltaX) <= Math.abs(deltaY) * (touch ? .65 : 1.08)) return;
       gestureAxis.current = 'horizontal';
       setDragging(true);
       event.currentTarget.setPointerCapture(event.pointerId);
     }
 
     if (gestureAxis.current !== 'horizontal') return;
-    event.preventDefault();
+    onBusy?.(true);
+    // CSS touch-action governs touch scrolling and preserves pinch zoom.
+    if (event.pointerType !== 'touch') event.preventDefault();
     const horizontalLimit = Math.max(300, window.innerWidth * .62);
     const nextX = Math.max(-horizontalLimit, Math.min(horizontalLimit, deltaX));
     const nextY = Math.max(-42, Math.min(42, deltaY * .22));
@@ -221,6 +226,7 @@ export function SwipeCard({ card, onReact }: { card: Card; onReact: (reaction: R
   }
 
   function resetDrag(axis: 'pending' | 'vertical' = 'pending') {
+    onBusy?.(false);
     setDragging(false);
     gestureAxis.current = axis;
     dragXRef.current = 0;
@@ -238,7 +244,8 @@ export function SwipeCard({ card, onReact }: { card: Card; onReact: (reaction: R
     dragXRef.current = exitX;
     setDragX(exitX);
     setDragY(dragYRef.current * 1.7);
-    exitTimer.current = window.setTimeout(() => onReact(direction === 'right' ? 'love' : 'dislike'), 360);
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    exitTimer.current = window.setTimeout(() => { onBusy?.(false); onReact(direction === 'right' ? 'like' : 'dislike'); }, reducedMotion ? 20 : 300);
   }
 
   function pointerUp(event: React.PointerEvent<HTMLElement>) {
@@ -293,15 +300,15 @@ export function SwipeCard({ card, onReact }: { card: Card; onReact: (reaction: R
   );
 }
 
-export function ReactionControls({ onReact }: { onReact: (reaction: Reaction) => void }) {
+export function ReactionControls({ onReact, disabled = false }: { onReact: (reaction: Reaction) => void; disabled?: boolean }) {
   const { copy } = useLanguage();
   return (
-    <div className="reaction-controls" aria-label={copy.swipe.answerAria}>
+    <fieldset className="reaction-controls" disabled={disabled} aria-label={copy.swipe.answerAria}>
       <button className="reaction reaction--dislike" onClick={() => onReact('dislike')}><span>×</span><small>{copy.swipe.dislike}</small></button>
       <button className="reaction reaction--skip" onClick={() => onReact('skip')}><span>~</span><small>{copy.swipe.unsure}</small></button>
       <button className="reaction reaction--like" onClick={() => onReact('like')}><span>✓</span><small>{copy.swipe.like}</small></button>
       <button className="reaction reaction--love" onClick={() => onReact('love')}><span>♥</span><small>{copy.swipe.love}</small></button>
-    </div>
+    </fieldset>
   );
 }
 
@@ -323,7 +330,7 @@ export function ProfileEditor({ profile, corrections, onCorrection, onClearCorre
           <div className="profile-editor__row" key={dim}>
             <div className="profile-editor__label"><span className="profile-editor__icon">{meta.icon}</span><div><b>{meta.label}</b><small>{meta.low} ↔ {meta.high}</small></div></div>
             <input type="range" min="-1" max="1" step="0.05" value={value} onChange={(event) => onCorrection(dim, Number(event.target.value))} aria-label={`${copy.profile.adjustAxis} ${meta.label}`} />
-            <div className="profile-editor__value"><b>{value > 0 ? '+' : ''}{Math.round(value * 100)}</b><small>{Math.round(profile.dims[dim].confidence * 100)}% {copy.profile.confidence}</small></div>
+            <div className="profile-editor__value"><b>{value > 0 ? '+' : ''}{Math.round(value * 100)}</b><small>{confidenceLabel(profile.dims[dim].confidence, language)}</small></div>
             <button className="reset-axis" disabled={!hasCorrection} onClick={() => onClearCorrection(dim)} aria-label={`${copy.profile.learnedAxis} ${meta.label}`}>↺</button>
           </div>
         );
@@ -346,6 +353,7 @@ export function ResultCard({ item, index, saved, feedback, onSave, onFeedback, o
   const feedbackOptions: Array<{ id: ResultFeedback; label: string }> = [
     { id: 'useful', label: copy.results.useful }, { id: 'not_relevant', label: copy.results.irrelevant },
     { id: 'visited', label: copy.results.visited }, { id: 'wrong_info', label: copy.results.wrong },
+    { id: 'enjoyed', label: copy.flow.enjoyed }, { id: 'not_for_me', label: copy.flow.notForMe },
   ];
   const destinationLabel = item.source === 'starter' ? copy.results.mapsSearch : item.source === 'google_places' ? copy.results.openPlace : copy.results.sourceLink;
   const showSource = Boolean(item.sourceUrl && item.sourceUrl !== item.url);
@@ -359,7 +367,10 @@ export function ResultCard({ item, index, saved, feedback, onSave, onFeedback, o
           <div className="match-score"><b>{matchLabel(item.match, language)}</b><span>{copy.results.profileMatch}</span></div>
           <div className="result-links">{showSource && <a href={item.sourceUrl} target="_blank" rel="noreferrer">{item.source === 'google_places' ? copy.results.officialWebsite : item.source === 'starter' ? copy.results.officialSource : copy.results.sourceLink}</a>}{item.url && <a href={item.url} target="_blank" rel="noreferrer">{destinationLabel}</a>}<button className="share-button" onClick={onShare} aria-label={`${copy.results.shareResultAria} ${item.name}`}>↗ {copy.results.shareResult}</button><button className={saved ? 'save-button save-button--active' : 'save-button'} onClick={onSave} aria-label={`${saved ? copy.results.removeSave : copy.results.saveAria} ${item.name}`}>{saved ? copy.results.saved : copy.results.save}</button></div>
         </div>
-        <div className="result-feedback" aria-label={`${copy.results.feedbackAria} ${item.name}`}><span>{copy.results.helped}</span>{feedbackOptions.map((option) => <button className={feedback === option.id ? 'is-selected' : ''} key={option.id} onClick={() => onFeedback(option.id)} aria-pressed={feedback === option.id}>{option.label}</button>)}</div>
+        <details className="result-details"><summary>{copy.flow.details}</summary>
+          {item.address && item.address !== item.why && <p>{item.address}</p>}
+          <div className="result-feedback" aria-label={`${copy.results.feedbackAria} ${item.name}`}><span>{copy.results.helped}</span>{feedbackOptions.map((option) => <button className={feedback === option.id ? 'is-selected' : ''} key={option.id} onClick={() => onFeedback(option.id)} aria-pressed={feedback === option.id}>{option.id === 'not_relevant' ? copy.flow.notNow : option.label}</button>)}</div>
+        </details>
       </div>
     </article>
   );

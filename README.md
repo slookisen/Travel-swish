@@ -1,4 +1,4 @@
-# Travel Swipe — V0.6.0 PWA + Capacitor
+# Travel Swipe — V0.7.0 PWA + Capacitor
 
 En forskningsinformert videreutvikling av Travel Swipe. Konseptet er fortsatt kortbasert reiseoppdagelse, men profileringen er bygget om rundt tre separate lag:
 
@@ -7,6 +7,8 @@ En forskningsinformert videreutvikling av Travel Swipe. Konseptet er fortsatt ko
 3. **Kandidatvalg og rangering** — adaptive kort velges der modellen vet minst; anbefalinger bruker både smak og turkontekst.
 
 Testbygget inkluderer responsiv frontend, lagret norsk/engelsk språkvalg, migrerbar lokal profil, lagrede tips, eksplisitt resultatfeedback, Google Places-/Brave-integrasjon og kuraterte starttips med kilder og kartlenker når livesøk ikke svarer.
+
+V0.7 gir gjenbesøksskjermen «Finn noe nå», høyreswipe = Liker, Angre, lesemodus, tre synlige tips om gangen og læring fra frivillig resultatfeedback. Søk sender den aktuelle profilen i ett atomisk kall og beholder tidligere treff ved feil. **Backend må oppdateres før frontend publiseres.** Se [RELEASE_NOTES_V0.7.md](RELEASE_NOTES_V0.7.md) for omfang, tester, publiseringsrekkefølge og begrensninger.
 
 V0.5 gir i tillegg en mobiltilpasset swipeflate som holder kort, svar og treffknapp på én skjerm. Stedstyper valideres mot valgt modus før personlig rangering, slik at matsteder ikke presenteres som opplevelser. Se [RELEASE_NOTES_V0.5.md](RELEASE_NOTES_V0.5.md).
 
@@ -27,7 +29,7 @@ Krever Node.js 20+. Standard teststart bruker den hostede live-tjenesten og krev
 .\start-test.ps1
 ```
 
-Åpne `http://127.0.0.1:5173/Travel-swish/`. Hvis live-tjenesten ikke svarer, går resultatsiden automatisk over til kildebelagte starttips. Se [TEST_TOMORROW.md](TEST_TOMORROW.md) for en kort testplan.
+Åpne `http://127.0.0.1:5173/Travel-swish/`. Hvis live-tjenesten ikke svarer, beholdes eksisterende treff. Brukeren kan prøve igjen eller uttrykkelig velge kildebelagte starttips. Se [RELEASE_NOTES_V0.7.md](RELEASE_NOTES_V0.7.md) for testplan.
 
 Test installasjon og offline PWA lokalt i Chrome/Edge med:
 
@@ -48,7 +50,9 @@ Valgfri lokal backend krever Python 3.12 eller nyere, inkludert Python 3.14:
 
 ```powershell
 npm run check
+npx playwright install chromium webkit
 npm run test:e2e
+npm run test:pwa:offline
 npm run cap:sync
 npm audit
 ```
@@ -66,8 +70,8 @@ cd backend
 - [PROFILE_MODEL_V2.md](PROFILE_MODEL_V2.md) — profilmodell, signalvekter, usikkerhet, adaptivt kortvalg og API-format.
 - [API_CONTRACT_V2.md](API_CONTRACT_V2.md) — eksisterende API-kontrakt; bør oppdateres før produksjonslansering.
 - [MOBILE_BUILD.md](MOBILE_BUILD.md) — PWA-, Android- og iOS-flyt, krav og kommandoer.
-- [RELEASE_NOTES_V0.6.md](RELEASE_NOTES_V0.6.md) — endringer, tester og kjente avgrensninger i denne leveransen.
+- [RELEASE_NOTES_V0.7.md](RELEASE_NOTES_V0.7.md) — endringer, tester og kjente avgrensninger i denne leveransen.
 
 ## Status og avgrensning
 
-Dette er en fungerende testversjon, ikke en ferdig App Store-/Google Play-lansering. Live-resultater avhenger av konfigurert backend og søkeleverandør. Når de ikke svarer, brukes faktiske, kildebelagte starttips for Lisboa, Oslo, Barcelona og Tokyo, eller direkte kart-søk for andre destinasjoner. Appen viser ikke åpningstider eller priser som om de var garantert ferske. Android-kildeprosjektet krever Android Studio/SDK for å lage APK, mens iOS krever macOS, Xcode og en Apple-utviklerkonto for signering.
+Travel Swipe er publisert i Microsoft Store for Windows; denne kildeversjonen er en lokal videreutvikling, ikke bekreftelse på en ny Store-release. iPhone bruker PWA-en. App Store-/Google Play-lansering er ikke utført. Live-resultater avhenger av konfigurert backend og søkeleverandør. Ved feil kan brukeren velge kildebelagte starttips for Lisboa, Oslo, Barcelona og Tokyo, eller direkte kart-søk for andre destinasjoner. Appen viser ikke åpningstider eller priser som om de var garantert ferske. Android-kildeprosjektet krever Android Studio/SDK for APK; iOS krever macOS, Xcode og signering.

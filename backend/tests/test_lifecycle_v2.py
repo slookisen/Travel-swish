@@ -23,7 +23,7 @@ def test_numbered_migrations_are_idempotent() -> None:
     con = connect()
     try:
         versions = [row[0] for row in con.execute("SELECT version FROM schema_migrations ORDER BY version")]
-        assert versions == [1, 2]
+        assert versions == [1, 2, 3]
         tables = {row[0] for row in con.execute("SELECT name FROM sqlite_master WHERE type='table'")}
         assert {"sessions", "recommendation_runs", "result_feedback", "kv_cache"} <= tables
         assert con.execute("PRAGMA foreign_keys").fetchone()[0] == 1

@@ -42,3 +42,27 @@ if (payload.taste.context.budget !== 'value') throw new Error('Trip context miss
 if (createEmptyStoredProfile().version !== 2) throw new Error('Unexpected profile version');
 
 console.log('profile-engine-check: ok');
+
+const now = Date.UTC(2026, 8, 7);
+const positive = Array.from({ length: 12 }, (_, i) => ({ id: `p${i}`, cat: 'nature', dims: dims({ nat: 1 }) }));
+const opposite = positive.map((card, i) => ({ ...card, dims: dims({ nat: i % 2 ? -1 : 1 }) }));
+const positiveAnswers = Object.fromEntries(positive.map((card) => [card.id, { cardId: card.id, reaction: 'like', answeredAt: now }]));
+const consistent = computeProfile(positiveAnswers, positive, {}, { now });
+const conflicting = computeProfile(positiveAnswers, opposite, {}, { now });
+if (!(consistent.dims.nat.confidence > conflicting.dims.nat.confidence * 2)) throw Error('Conflict must lower evidence confidence');
+const aged = computeProfile(positiveAnswers, positive, {}, { now: now + 5 * 365 * 86400000 });
+if (!(aged.dims.nat.evidence < consistent.dims.nat.evidence && aged.dims.nat.value > 0)) throw Error('Old taste should soften, not disappear');
+const explicit = computeProfile(positiveAnswers, positive, { nat: -0.8 }, { now });
+if (explicit.dims.nat.value !== -0.8) throw Error('Explicit correction must control the preference');
+const outcome = { itemId: 'place1', category: 'nature', mode: 'experiences', destination: 'Oslo', answeredAt: now };
+const outcomeProfile = (feedback) => computeProfile({}, positive, {}, { now, outcomes: [{ ...outcome, feedback }] });
+if (!(outcomeProfile('enjoyed').categories.nature.value > outcomeProfile('useful').categories.nature.value)) throw Error('Experience should outweigh a good-tip click');
+for (const feedback of ['visited', 'wrong_info', 'not_relevant']) {
+  if (Object.keys(outcomeProfile(feedback).categories).length) throw Error(`${feedback} must not alter durable taste`);
+}
+if (!(outcomeProfile('not_for_me').categories.nature.value < 0)) throw Error('Explicit dislike should affect only its category');
+if (outcomeProfile('enjoyed').dims.nat.value !== 0) throw Error('Venue feedback must not invent axis traits');
+if (outcomeProfile('enjoyed').ready) throw Error('A venue review is not a ready profile');
+const hotel = computeProfile({}, positive, {}, { now, outcomes: [{ ...outcome, category: 'hotels', feedback: 'enjoyed' }] });
+if (hotel.dims.lux.value || Object.keys(hotel.categories).length) throw Error('Enjoying a hotel must not imply luxury taste');
+console.log('profile-engine-v3: conflict, recency, correction and outcome tests ok');

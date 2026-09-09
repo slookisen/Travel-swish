@@ -35,7 +35,34 @@ export type StoredProfile = {
   version: 2;
   reactions: Record<Mode, Record<string, ReactionRecord>>;
   corrections: Partial<Record<DimId, number>>;
+  outcomes?: Record<string, ProfileOutcome>;
 };
+
+export type ProfileOutcome = {
+  itemId: string;
+  category: string;
+  mode: Mode;
+  destination: string;
+  feedback: 'useful' | 'not_relevant' | 'visited' | 'wrong_info' | 'enjoyed' | 'not_for_me';
+  answeredAt: number;
+};
+
+// Domain-specific feedback must never invent personality traits. In particular,
+// a hotel or a generic web result is not evidence of a liking for luxury.
+export function outcomeCategory(category: string): string {
+  const categories: Record<string, string> = {
+    restaurants: 'food', coffee: 'food', bakery: 'food', brunch: 'food',
+    streetfood: 'food', fine: 'food', food: 'food', nature: 'nature',
+    culture: 'culture', nightlife: 'nightlife', adrenaline: 'adrenaline',
+  };
+  return categories[category] || '';
+}
+
+function recencyWeight(answeredAt: number, now: number): number {
+  const ageDays = Math.max(0, now - answeredAt) / 86_400_000;
+  // Conservative decay: stable taste retains at least half its evidence.
+  return 0.5 + 0.5 * Math.pow(0.5, ageDays / 365);
+}
 
 const REACTION_WEIGHT: Record<Reaction, number> = {
   love: 1.2,
@@ -54,8 +81,9 @@ function clamp(value: number, min = -1, max = 1) {
   return Math.max(min, Math.min(max, value));
 }
 
-function confidenceFromEvidence(evidence: number) {
-  return clamp(1 - Math.exp(-evidence / 4.2), 0, 1);
+function confidenceFromEvidence(evidence: number, numerator = evidence) {
+  const agreement = evidence > 0 ? Math.min(1, Math.abs(numerator) / evidence) : 0;
+  return clamp((1 - Math.exp(-evidence / 4.2)) * (0.35 + 0.65 * agreement), 0, 1);
 }
 
 function emptyDims(): Record<DimId, { numerator: number; evidence: number }> {
@@ -76,7 +104,9 @@ export function computeProfile(
   reactions: Record<string, ReactionRecord>,
   cards: Card[],
   corrections: Partial<Record<DimId, number>> = {},
+  options: { outcomes?: ProfileOutcome[]; now?: number } = {},
 ): PreferenceProfile {
+  const now = options.now ?? Date.now();
   const cardById = new Map(cards.map((card) => [card.id, card]));
   const dimStats = emptyDims();
   const categoryStats: Record<string, { numerator: number; evidence: number }> = {};
@@ -87,7 +117,7 @@ export function computeProfile(
     const card = cardById.get(record.cardId);
     if (!card) continue;
 
-    const weight = REACTION_WEIGHT[record.reaction];
+    const weight = REACTION_WEIGHT[record.reaction] * recencyWeight(record.answeredAt, now);
     if (weight === 0) {
       skippedCount += 1;
       continue;
@@ -130,26 +160,41 @@ export function computeProfile(
       return [
         dim,
         {
-          value: clamp(numerator / (evidence + DIM_PRIOR)),
-          confidence: confidenceFromEvidence(evidence),
+          value: hasCorrection ? clamp(correction) : clamp(numerator / (evidence + DIM_PRIOR)),
+          confidence: hasCorrection ? confidenceFromEvidence(MANUAL_EVIDENCE) : confidenceFromEvidence(evidence, numerator),
           evidence,
         },
       ];
     }),
   ) as Record<DimId, AxisScore>;
 
+  // Readiness describes the card coverage, not the number of venue reviews.
+  const categoryCoverage = Object.values(categoryStats).filter((stat) => stat.evidence > 0).length;
+  for (const outcome of options.outcomes ?? []) {
+    const categoryId = outcomeCategory(outcome.category);
+    if (!categoryId) continue;
+    const strength = outcome.feedback === 'enjoyed' ? 1.8
+      : outcome.feedback === 'not_for_me' ? -0.85
+        : outcome.feedback === 'useful' ? 0.25 : 0;
+    if (!strength) continue;
+    const weight = strength * recencyWeight(outcome.answeredAt, now);
+    const category = categoryStats[categoryId] ?? { numerator: 0, evidence: 0 };
+    category.numerator += weight;
+    category.evidence += Math.abs(weight);
+    categoryStats[categoryId] = category;
+  }
+
   const categories = Object.fromEntries(
     Object.entries(categoryStats).map(([category, stat]) => [
       category,
       {
         value: clamp(stat.numerator / (stat.evidence + CATEGORY_PRIOR)),
-        confidence: confidenceFromEvidence(stat.evidence),
+        confidence: confidenceFromEvidence(stat.evidence, stat.numerator),
         evidence: stat.evidence,
       },
     ]),
   );
 
-  const categoryCoverage = Object.values(categoryStats).filter((stat) => stat.evidence > 0).length;
   const meanConfidence = DIMS.reduce((sum, dim) => sum + dims[dim].confidence, 0) / DIMS.length;
   const readiness = clamp(
     meanConfidence * 0.52
@@ -242,7 +287,7 @@ export function profileToBackend(
   return {
     prefs,
     taste: {
-      version: 2,
+      version: 3,
       cats,
       confidence,
       context,

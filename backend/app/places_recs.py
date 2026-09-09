@@ -5,12 +5,20 @@ import logging
 from concurrent.futures import ThreadPoolExecutor
 from typing import Any, Callable, Mapping
 
-from .google_places import google_places_search
-from .query_builder import build_queries
+from .google_places import google_places_search, resolve_destination_bounds, within_bounds
+from .query_builder import build_queries, _search_destination
 from .scorer import build_why, score_item
 
 log = logging.getLogger(__name__)
 PlacesSearchFn = Callable[..., tuple[list[dict[str, Any]], bool]]
+
+
+class DestinationUnresolved(ValueError):
+    pass
+
+
+class DestinationProviderUnavailable(RuntimeError):
+    pass
 
 FOOD_ONLY_TYPES = {
     "bakery", "cafe", "coffee_shop", "food_court", "meal_delivery", "meal_takeaway",
@@ -53,9 +61,18 @@ def rank_places_recs(
     query_text: str = "",
     exclude_ids: list[str] | None = None,
     search_fn: PlacesSearchFn = google_places_search,
+    bounds_fn: Callable[..., dict[str, Any] | None] = resolve_destination_bounds,
+    require_bounds: bool = True,
 ) -> dict[str, Any]:
     """Fetch and rank Google Places results using multi-layer matching."""
     _ = user_id
+
+    try:
+        bounds = bounds_fn(_search_destination(destination), language) if require_bounds else None
+    except RuntimeError as exc:
+        raise DestinationProviderUnavailable("destination_provider_unavailable") from exc
+    if require_bounds and not bounds:
+        raise DestinationUnresolved("destination_unresolved")
 
     prefs_dict = {k: float(v) for k, v in prefs.items() if isinstance(v, (int, float))}
 
@@ -81,6 +98,7 @@ def rank_places_recs(
             included_type=pq.included_type,
             min_rating=pq.min_rating,
             price_levels=pq.price_levels,
+            **({"bounds": bounds} if bounds else {}),
         )
 
     # Provider calls are independent. A bounded fan-out waits for the slowest
@@ -105,6 +123,8 @@ def rank_places_recs(
     if excluded:
         all_items = [item for item in all_items if str(item.get("id") or "") not in excluded]
     all_items = [item for item in all_items if _is_mode_appropriate(item, search_kind or mode)]
+    if bounds:
+        all_items = [item for item in all_items if within_bounds(item, bounds)]
 
     scored: list[dict[str, Any]] = []
     for item in all_items:
@@ -130,7 +150,7 @@ def rank_places_recs(
         "items": final,
         "cached": False,
         "provider": "google_places",
-        "model_version": "v6-mode-safe-diverse",
+        "model_version": "v7-bounded-mode-safe",
         "queries": [q.to_dict() for q in queries],
     }
 

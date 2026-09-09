@@ -1,0 +1,28 @@
+/* Shared palette for the app, first paint and offline legal pages. */
+html[data-theme='dark'] {
+  color-scheme: dark;
+  --ink: #edf5f3;
+  --muted: #b0c3c1;
+  --paper: #0c171c;
+  --surface: #15282e;
+  --surface-raised: #1d343b;
+  --line: #39565c;
+  --control-border: #6a878c;
+  --teal: #88e2cf;
+  --teal-dark: #102e29;
+  --accent-ink: #102e29;
+  --lime: #d4eb97;
+  --coral: #ffa58f;
+  --sand: #243d40;
+  --selected: #25483f;
+  --shadow: 0 24px 64px rgba(0, 0, 0, .3);
+  background: var(--paper);
+}
+html[data-theme='dark'] body, html[data-theme='dark'] #root { background: var(--paper); color: var(--ink); }
+html[data-theme='dark'] .legal-shell :is(h2, h3, .legal-brand) { color: var(--ink); }
+html[data-theme='dark'] .legal-brand span { color: var(--accent-ink); }
+html[data-theme='dark'] .legal-card { background: var(--surface); }
+html[data-theme='dark'] .legal-shell :is(p, li) { color: var(--muted); }
+html[data-theme='dark'] .legal-note { background: var(--selected); }
+html[data-theme='dark'] .legal-hero { background: var(--surface-raised); border: 1px solid var(--line); }
+html[data-theme='dark'] .legal-shell .legal-kicker { color: var(--lime); }

@@ -31,7 +31,7 @@ from .ratelimit import (
     api_rate_limit_key,
     brave_rate_limit_key,
 )
-from .places_recs import rank_places_recs
+from .places_recs import rank_places_recs, DestinationUnresolved, DestinationProviderUnavailable
 from .prefetch import get_status as get_prefetch_status
 from .prefetch import mark_failed as mark_prefetch_failed
 from .prefetch import mark_ready as mark_prefetch_ready
@@ -66,7 +66,7 @@ async def lifespan(_: FastAPI):
     yield
 
 
-app = FastAPI(title="Travel Swipe API", version="0.6.1", lifespan=lifespan)
+app = FastAPI(title="Travel Swipe API", version="0.7.0", lifespan=lifespan)
 
 # CORS: local dev defaults; override with TS_CORS_ORIGINS for public deploys.
 _allow_origins, _allow_credentials = cors_config()
@@ -76,6 +76,7 @@ app.add_middleware(
     allow_credentials=_allow_credentials,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["Retry-After"],
 )
 
 
@@ -578,6 +579,9 @@ def _search_signature(req: WebRecsRequest, prefs: dict[str, float], search_kind:
             "trip_context": dict(sorted(req.trip_context.items())),
             "prefs": prefs,
             "taste": req.taste or {},
+            "language": req.language,
+            "search_lang": req.search_lang,
+            "limit": req.limit,
         },
         sort_keys=True,
         ensure_ascii=False,
@@ -609,6 +613,11 @@ def _schedule_next_selection(
     rate_limit_key: str,
 ) -> tuple[str | None, int | None]:
     if not _brave_configured():
+        return None, None
+    # Don't silently replace geographically checked Places with a different,
+    # unbounded web provider on the next page. The client reveals its existing
+    # nine Places results three at a time without another network request.
+    if os.getenv("GOOGLE_PLACES_API_KEY") and search_kind not in {"tours", "custom"}:
         return None, None
     next_seed = _next_seed(req.seed)
     token = reserve_prefetch(signature, ttl_s=180)
@@ -650,6 +659,7 @@ def recs_prefetch_status(token: str, request: Request) -> dict:
 
 
 @app.post("/recs/web", response_model=WebRecsResponse)
+@app.post("/recs/personalized", response_model=WebRecsResponse)
 def recs_web(req: WebRecsRequest, request: Request, background_tasks: BackgroundTasks) -> WebRecsResponse:
     """Live web recommendations (Google Places preferred, Brave fallback).
 
@@ -665,6 +675,8 @@ def recs_web(req: WebRecsRequest, request: Request, background_tasks: Background
         raise HTTPException(status_code=400, detail="destination required")
 
     require_demo_auth(request)
+    if request.url.path == "/recs/personalized" and req.current_prefs is None:
+        raise HTTPException(status_code=422, detail="current_profile_required")
     try:
         api_consume_or_raise(key=api_rate_limit_key(request=request, user_id=req.user_id), cost=8)
     except RateLimitError as e:
@@ -675,7 +687,20 @@ def recs_web(req: WebRecsRequest, request: Request, background_tasks: Background
         raise HTTPException(status_code=400, detail="query_text required for custom search")
 
     started = time.monotonic()
-    prefs = _load_search_prefs(req.user_id, req.mode, search_kind)
+    prefs = dict(req.current_prefs) if req.current_prefs is not None else _load_search_prefs(req.user_id, req.mode, search_kind)
+    con = connect()
+    try:
+        blocked = con.execute(
+            """SELECT item_id FROM (
+                 SELECT *, ROW_NUMBER() OVER (PARTITION BY item_id ORDER BY ts DESC, rowid DESC) AS latest
+                 FROM result_feedback WHERE user_id=? AND mode=?
+               ) WHERE latest=1 AND (feedback IN ('not_for_me','wrong_info') OR
+                 (feedback='not_relevant' AND lower(destination)=lower(?) AND ts>?)) ORDER BY ts DESC LIMIT 200""",
+            (req.user_id, req.mode, req.destination.strip(), int(time.time()) - 86400),
+        ).fetchall()
+    finally:
+        con.close()
+    req.exclude_ids = list(dict.fromkeys(req.exclude_ids + [str(row[0]) for row in blocked]))[-200:]
     signature = _search_signature(req, prefs, search_kind)
     rl_key = brave_rate_limit_key(request=request, user_id=req.user_id)
     payload: dict | None = None
@@ -734,6 +759,10 @@ def recs_web(req: WebRecsRequest, request: Request, background_tasks: Background
                 query_text=req.query_text,
                 exclude_ids=req.exclude_ids,
             )
+    except DestinationUnresolved:
+        raise HTTPException(status_code=422, detail="destination_unresolved")
+    except DestinationProviderUnavailable:
+        raise HTTPException(status_code=503, detail="search_provider_unavailable")
     except RateLimitError as e:
         log.warning("recs_web rate_limited key=%s retry_after_s=%s", e.key, e.retry_after_s)
         raise HTTPException(status_code=429, detail="rate_limited", headers={"Retry-After": str(e.retry_after_s)})
@@ -761,6 +790,24 @@ def recs_web(req: WebRecsRequest, request: Request, background_tasks: Background
     con = connect()
     try:
         con.execute("INSERT OR IGNORE INTO users(id, created_ts) VALUES(?, ?)", (req.user_id, int(time.time())))
+        if req.current_prefs is not None:
+            con.execute(
+                """INSERT INTO prefs(user_id, mode, prefs_json, updated_ts) VALUES(?, ?, ?, ?)
+                   ON CONFLICT(user_id, mode) DO UPDATE SET prefs_json=excluded.prefs_json, updated_ts=excluded.updated_ts""",
+                (req.user_id, req.mode, json.dumps(req.current_prefs), int(time.time())),
+            )
+            if req.session_id:
+                # Never take over a session owned by a different client.
+                con.execute(
+                    """INSERT INTO sessions(id, user_id, created_ts, last_ts, mode, destination, context_json, profile_version, client_version)
+                       VALUES(?, ?, ?, ?, ?, ?, ?, 3, ?)
+                       ON CONFLICT(id) DO UPDATE SET last_ts=excluded.last_ts, mode=excluded.mode,
+                       destination=excluded.destination, context_json=excluded.context_json,
+                       profile_version=excluded.profile_version, client_version=excluded.client_version
+                       WHERE sessions.user_id=excluded.user_id""",
+                    (req.session_id, req.user_id, int(time.time()), int(time.time()), req.mode, req.destination.strip(),
+                     json.dumps((req.taste or {}).get("context", {})), req.client_version),
+                )
         session_id = None
         if req.session_id:
             session_exists = con.execute(

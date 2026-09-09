@@ -6,6 +6,9 @@ DEFAULT_CORS_ORIGINS: list[str] = [
     # Vite dev server
     "http://127.0.0.1:5173",
     "http://localhost:5173",
+    # Built PWA preview (exact loopback origins, never a wildcard).
+    "http://127.0.0.1:4173",
+    "http://localhost:4173",
     # Local dashboard / Pages preview (team-dashboard)
     "http://127.0.0.1:8090",
     "http://localhost:8090",
