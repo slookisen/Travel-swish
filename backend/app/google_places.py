@@ -16,7 +16,7 @@ FIELD_MASK = (
     "places.id,places.displayName,places.formattedAddress,places.types,"
     "places.rating,places.priceLevel,places.userRatingCount,"
     "places.location,places.googleMapsUri,places.websiteUri,places.editorialSummary,"
-    "places.primaryTypeDisplayName"
+    "places.primaryTypeDisplayName,places.primaryType"
 )
 
 # Map Google place types to our internal categories.
@@ -98,6 +98,7 @@ def google_places_search(
     }
     if included_type:
         body["includedType"] = included_type
+        body["strictTypeFiltering"] = True
     if min_rating is not None:
         body["minRating"] = min_rating
     if price_levels:
@@ -111,7 +112,8 @@ def google_places_search(
         places = resp.json().get("places", [])
     except Exception as e:
         log.warning("google_places_search failed query=%r: %s", query, e)
-        return [], False
+        # A provider outage is not a successful search with zero matches.
+        raise RuntimeError("search_provider_unavailable") from e
 
     items = [_normalize(p) for p in places]
     items = [i for i in items if i]
@@ -175,9 +177,10 @@ def _normalize(place: dict[str, Any]) -> dict[str, Any] | None:
             return None
 
         primary_type = place.get("primaryTypeDisplayName", {}).get("text", "")
+        primary_type_id = str(place.get("primaryType") or "")
         types = place.get("types", [])
         cat = "experiences"
-        for t in types:
+        for t in ([primary_type_id] if primary_type_id else []) + types:
             if t in TYPE_TO_CAT:
                 cat = TYPE_TO_CAT[t]
                 break
@@ -226,6 +229,7 @@ def _normalize(place: dict[str, Any]) -> dict[str, Any] | None:
             "price_level": price_level,
             "types": types,
             "primary_type": primary_type,
+            "primary_type_id": primary_type_id,
             "website_url": website_url,
             "maps_url": maps_url,
         }

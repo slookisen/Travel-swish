@@ -66,7 +66,7 @@ async def lifespan(_: FastAPI):
     yield
 
 
-app = FastAPI(title="Travel Swipe API", version="0.7.0", lifespan=lifespan)
+app = FastAPI(title="Travel Swipe API", version="0.7.1", lifespan=lifespan)
 
 # CORS: local dev defaults; override with TS_CORS_ORIGINS for public deploys.
 _allow_origins, _allow_credentials = cors_config()
