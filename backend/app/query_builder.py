@@ -69,6 +69,9 @@ def _search_destination(destination: str) -> str:
 def _place_types_for_mode(place_types: list[str], mode: str) -> list[str]:
     """Keep food taste useful without turning the Experiences tab into a venue list."""
     copied = list(place_types)
+    if mode == "restaurants":
+        return [place_type for place_type in copied
+                if place_type in FOOD_VENUE_TYPES or place_type.endswith("_restaurant")]
     if mode != "experiences":
         return copied
     return [
@@ -168,11 +171,12 @@ def build_queries(
         if context.get("discovery") == "hidden":
             context_terms.append("local independent")
 
-        price_levels = None
+        # Places priceLevels is not a room-price filter. It can remove otherwise
+        # valid hotels. Express budget as search intent, never as a room quote.
         if context.get("budget") == "premium":
-            price_levels = ["PRICE_LEVEL_EXPENSIVE", "PRICE_LEVEL_VERY_EXPENSIVE"]
+            context_terms.append("luxury")
         elif context.get("budget") == "value":
-            price_levels = ["PRICE_LEVEL_INEXPENSIVE", "PRICE_LEVEL_MODERATE"]
+            context_terms.append("good value")
 
         seen_hotel_queries: set[str] = set()
         prefix = " ".join(context_terms)
@@ -184,7 +188,6 @@ def build_queries(
             queries.append(PlacesQuery(
                 text_query=text,
                 included_type=included_type,
-                price_levels=price_levels,
                 weight=max(0.65, 1.15 - rank * 0.07),
                 source="profile:hotels",
             ))
@@ -294,14 +297,18 @@ def build_queries(
             if q.min_rating is None:
                 q.min_rating = 4.0 + (lux_score * 0.5)
     budget = context.get("budget")
+    # Google drops unsupported/unpriced places when priceLevels is present.
+    # Parks, museums and hotel rooms must not inherit a restaurant price filter.
+    price_queries = [q for q in queries if mode == "restaurants" and q.included_type
+                     and (q.included_type in FOOD_VENUE_TYPES or q.included_type.endswith("_restaurant"))]
     if budget == "premium":
-        for q in queries:
+        for q in price_queries:
             q.price_levels = ["PRICE_LEVEL_EXPENSIVE", "PRICE_LEVEL_VERY_EXPENSIVE"]
     elif budget == "value":
-        for q in queries:
+        for q in price_queries:
             q.price_levels = ["PRICE_LEVEL_INEXPENSIVE", "PRICE_LEVEL_MODERATE"]
     elif lux_score > 0.7:
-        for q in queries:
+        for q in price_queries:
             if q.price_levels is None:
                 q.price_levels = ["PRICE_LEVEL_EXPENSIVE", "PRICE_LEVEL_VERY_EXPENSIVE"]
 

@@ -42,7 +42,7 @@ def _is_mode_appropriate(item: Mapping[str, Any], mode: str) -> bool:
     if mode == "hotels":
         return False
     if mode == "restaurants":
-        return _is_food_venue(item) or str(item.get("cat") or "") == "nightlife"
+        return _is_food_venue(item)
     return not _is_food_venue(item)
 
 
@@ -89,6 +89,7 @@ def rank_places_recs(
 
     all_items: list[dict[str, Any]] = []
     seen_ids: set[str] = set()
+    successful_queries = 0
 
     def fetch_query(pq):
         return search_fn(
@@ -111,6 +112,7 @@ def rank_places_recs(
             except Exception as e:
                 log.warning("places query failed: %s — %s", pq.text_query, e)
                 continue
+            successful_queries += 1
             for item in items:
                 pid = item.get("id", "")
                 if pid and pid not in seen_ids:
@@ -118,6 +120,9 @@ def rank_places_recs(
                     item["_query"] = pq.text_query
                     item["_query_weight"] = pq.weight
                     all_items.append(item)
+
+    if queries and successful_queries == 0:
+        raise DestinationProviderUnavailable("search_provider_unavailable")
 
     excluded = {str(value) for value in (exclude_ids or []) if value}
     if excluded:
@@ -150,7 +155,7 @@ def rank_places_recs(
         "items": final,
         "cached": False,
         "provider": "google_places",
-        "model_version": "v7-bounded-mode-safe",
+        "model_version": "v7.1-bounded-price-safe",
         "queries": [q.to_dict() for q in queries],
     }
 
