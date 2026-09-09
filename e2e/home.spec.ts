@@ -116,6 +116,7 @@ test('profile cards stay available while live search is cooling down', async ({ 
   await expect(page.locator('.home-action--find')).toBeDisabled();
   await expect(page.locator('.home-action--profile')).toBeEnabled();
   await page.getByRole('button', {name:'Forbedre profilen min',exact:true}).click();
-  await page.getByRole('button', {name:UI_COPY.no.swipe.keepSwiping,exact:true}).click();
   await expect(page.locator('.swipe-card__copy h1')).toBeVisible();
+  await page.getByRole('button', {name:/Ja$/}).click();
+  await expect.poll(() => page.evaluate(() => Object.keys(JSON.parse(localStorage.getItem('travel_swish_app_v3')!).profile.reactions.experiences).length)).toBe(13);
 });

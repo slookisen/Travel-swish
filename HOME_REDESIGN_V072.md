@@ -14,6 +14,7 @@
 
 - `npm run check`: types, 180-card audit, profile engine, production build and PWA checks pass.
 - Home cases cover both languages and themes, equal action dimensions, viewport fit, keyboard controls, profile persistence, destination/readiness guards and correct search-mode request bodies. Profile building stays available during a live-search cooldown.
+- Verification result: 48 browser cases passed in the full run; the 2 additional cooldown cases passed on rerun after correcting their test-only assumption that an already-dismissed readiness prompt would reappear. No unresolved application/test failures remain.
 - Contrast checks cover visible text in both palettes and disabled states. Desktop/mobile screenshots reviewed.
 - `npm run test:pwa:offline`: built service-worker assets, theme, profile and offline navigation pass.
 - Provider responses in these UI tests are mocked. The live-search service and API contract are unchanged by this design work.
