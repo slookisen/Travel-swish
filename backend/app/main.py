@@ -92,7 +92,7 @@ def health() -> Health:
         providers.append("google_places")
     if any(os.getenv(key) for key in ("BRAVE_SEARCH_API_KEY", "BRAVE_API_KEY", "OPENCLAW_BRAVE_API_KEY", "TS_BRAVE_API_KEY")):
         providers.append("brave")
-    return Health(service="travel-swish-backend", providers=providers)
+    return Health(service="travel-swish-backend", version=app.version, providers=providers)
 
 
 @app.delete("/users/{user_id}")
