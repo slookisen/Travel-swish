@@ -98,7 +98,7 @@ test('small screen, accessible reading mode, undo and language persistence', asy
   await returningUser(page, 'en');
   await expect(page.getByRole('button', { name: 'Find experiences' })).toBeInViewport({ ratio: 1 });
   await page.getByRole('button', { name: 'Improve my profile' }).tap();
-  await page.getByRole('button', { name: 'Keep refining' }).tap();
+  await expect(page.getByRole('dialog')).toBeHidden();
   await expect(page.locator('.mobile-results-cta')).toBeInViewport();
   await page.screenshot({ path: testInfo.outputPath('small-mobile-swipe.png'), fullPage: true });
   const question = page.locator('.swipe-card__copy h1');

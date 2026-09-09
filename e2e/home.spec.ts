@@ -120,3 +120,42 @@ test('profile cards stay available while live search is cooling down', async ({ 
   await page.getByRole('button', {name:/Ja$/}).click();
   await expect.poll(() => page.evaluate(() => Object.keys(JSON.parse(localStorage.getItem('travel_swish_app_v3')!).profile.reactions.experiences).length)).toBe(13);
 });
+
+for (const language of ['no', 'en'] as const) {
+  test(`intentional refinement skips the prompt but a new category still gets it: ${language}`, async ({ page }) => {
+    const copy = UI_COPY[language];
+    await page.setViewportSize({ width: 375, height: 667 });
+    await home(page, language, 'dark', false);
+    await page.getByRole('button', { name: copy.home.refine, exact: true }).click();
+    const question = page.locator('.swipe-card__copy h1');
+    await expect(question).toBeVisible();
+    for (let i = 0; i < 10; i++) {
+      await expect(page.getByRole('dialog')).toBeHidden();
+      const before = await question.innerText();
+      await page.locator('.reaction--like').click();
+      await expect(question).not.toHaveText(before);
+    }
+    await expect(page.getByRole('dialog')).toBeHidden();
+    await expect(page.locator('.mobile-results-cta')).toBeInViewport();
+    await page.reload();
+    await page.getByRole('button', { name: copy.home.refine, exact: true }).click();
+    await expect(question).toBeVisible();
+    await expect(page.getByRole('dialog')).toBeHidden();
+    await page.getByRole('button', { name: copy.nav.home, exact: true }).click();
+    await page.getByRole('button', { name: copy.brief.restaurants, exact: true }).click();
+    await page.locator('.home-action--profile').click();
+    // Suppression belongs to the learned category, not the whole session.
+    for (let i = 0; i < 12 && !(await page.getByRole('dialog').isVisible()); i++) {
+      const before = await question.innerText();
+      await page.locator('.reaction--like').click();
+      await expect(question).not.toHaveText(before);
+    }
+    await expect(page.getByRole('dialog')).toContainText(copy.swipe.promptTitle);
+    await page.getByRole('button', { name: copy.swipe.keepSwiping, exact: true }).click();
+    await page.locator('.reaction--like').click();
+    await expect(page.getByRole('dialog')).toBeHidden();
+    const state = await page.evaluate(() => JSON.parse(localStorage.getItem('travel_swish_app_v3')!));
+    expect(Object.keys(state.profile.reactions.experiences)).toHaveLength(22);
+    expect(Object.keys(state.profile.reactions.restaurants).length).toBeGreaterThanOrEqual(7);
+  });
+}

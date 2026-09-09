@@ -50,7 +50,7 @@ test('dark mobile home, swipe, profile, results and discovery remain readable', 
   await expect(page.getByLabel('Colour theme')).toBeInViewport({ ratio: 1 });
   await page.screenshot({ path: info.outputPath('dark-home.png'), fullPage: true });
   await page.getByRole('button', { name: 'Improve my profile' }).click();
-  await page.getByRole('button', { name: 'Keep refining' }).click();
+  await expect(page.getByRole('dialog')).toBeHidden();
   await readable(page);
   await expect(page.locator('.mobile-results-cta')).toBeInViewport({ ratio: 1 });
   await page.screenshot({ path: info.outputPath('dark-swipe.png'), fullPage: true });
@@ -76,7 +76,7 @@ test('dark mobile home, swipe, profile, results and discovery remain readable', 
   await page.setViewportSize({ width: 1280, height: 900 });
   await page.getByLabel('Colour theme').selectOption('dark');
   await page.getByRole('button', { name: 'Improve my profile' }).click();
-  await page.getByRole('button', { name: 'Keep refining' }).click();
+  await expect(page.getByRole('dialog')).toBeHidden();
   await readable(page);
   await page.screenshot({ path: info.outputPath('dark-desktop-swipe.png'), fullPage: true });
 });

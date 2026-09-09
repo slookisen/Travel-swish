@@ -57,7 +57,7 @@ export default function App() {
   const [showInstallHelp, setShowInstallHelp] = useState(false);
   const [manualCopied, setManualCopied] = useState(false);
   const [showResultsPrompt, setShowResultsPrompt] = useState(false);
-  const [dismissedPromptAt, setDismissedPromptAt] = useState(0);
+  const [handledResultsPrompt, setHandledResultsPrompt] = useState<Partial<Record<Mode, boolean>>>({});
   const [undoStack, setUndoStack] = useState<Array<{ mode: Mode; cardId: string }>>([]);
   const [preferredCardId, setPreferredCardId] = useState('');
   const [gestureBusy, setGestureBusy] = useState(false);
@@ -89,7 +89,16 @@ export default function App() {
   const currentCard = useMemo(() => cards.find((card) => card.id === preferredCardId && !reactions[card.id]) ?? selectNextCard(cards, reactions, profile), [cards, reactions, profile, preferredCardId]);
   const cooldown = Math.max(0, Math.ceil((cooldownUntil - clockNow) / 1000));
   const searchDisabled = loading || cooldown > 0;
-  const enterSwipe = () => setScreen(destination.trim() ? 'swipe' : 'brief');
+  const dismissResultsPrompt = () => {
+    setHandledResultsPrompt((current) => ({ ...current, [mode]: true }));
+    setShowResultsPrompt(false);
+  };
+  const enterSwipe = () => {
+    // Returning users deliberately chose more cards. Keep the first-results
+    // hint for a newly learned category, not for an already-ready profile.
+    if (destination.trim() && profile.ready) dismissResultsPrompt();
+    setScreen(destination.trim() ? 'swipe' : 'brief');
+  };
   const modalActive = Boolean(searchError || showResultsPrompt || showInstallHelp || manualShareText || loading);
 
   useEffect(() => {
@@ -104,7 +113,7 @@ export default function App() {
       if (event.key === 'Escape') {
         if (loading) cancelSearch();
         setSearchError(null); setShowInstallHelp(false); setManualShareText('');
-        if (showResultsPrompt) { setShowResultsPrompt(false); setDismissedPromptAt(Math.max(1, profile.informativeCount)); }
+        if (showResultsPrompt) dismissResultsPrompt();
       }
       if (event.key !== 'Tab') return;
       const nodes = focusable();
@@ -168,10 +177,10 @@ export default function App() {
 
   useEffect(() => {
     if (screen !== 'swipe' || loading || !profile.ready || profile.informativeCount < 6 || showResultsPrompt) return;
-    if (dismissedPromptAt === 0) {
+    if (!handledResultsPrompt[mode]) {
       setShowResultsPrompt(true);
     }
-  }, [dismissedPromptAt, loading, profile.informativeCount, profile.ready, screen, showResultsPrompt]);
+  }, [handledResultsPrompt, mode, loading, profile.informativeCount, profile.ready, screen, showResultsPrompt]);
 
   useEffect(() => {
     if (screen !== 'results' || !nextPrefetchToken || !['preparing', 'queued', 'running'].includes(nextPrefetchStatus)) return;
@@ -268,8 +277,7 @@ export default function App() {
     lastSearch.current = normalizedSearch;
     setLoading(true);
     setSearchError(null);
-    setDismissedPromptAt(Math.max(1, profile.informativeCount));
-    setShowResultsPrompt(false);
+    dismissResultsPrompt();
     setResultNotice('');
     try {
       const response = await fetchRecommendations({
@@ -428,7 +436,7 @@ export default function App() {
     </div></div>}
     {showInstallHelp && <div className="app-modal" role="dialog" aria-modal="true" aria-labelledby="install-help-title"><div className="app-modal__card"><h2 id="install-help-title">{copy.pwa.iosTitle}</h2><p>{copy.pwa.iosHelp}</p><div className="app-modal__actions"><button className="primary-button" onClick={() => setShowInstallHelp(false)}>{copy.results.close}</button></div></div></div>}
     {manualShareText && <div className="app-modal" role="dialog" aria-modal="true" aria-labelledby="share-manual-title"><div className="app-modal__card"><h2 id="share-manual-title">{copy.results.shareManualTitle}</h2><p>{copy.results.shareManualHelp}</p><textarea readOnly value={manualShareText} aria-label={copy.results.shareManualTitle} /><div className="app-modal__actions"><button className="secondary-button" onClick={() => setManualShareText('')}>{copy.results.close}</button><button className="primary-button" onClick={copyManualShare}>{manualCopied ? copy.results.copied : copy.results.copyShare}</button></div></div></div>}
-    {showResultsPrompt && <div className="app-modal app-modal--results" role="dialog" aria-modal="true" aria-labelledby="results-ready-title"><div className="app-modal__card"><p className="panel-kicker">{copy.swipe.promptKicker}</p><h2 id="results-ready-title">{copy.swipe.promptTitle}</h2><p>{copy.swipe.promptLead(destination)}</p><div className="app-modal__actions"><button className="secondary-button" onClick={() => { setDismissedPromptAt(profile.informativeCount); setShowResultsPrompt(false); }}>{copy.swipe.keepSwiping}</button><button className="primary-button" onClick={() => void findMatches()}>{copy.swipe.promptAction} <span>→</span></button></div></div></div>}
+    {showResultsPrompt && <div className="app-modal app-modal--results" role="dialog" aria-modal="true" aria-labelledby="results-ready-title"><div className="app-modal__card"><p className="panel-kicker">{copy.swipe.promptKicker}</p><h2 id="results-ready-title">{copy.swipe.promptTitle}</h2><p>{copy.swipe.promptLead(destination)}</p><div className="app-modal__actions"><button className="secondary-button" onClick={dismissResultsPrompt}>{copy.swipe.keepSwiping}</button><button className="primary-button" onClick={() => void findMatches()}>{copy.swipe.promptAction} <span>→</span></button></div></div></div>}
   </>;
 
   if (screen === 'landing') {
