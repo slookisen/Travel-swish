@@ -1,21 +1,9 @@
 /* V0.7: one-thumb entry, progressive detail, and an accessible reading escape. */
-.quick-home { max-width: 720px; }
-.quick-home .section-heading { margin-bottom: 26px; }
-.quick-home .section-heading h1 { font-size: clamp(32px, 5vw, 48px); }
-.quick-home__card { padding: 28px; }
-.quick-home .destination-input { padding-bottom: 0; border-bottom: 0; }
-.quick-home__card .destination-input input { font-size: 16px; }
 .field-help { margin: 8px 0 18px; color: var(--muted); font-size: 13px; line-height: 1.5; }
-.quick-mode { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 20px 0; }
-.quick-mode button { min-height: 56px; padding: 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); color: var(--teal); font: inherit; font-size: 14px; font-weight: 700; }
-.quick-mode button.is-selected { border-color: var(--teal); background: #e8eee7; box-shadow: inset 0 0 0 1px var(--teal); }
 .quick-context { border-top: 1px solid var(--line); }
 .quick-context summary { padding: 16px 0; min-height: 48px; cursor: pointer; font-size: 14px; font-weight: 600; }
 .quick-context summary span { display: block; font-size: 12px; color: var(--muted); font-weight: 400; margin-top: 5px; }
 .quick-context .brief-grid { margin-top: 8px; }
-.quick-home__find { width: 100%; min-height: 54px; margin-top: 12px; font-size: 15px; }
-.quick-home__links { display: flex; justify-content: space-between; gap: 12px; margin-top: 12px; }
-.quick-home__links button { min-height: 48px; }
 .swipe-tools { display: flex; flex: 0 0 auto; justify-content: space-between; gap: 12px; margin: 0 0 6px; }
 .swipe-tools button { min-height: 36px; padding: 6px 12px; border: 0; background: transparent; color: var(--teal); font-size: 12px; cursor: pointer; }
 .swipe-tools button:disabled { opacity: .4; cursor: default; }
@@ -39,11 +27,6 @@ button:focus-visible, a:focus-visible, summary:focus-visible { outline: 3px soli
 button, a, summary { touch-action: manipulation; }
 @keyframes search-spin { to { transform: rotate(360deg); } }
 @media (max-width: 760px) {
-  .quick-home { padding-top: 24px; }
-  .quick-home .section-heading { margin-bottom: 20px; }
-  .quick-home .section-heading > p:last-child { margin-top: 12px; font-size: 15px; line-height: 1.5; }
-  .quick-home__card { padding: 18px; }
-  .quick-home__links { flex-wrap: wrap; }
   .swipe-tools button { min-height: 44px; padding: 5px 12px; }
   .app-shell--swipe .swipe-card { touch-action: pinch-zoom; }
   .reaction small { font-size: 10px; }

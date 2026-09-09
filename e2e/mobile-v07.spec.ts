@@ -35,9 +35,9 @@ test('returning guest searches atomically and reveals more without another reque
     return route.fulfill({ json: { run_id: 'run1', items, provider: 'google_places' } });
   });
   await returningUser(page);
-  await expect(page.getByRole('heading', { name: 'Hva frister i dag?' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Gjør dagen litt mer deg.' })).toBeVisible();
   await page.screenshot({ path: testInfo.outputPath('quick-home.png'), fullPage: true });
-  await page.getByRole('button', { name: 'Finn noe nå' }).click();
+  await page.getByRole('button', { name: 'Finn opplevelser' }).click();
   await expect(page.locator('.result-card')).toHaveCount(3);
   await page.screenshot({ path: testInfo.outputPath('first-three-results.png'), fullPage: true });
   await page.getByRole('button', { name: 'Vis tre til' }).click();
@@ -54,15 +54,15 @@ test('returning guest searches atomically and reveals more without another reque
 test('mode switch preserves separate memories and destination guard', async ({ page }) => {
   await returningUser(page);
   await page.getByRole('button', { name: 'Mat og drikke', exact: false }).click();
-  await expect(page.getByRole('button', { name: 'Bli kjent med smaken min' })).toBeVisible();
-  await page.getByRole('button', { name: 'Bli kjent med smaken min' }).click();
+  await expect(page.getByRole('button', { name: 'Bygg profilen min' })).toBeVisible();
+  await page.getByRole('button', { name: 'Bygg profilen min' }).click();
   await expect(page.locator('.swipe-count')).toContainText('0');
   await page.getByRole('button', { name: /Ja$/ }).click();
   await page.getByRole('button', { name: 'Gå til start' }).click();
   await page.getByRole('button', { name: /Opplevelser/ }).click();
-  await expect(page.getByRole('button', { name: 'Finn noe nå' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Finn opplevelser' })).toBeVisible();
   await page.getByLabel('Hvor vil du finne tips?').fill('');
-  await expect(page.getByRole('button', { name: 'Finn noe nå' })).toBeDisabled();
+  await expect(page.getByRole('button', { name: 'Finn opplevelser' })).toBeDisabled();
   const state = await page.evaluate(() => JSON.parse(localStorage.getItem('travel_swish_app_v3')!));
   expect(Object.keys(state.profile.reactions.experiences)).toHaveLength(Object.keys(answers).length);
   expect(Object.keys(state.profile.reactions.restaurants)).toHaveLength(1);
@@ -96,9 +96,9 @@ test('diagonal touch swipe means like and undo restores the exact answer state',
 test('small screen, accessible reading mode, undo and language persistence', async ({ page }, testInfo) => {
   await page.setViewportSize({ width: 375, height: 667 });
   await returningUser(page, 'en');
-  await expect(page.getByRole('button', { name: 'Find something now' })).toBeInViewport({ ratio: 1 });
-  await page.getByRole('button', { name: 'Refine my taste' }).tap();
-  await page.getByRole('button', { name: 'Keep refining' }).tap();
+  await expect(page.getByRole('button', { name: 'Find experiences' })).toBeInViewport({ ratio: 1 });
+  await page.getByRole('button', { name: 'Improve my profile' }).tap();
+  await expect(page.getByRole('dialog')).toBeHidden();
   await expect(page.locator('.mobile-results-cta')).toBeInViewport();
   await page.screenshot({ path: testInfo.outputPath('small-mobile-swipe.png'), fullPage: true });
   const question = page.locator('.swipe-card__copy h1');
@@ -111,7 +111,7 @@ test('small screen, accessible reading mode, undo and language persistence', asy
   expect(await page.evaluate(() => getComputedStyle(document.body).overflow)).not.toBe('hidden');
   await expect(page.locator('.app-shell')).toHaveClass(/app-shell--reading/);
   await page.reload();
-  await expect(page.getByRole('heading', { name: 'What sounds good today?' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Make today more you.' })).toBeVisible();
   await expect(page.locator('html')).toHaveAttribute('lang', 'en');
 });
 
@@ -123,7 +123,7 @@ test('rate limit keeps previous results and blocks retry until Retry-After', asy
       : route.fulfill({ status: 429, headers: { 'Retry-After': '3', 'Access-Control-Expose-Headers': 'Retry-After' }, json: { detail: 'rate_limited' } });
   });
   await returningUser(page);
-  await page.getByRole('button', { name: 'Finn noe nå' }).click();
+  await page.getByRole('button', { name: 'Finn opplevelser' }).click();
   await expect(page.locator('.result-card')).toHaveCount(3);
   await page.getByRole('button', { name: 'Nytt utvalg' }).click();
   await expect(page.getByRole('dialog')).toContainText('Søket trenger en liten pause');
@@ -140,13 +140,13 @@ test('outcome feedback survives reload and changes categories without leaking in
   await page.route('**/feedback', (route) => route.fulfill({ json: { ok: true } }));
   await page.route('**/recs/personalized', (route) => { bodies.push(route.request().postDataJSON()); return route.fulfill({ json: { items, run_id: `run${bodies.length}` } }); });
   await returningUser(page);
-  await page.getByRole('button', { name: 'Finn noe nå' }).click();
+  await page.getByRole('button', { name: 'Finn opplevelser' }).click();
   const first = page.locator('.result-card').first();
   await first.getByText('Mer om tipset', { exact: true }).click();
   await first.getByRole('button', { name: 'Prøvde og likte' }).tap();
   await expect(first.getByRole('button', { name: 'Prøvde og likte' })).toHaveAttribute('aria-pressed', 'true');
   await page.reload();
-  await page.getByRole('button', { name: 'Finn noe nå' }).click();
+  await page.getByRole('button', { name: 'Finn opplevelser' }).click();
   await expect(page.locator('.result-card')).toHaveCount(3);
   expect(bodies[1].taste.cats.nature).toBeGreaterThan(bodies[0].taste.cats.nature ?? 0);
   expect(bodies[1].current_prefs).toEqual(bodies[0].current_prefs);
@@ -165,7 +165,7 @@ test('cancelling a slow request keeps results and ignores a late response', asyn
     await route.fulfill({ json: { items: count > 1 ? [{ ...items[0], name: 'Late result' }] : items } }).catch(() => {});
   });
   await returningUser(page);
-  await page.getByRole('button', { name: 'Finn noe nå' }).click();
+  await page.getByRole('button', { name: 'Finn opplevelser' }).click();
   await expect(page.locator('.result-card')).toHaveCount(3);
   await page.getByRole('button', { name: 'Nytt utvalg' }).click();
   await expect(page.getByRole('dialog')).toBeVisible();
@@ -180,7 +180,7 @@ test('cancelling a slow request keeps results and ignores a late response', asyn
 test('old backend fails visibly without silently replacing live results with starter ideas', async ({ page }) => {
   await page.route('**/recs/personalized', (route) => route.fulfill({ status: 404, json: { detail: 'Not Found' } }));
   await returningUser(page, 'en');
-  await page.getByRole('button', { name: 'Find something now' }).click();
+  await page.getByRole('button', { name: 'Find experiences' }).click();
   await expect(page.getByRole('dialog')).toContainText('updated');
   await expect(page.getByRole('button', { name: 'Try again', exact: true })).toHaveCount(0);
   await expect(page.locator('.result-card')).toHaveCount(0);

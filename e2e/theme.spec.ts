@@ -20,34 +20,7 @@ async function returningGuest(page: Page) {
   await page.goto('/Travel-swish/');
 }
 
-// DOM text check with ancestor alpha compositing; screenshots also verify the
-// gradients/emoji/native controls that a computed-colour check cannot assess.
-async function readable(page: Page) {
-  const failures = await page.evaluate(() => {
-    const rgba = (s: string) => (s.match(/[\d.]+/g) || []).map(Number);
-    const blend = (fg: number[], bg: number[]) => fg.slice(0, 3).map((v, i) => v * (fg[3] ?? 1) + bg[i] * (1 - (fg[3] ?? 1)));
-    const luminance = (c: number[]) => c.slice(0, 3).map(v => v / 255).map(v => v <= .04045 ? v / 12.92 : ((v + .055) / 1.055) ** 2.4).reduce((a, v, i) => a + v * [.2126, .7152, .0722][i], 0);
-    const ratio = (a: number[], b: number[]) => (Math.max(luminance(a), luminance(b)) + .05) / (Math.min(luminance(a), luminance(b)) + .05);
-    return [...document.querySelectorAll<HTMLElement>('body *')].flatMap(el => {
-      const text = [...el.childNodes].filter(n => n.nodeType === Node.TEXT_NODE).map(n => n.textContent).join('').trim();
-      if (!/[a-zæøå0-9]/i.test(text) || ['SCRIPT', 'STYLE', 'OPTION'].includes(el.tagName)) return [];
-      const style = getComputedStyle(el);
-      if (!el.getClientRects().length || style.visibility !== 'visible' || style.opacity === '0') return [];
-      const parents = []; let parent: HTMLElement | null = el;
-      while (parent) { parents.unshift(parent); parent = parent.parentElement; }
-      if (parents.some(p => getComputedStyle(p).opacity === '0' || getComputedStyle(p).visibility === 'hidden')) return [];
-      let bg = [255, 255, 255];
-      for (const p of parents) bg = blend(rgba(getComputedStyle(p).backgroundColor), bg);
-      // Evaluate card text against the brightest stop too (worst dark gradient).
-      if (el.closest('.swipe-card:not(.swipe-card--behind), .preview-card:not(.preview-card--back)')) bg = [34, 62, 67];
-      const contrast = ratio(blend(rgba(style.color), bg), bg);
-      const large = parseFloat(style.fontSize) >= 24 || (parseFloat(style.fontSize) >= 18.66 && Number(style.fontWeight) >= 700);
-      return contrast + .01 < (large ? 3 : 4.5) ? [{ text: text.slice(0, 50), contrast: contrast.toFixed(2), class: el.className }] : [];
-    });
-  });
-  expect(failures, 'Visible text must meet WCAG AA contrast (including disabled labels)').toEqual([]);
-}
-
+import { readable } from './helpers/contrast';
 test('system theme follows OS, manual choice persists, and Norwegian/English labels work', async ({ page }) => {
   await page.emulateMedia({ colorScheme: 'dark' });
   await page.goto('/Travel-swish/');
@@ -76,17 +49,17 @@ test('dark mobile home, swipe, profile, results and discovery remain readable', 
   await readable(page);
   await expect(page.getByLabel('Colour theme')).toBeInViewport({ ratio: 1 });
   await page.screenshot({ path: info.outputPath('dark-home.png'), fullPage: true });
-  await page.getByRole('button', { name: 'Refine my taste' }).click();
-  await page.getByRole('button', { name: 'Keep refining' }).click();
+  await page.getByRole('button', { name: 'Improve my profile' }).click();
+  await expect(page.getByRole('dialog')).toBeHidden();
   await readable(page);
   await expect(page.locator('.mobile-results-cta')).toBeInViewport({ ratio: 1 });
   await page.screenshot({ path: info.outputPath('dark-swipe.png'), fullPage: true });
   await page.getByRole('button', { name: UI_COPY.en.nav.home }).click();
-  await page.getByRole('button', { name: 'See my taste' }).click();
+  await page.getByRole('button', { name: 'See my profile' }).click();
   await readable(page);
   await page.screenshot({ path: info.outputPath('dark-profile.png'), fullPage: true });
   await page.getByRole('button', { name: UI_COPY.en.nav.home }).click();
-  await page.getByRole('button', { name: 'Find something now' }).click();
+  await page.getByRole('button', { name: 'Find experiences' }).click();
   await expect(page.locator('.result-card')).toHaveCount(1);
   await page.getByText('More about this idea', { exact: true }).click();
   await page.locator('.save-button').click();
@@ -102,8 +75,8 @@ test('dark mobile home, swipe, profile, results and discovery remain readable', 
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   await page.setViewportSize({ width: 1280, height: 900 });
   await page.getByLabel('Colour theme').selectOption('dark');
-  await page.getByRole('button', { name: 'Refine my taste' }).click();
-  await page.getByRole('button', { name: 'Keep refining' }).click();
+  await page.getByRole('button', { name: 'Improve my profile' }).click();
+  await expect(page.getByRole('dialog')).toBeHidden();
   await readable(page);
   await page.screenshot({ path: info.outputPath('dark-desktop-swipe.png'), fullPage: true });
 });
@@ -112,7 +85,7 @@ test('dark network and outdated API dialogs explain the real failure', async ({ 
   await page.setViewportSize({ width: 375, height: 667 });
   await returningGuest(page);
   await page.route('**/recs/personalized', route => route.abort('failed'));
-  await page.getByRole('button', { name: 'Find something now' }).click();
+  await page.getByRole('button', { name: 'Find experiences' }).click();
   await expect(page.getByRole('dialog')).toContainText('Local preview:');
   await expect(page.getByRole('dialog')).not.toContainText('wake up');
   await readable(page);
@@ -120,7 +93,7 @@ test('dark network and outdated API dialogs explain the real failure', async ({ 
   await page.getByRole('button', { name: 'Close', exact: true }).click();
   await page.unroute('**/recs/personalized');
   await page.route('**/recs/personalized', route => route.fulfill({ status: 404, json: { detail: 'Not Found' } }));
-  await page.getByRole('button', { name: 'Find something now' }).click();
+  await page.getByRole('button', { name: 'Find experiences' }).click();
   await expect(page.getByRole('dialog')).toContainText('server must be updated');
   await expect(page.getByRole('button', { name: 'Try again', exact: true })).toHaveCount(0);
   await readable(page);
@@ -129,12 +102,12 @@ test('dark network and outdated API dialogs explain the real failure', async ({ 
 test('timeout and offline are distinct, and disabled dark controls stay readable', async ({ page, context }) => {
   await returningGuest(page);
   await page.getByLabel('Where would you like ideas?').fill('');
-  await expect(page.getByRole('button', { name: 'Find something now' })).toBeDisabled();
+  await expect(page.getByRole('button', { name: 'Find experiences' })).toBeDisabled();
   await readable(page);
   await page.getByLabel('Where would you like ideas?').fill('Oslo, Norway');
   await page.clock.install();
   await page.route('**/recs/personalized', () => {});
-  await page.getByRole('button', { name: 'Find something now' }).click();
+  await page.getByRole('button', { name: 'Find experiences' }).click();
   await expect(page.getByRole('dialog')).toContainText('Finding places');
   await page.clock.fastForward(60000);
   await expect(page.getByRole('dialog')).toContainText('Finding places');
@@ -144,7 +117,7 @@ test('timeout and offline are distinct, and disabled dark controls stay readable
   await page.getByRole('button', { name: 'Close', exact: true }).click();
   await page.unroute('**/recs/personalized');
   await context.setOffline(true);
-  await page.getByRole('button', { name: 'Find something now' }).click();
+  await page.getByRole('button', { name: 'Find experiences' }).click();
   await expect(page.getByRole('dialog')).toContainText('You are offline');
   await context.setOffline(false);
 });

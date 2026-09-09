@@ -8,11 +8,24 @@ export const UI_COPY = {
   no: {
     language: { label: 'Språk', no: 'Norsk', en: 'English' },
     theme: { label: 'Fargetema', system: 'System', light: 'Lyst', dark: 'Mørkt' },
+    home: {
+      welcome: 'HEI IGJEN, UTFORSKER', refine: 'Forbedre profilen min', build: 'Bygg profilen min', profile: 'Se profilen min',
+      placeHelp: 'By og land gir bedre treff.', actions: 'Hva vil du gjøre nå?', locked: 'Noen sveip først, så finner vi treff.',
+      experiences: {
+        title: 'Gjør dagen', accent: 'litt mer deg.', lead: 'Store eventyr eller små avbrekk. Finn opplevelser som passer deg.',
+        find: 'Finn opplevelser', findHint: 'Fra din profil til din neste opplevelse.', refineHint: 'Flere sveip. Mer deg.',
+        needsCards: 'La oss bli kjent med hva du liker å gjøre. Start med noen kort.',
+      },
+      restaurants: {
+        title: 'Finn din', accent: 'neste favoritt.', lead: 'En god kaffe eller en lang middag? Finn steder som treffer smaken din.',
+        find: 'Finn mat og drikke', findHint: 'Gode steder, valgt for din smak.', refineHint: 'Vis oss hva som frister.',
+        needsCards: 'Mat og drikke har en egen profil. Start med noen kort om det du liker.',
+      },
+    },
     flow: {
-      welcome: 'VELKOMMEN TILBAKE', title: 'Hva frister i dag?', lead: 'Smaken din er med. Finn noe her hjemme eller på tur.',
-      find: 'Finn noe nå', refine: 'Forbedre smaken min', startMode: 'Bli kjent med smaken min',
+      find: 'Finn noe nå',
       destination: 'Hvor vil du finne tips?', placeHelp: 'Bruk gjerne by og land, for eksempel Lisboa, Portugal.',
-      customize: 'Tilpass denne gangen', profile: 'Se smaken min', modeNeedsCards: 'Vi holder mat og opplevelser adskilt. Svar på noen kort for denne kategorien først.',
+      customize: 'Tilpass denne gangen',
       undo: 'Angre', undone: 'Siste svar er angret', compact: 'Kompakt kort', reading: 'Større tekst',
       more: 'Vis tre til', shown: (count: number, total: number) => `${count} av ${total} tips`,
       details: 'Mer om tipset', enjoyed: 'Prøvde og likte', notForMe: 'Ikke min smak', notNow: 'Ikke nå',
@@ -33,7 +46,7 @@ export const UI_COPY = {
       workingHint: 'Etter en pause kan tjenesten bruke rundt ett minutt på å starte. Du kan avbryte uten å miste profilen.',
       cancel: 'Avbryt søket',
     },
-    nav: { home: 'Gå til start', saved: 'Lagret', profile: 'Smaksprofil' },
+    nav: { home: 'Gå til start', saved: 'Lagret', profile: 'Profilen min' },
     legal: { privacy: 'Personvern', support: 'Hjelp og støtte' },
     pwa: {
       install: 'Installer app', installed: 'Appen er installert', installDismissed: 'Installasjonen ble avbrutt',
@@ -128,11 +141,24 @@ export const UI_COPY = {
   en: {
     language: { label: 'Language', no: 'Norwegian', en: 'English' },
     theme: { label: 'Colour theme', system: 'System', light: 'Light', dark: 'Dark' },
+    home: {
+      welcome: 'HEY AGAIN, EXPLORER', refine: 'Improve my profile', build: 'Build my profile', profile: 'See my profile',
+      placeHelp: 'City and country help us find the right places.', actions: 'What would you like to do?', locked: 'A few swipes first, then your matches.',
+      experiences: {
+        title: 'Make today', accent: 'more you.', lead: 'Big adventures or little escapes. Find experiences that feel like you.',
+        find: 'Find experiences', findHint: 'Your profile. Your next adventure.', refineHint: 'More swipes. More you.',
+        needsCards: 'Let’s get to know what you love doing. Start with a few cards.',
+      },
+      restaurants: {
+        title: 'Meet your', accent: 'next favourite.', lead: 'A great coffee or a long dinner? Find places that hit the spot.',
+        find: 'Find food and drink', findHint: 'Great places, picked for your taste.', refineHint: 'Show us what you love.',
+        needsCards: 'Food and drink has its own profile. Start with a few cards about what you like.',
+      },
+    },
     flow: {
-      welcome: 'WELCOME BACK', title: 'What sounds good today?', lead: 'Your taste comes with you. Find something at home or away.',
-      find: 'Find something now', refine: 'Refine my taste', startMode: 'Discover my taste',
+      find: 'Find something now',
       destination: 'Where would you like ideas?', placeHelp: 'Include the city and country, for example Lisbon, Portugal.',
-      customize: 'Adjust for today', profile: 'See my taste', modeNeedsCards: 'Food and experiences have separate profiles. Answer a few cards for this category first.',
+      customize: 'Adjust for today',
       undo: 'Undo', undone: 'Last answer undone', compact: 'Compact card', reading: 'Larger text',
       more: 'Show three more', shown: (count: number, total: number) => `${count} of ${total} ideas`,
       details: 'More about this idea', enjoyed: 'Tried and enjoyed', notForMe: 'Not my taste', notNow: 'Not now',
@@ -153,7 +179,7 @@ export const UI_COPY = {
       workingHint: 'After a break, the service may need about a minute to wake up. You can cancel without losing your profile.',
       cancel: 'Cancel search',
     },
-    nav: { home: 'Go to home', saved: 'Saved', profile: 'Taste profile' },
+    nav: { home: 'Go to home', saved: 'Saved', profile: 'My profile' },
     legal: { privacy: 'Privacy', support: 'Help and support' },
     pwa: {
       install: 'Install app', installed: 'The app is installed', installDismissed: 'Installation was dismissed',

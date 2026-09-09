@@ -7,6 +7,7 @@ import { LanguageProvider } from './app/i18n';
 import './styles.css';
 import './mobile-refinement.css';
 import './dark-mode.css';
+import './home.css';
 
 // --- Basepath sanity check (debug aid for GitHub Pages blank-screen issues) ---
 const expectedBase = (import.meta as any).env?.BASE_URL ?? '/';

@@ -69,11 +69,27 @@ test('swipe card fits the viewport and is visibly thrown aside', async ({ page }
   await page.mouse.down();
   await page.mouse.move(cardBox!.x + cardBox!.width / 2 + 260, cardBox!.y + cardBox!.height / 2 + 24, { steps: 8 });
   await expect(card).toHaveClass(/is-dragging/);
+  // Record actual animation frames in the browser. Cross-process assertions
+  // can otherwise arrive after the 300ms exit timer has replaced the card.
+  await card.evaluate((element) => {
+    const sample = { sawExit: false, maxX: element.getBoundingClientRect().x };
+    (window as any).__swipeExitSample = sample;
+    const observer = new MutationObserver(() => {
+      if (!element.classList.contains('is-exiting')) return;
+      sample.sawExit = true;
+      observer.disconnect();
+      const frame = () => {
+        if (!element.isConnected) return;
+        sample.maxX = Math.max(sample.maxX, element.getBoundingClientRect().x);
+        requestAnimationFrame(frame);
+      };
+      requestAnimationFrame(frame);
+    });
+    observer.observe(element, { attributes: true, attributeFilter: ['class'] });
+  });
   await page.mouse.up();
-  await expect(card).toHaveClass(/is-exiting/);
-  await page.waitForTimeout(140);
-  const exitBox = await card.boundingBox();
-  expect(exitBox!.x).toBeGreaterThan(cardBox!.x + 250);
+  await expect.poll(() => page.evaluate(() => (window as any).__swipeExitSample.maxX)).toBeGreaterThan(cardBox!.x + 400);
+  expect(await page.evaluate(() => (window as any).__swipeExitSample.sawExit)).toBe(true);
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(viewport!.width);
   await page.screenshot({ path: testInfo.outputPath('swipe-throw.png'), fullPage: true });
   await expect.poll(() => card.locator('.swipe-card__copy h1').innerText()).not.toBe(firstQuestion);
